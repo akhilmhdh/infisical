@@ -15,6 +15,7 @@ import { TSmtpService } from "@app/services/smtp/smtp-service";
 
 import { getConfig } from "@lib/config/env";
 
+import serveNext from "../serve-next";
 import { globalRateLimiterCfg } from "./config/rateLimiter";
 import { fastifyErrHandler } from "./plugins/error-handler";
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from "./plugins/fastify-zod";
@@ -56,14 +57,32 @@ export const main = async ({ db, smtp, logger, queue }: TMain) => {
     await server.register(fastifySwagger);
     await server.register(fastifyFormBody);
     await server.register(fastifyErrHandler);
+    // allow empty body on post request
+    // server.addContentTypeParser("application/json", { bodyLimit: 0 }, (_request, _payload, done) =>
+    //   done(null, null)
+    // );
 
     // Rate limiters and security headers
-    if (appCfg.NODE_ENV === "production") {
-      await server.register<FastifyRateLimitOptions>(ratelimiter, globalRateLimiterCfg());
-    }
+    await server.register<FastifyRateLimitOptions>(ratelimiter, globalRateLimiterCfg);
     await server.register(helmet, { contentSecurityPolicy: false });
 
     await server.register(registerRoutes, { smtp, queue, db });
+
+    if (process.env.STANDALONE_BUILD === "true" && appCfg.NODE_ENV === "production") {
+      await server.register(serveNext, {
+        logLevel: "debug"
+      });
+
+      await server.after();
+
+      await server.after();
+
+      server.passNextJsDataRequests();
+      server.passNextJsImageRequests();
+      server.passNextJsStaticRequests();
+      server.passNextJsPageRequests();
+    }
+
     await server.ready();
     server.swagger();
     return server;

@@ -107,8 +107,8 @@ const main = async () => {
 
   const port = await getPort();
 
-  // initializing the database connection + redis 
-  await initRedis()
+  // initializing the database connection + redis
+  await initRedis();
   await DatabaseService.initDatabase(await getMongoURL());
   const serverCfg = await serverConfigInit();
   await setup();
@@ -180,7 +180,7 @@ const main = async () => {
   if ((await getNodeEnv()) === "production" && process.env.STANDALONE_BUILD === "true") {
     const nextJsBuildPath = path.join(__dirname, "../frontend-build");
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const conf = require("../frontend-build/.next/required-server-files.json").config;
     const NextServer =

@@ -1,4 +1,3 @@
-
 const path = require("path");
 
 const ContentSecurityPolicy = `
@@ -58,6 +57,9 @@ module.exports = {
     locales: ["en", "ko", "fr", "pt-BR", "pt-PT", "es"],
     defaultLocale: "en"
   },
+  // TODO (Daniel): Bring compression up with the team. This is required according to docs.
+  compress: false,
+
   async headers() {
     return [
       {

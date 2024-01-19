@@ -68,11 +68,12 @@ RUN addgroup --system --gid 1001 nodejs \
 
 WORKDIR /app
 
-COPY backend/package*.json ./
-RUN npm ci --only-production
+COPY backend-pg/package*.json ./
+RUN npm ci
 
-COPY /backend .
+COPY /backend-pg .
 COPY --chown=non-root-user:nodejs standalone-entrypoint.sh standalone-entrypoint.sh
+RUN npm i -D tsconfig-paths
 RUN npm run build
 
 # Production stage
@@ -80,8 +81,8 @@ FROM base AS backend-runner
 
 WORKDIR /app
 
-COPY backend/package*.json ./
-RUN npm ci --only-production
+COPY backend-pg/package*.json ./
+RUN npm ci
 
 COPY --from=backend-build /app .
 
@@ -102,16 +103,16 @@ ENV NEXT_PUBLIC_INTERCOM_ID=$INTERCOM_ID \
 
 WORKDIR / 
 
-COPY --from=backend-runner /app /backend
+COPY --from=backend-runner /app /backend-pg
 
-COPY --from=frontend-runner /app ./backend/frontend-build
+COPY --from=frontend-runner /app ./backend-pg/frontend-build
 
 ENV PORT 8080
 ENV HTTPS_ENABLED false 
 ENV NODE_ENV production
 ENV STANDALONE_BUILD true 
 
-WORKDIR /backend
+WORKDIR /backend-pg
 
 ENV TELEMETRY_ENABLED true
 

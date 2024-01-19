@@ -5,4 +5,7 @@ scripts/initialize-standalone-build.sh
 
 cd ../
 
-exec node build/index.js
+
+# Add `npm run seed:run` to seed the database
+exec npm run migration:latest && node dist/main.mjs
+
