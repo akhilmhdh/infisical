@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 // REFACTOR(akhilmhdh): This file needs to be split into multiple components too complex
 
 import crypto from "crypto";

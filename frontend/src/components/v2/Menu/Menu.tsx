@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 // @ts-nocheck
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable global-require */

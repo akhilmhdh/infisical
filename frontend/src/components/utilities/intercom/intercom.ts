@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable prefer-template */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
