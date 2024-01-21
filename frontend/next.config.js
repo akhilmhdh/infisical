@@ -1,5 +1,3 @@
-const path = require("path");
-
 const ContentSecurityPolicy = `
 	default-src 'self';
 	script-src 'self' https://app.posthog.com https://js.stripe.com https://api.stripe.com https://widget.intercom.io https://js.intercomcdn.com 'unsafe-inline' 'unsafe-eval';
@@ -57,9 +55,6 @@ module.exports = {
     locales: ["en", "ko", "fr", "pt-BR", "pt-PT", "es"],
     defaultLocale: "en"
   },
-  // TODO (Daniel): Bring compression up with the team. This is required according to docs.
-  // compress: false, // If not set to false, fastify will attempt to download a zipped version of the page
-
   async headers() {
     return [
       {
