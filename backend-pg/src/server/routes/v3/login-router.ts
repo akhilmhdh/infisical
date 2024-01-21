@@ -24,6 +24,8 @@ export const registerLoginRouter = async (server: FastifyZodProvider) => {
       }
     },
     handler: async (req) => {
+      console.log(req);
+
       const { serverPublicKey, salt } = await server.services.login.loginGenServerPublicKey({
         email: req.body.email,
         clientPublicKey: req.body.clientPublicKey,

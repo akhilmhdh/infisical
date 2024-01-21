@@ -1,3 +1,4 @@
+/* eslint-disable import/extensions */
 /* eslint-disable simple-import-sort/imports */
 /* eslint-disable global-require */
 import type { FastifyCookieOptions } from "@fastify/cookie";
@@ -23,7 +24,8 @@ import { serializerCompiler, validatorCompiler, ZodTypeProvider } from "./plugin
 import { fastifyIp } from "./plugins/ip";
 import { fastifySwagger } from "./plugins/swagger";
 import { registerRoutes } from "./routes";
-import serveNext from "@app/serve-next";
+import path from "path";
+// import { FastifyCorsOptions, fastifyCors } from "@fastify/cors";
 
 type TMain = {
   db: Knex;
@@ -44,27 +46,43 @@ export const main = async ({ db, smtp, logger, queue }: TMain) => {
   server.setValidatorCompiler(validatorCompiler);
   server.setSerializerCompiler(serializerCompiler);
 
-  /* await server.register<FastifyCorsOptions>(cors, {
+  /* await server.register<FastifyCorsOptions>(fastifyCors, {
     credentials: true,
     origin: true
   });
   */
-  await server.register(fastifyErrHandler);
+
+  let handler: any;
 
   try {
     if (process.env.STANDALONE_BUILD === "true" && appCfg.NODE_ENV === "production") {
-      console.log("Registering..");
-      await server.register(serveNext, {
+      let nextJsBuildPath;
+      let conf;
+      let NextServer;
+      try {
+        nextJsBuildPath = path.join(__dirname, "../frontend-build");
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        conf = require("../frontend-build/.next/required-server-files.json").config;
+        NextServer =
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          require("../frontend-build/node_modules/next/dist/server/next-server").default;
+      } catch (e) {
+        console.log(e);
+        console.log("next server not found");
+      }
+
+      const nextApp = new NextServer({
         dev: false,
-        prefix: "/"
+        dir: nextJsBuildPath,
+        port: appCfg.PORT,
+        conf,
+        hostname: "local",
+        customServer: false
       });
-      console.log("registered?");
 
-      await server.after().then(() => console.log("after!!!"));
-      console.log("AFTER executed");
-
-      server.passNextJsRequests();
-      console.log("AFTER PASS");
+      handler = nextApp.getRequestHandler();
     }
 
     await server.register<FastifyCookieOptions>(cookie, {
@@ -76,16 +94,19 @@ export const main = async ({ db, smtp, logger, queue }: TMain) => {
 
     await server.register(fastifySwagger);
     await server.register(fastifyFormBody);
-
-    // allow empty body on post request
-    server.addContentTypeParser("application/json", { bodyLimit: 0 }, (_request, _payload, done) =>
-      done(null, null)
-    );
+    await server.register(fastifyErrHandler);
 
     // Rate limiters and security headers
     await server.register<FastifyRateLimitOptions>(ratelimiter, globalRateLimiterCfg);
     await server.register(helmet, { contentSecurityPolicy: false });
     await server.register(registerRoutes, { smtp, queue, db });
+
+    if (handler) {
+      console.log("Adding next.js handler");
+      server.all("*", (req, res) => {
+        handler(req.raw, res.raw);
+      });
+    }
 
     await server.ready();
     server.swagger();

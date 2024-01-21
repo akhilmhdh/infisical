@@ -58,7 +58,7 @@ module.exports = {
     defaultLocale: "en"
   },
   // TODO (Daniel): Bring compression up with the team. This is required according to docs.
-  compress: false, // If not set to false, fastify will attempt to download a zipped version of the page
+  // compress: false, // If not set to false, fastify will attempt to download a zipped version of the page
 
   async headers() {
     return [
