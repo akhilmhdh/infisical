@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import { faCircle } from "@fortawesome/free-regular-svg-icons";
 import {
   faAngleDown,

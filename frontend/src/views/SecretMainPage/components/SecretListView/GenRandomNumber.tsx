@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import crypto from "crypto";
 
 import { useState } from "react";

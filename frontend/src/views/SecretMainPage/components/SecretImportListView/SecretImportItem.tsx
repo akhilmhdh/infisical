@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import { useEffect } from "react";
 import { subject } from "@casl/ability";
 import { useSortable } from "@dnd-kit/sortable";

@@ -31,6 +31,7 @@ module.exports = {
   rules: {
     quotes: ["error", "double", { avoidEscape: true }],
     "comma-dangle": ["error", "only-multiline"],
+    "jsx-a11y/control-has-associated-label": "off",
     "react/react-in-jsx-scope": "off",
     "import/prefer-default-export": "off",
     "react-hooks/exhaustive-deps": "off",
