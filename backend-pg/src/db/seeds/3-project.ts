@@ -18,7 +18,7 @@ export async function seed(knex: Knex): Promise<void> {
   const [project] = await knex(TableName.Project)
     .insert({
       name: seedData1.project.name,
-      slug: "test",
+      slug: seedData1.project.slug,
       orgId: seedData1.organization.id,
       // @ts-ignore pre calc id
       id: seedData1.project.id

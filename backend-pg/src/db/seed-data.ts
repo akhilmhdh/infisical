@@ -4,9 +4,11 @@ export const seedData1 = {
   password: process.env.TEST_USER_PASSWORD || "testInfisical@1",
   organization: {
     id: "180870b7-f464-4740-8ffe-9d11c9245ea7",
-    name: "infisical"
+    name: "infisical",
+    slug: "infisical"
   },
   project: {
+    slug: "first-project",
     id: "77fa7aed-9288-401e-a4c9-3a9430be62a0",
     name: "first project"
   },
