@@ -30,8 +30,6 @@ const run = async () => {
     process.exit(0);
   });
 
-  console.log(`PORT: ${appCfg.PORT}`);
-
   server.listen({
     port: appCfg.PORT,
     host: appCfg.HOST,
