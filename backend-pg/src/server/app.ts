@@ -1,6 +1,3 @@
-/* eslint-disable import/extensions */
-/* eslint-disable simple-import-sort/imports */
-/* eslint-disable global-require */
 import type { FastifyCookieOptions } from "@fastify/cookie";
 import cookie from "@fastify/cookie";
 // import type { FastifyCorsOptions } from "@fastify/cors";
@@ -11,6 +8,7 @@ import type { FastifyRateLimitOptions } from "@fastify/rate-limit";
 import ratelimiter from "@fastify/rate-limit";
 import fastify from "fastify";
 import { Knex } from "knex";
+import path from "path";
 import { Logger } from "pino";
 
 import { TQueueServiceFactory } from "@app/queue";
@@ -24,7 +22,6 @@ import { serializerCompiler, validatorCompiler, ZodTypeProvider } from "./plugin
 import { fastifyIp } from "./plugins/ip";
 import { fastifySwagger } from "./plugins/swagger";
 import { registerRoutes } from "./routes";
-import path from "path";
 // import { FastifyCorsOptions, fastifyCors } from "@fastify/cors";
 
 type TMain = {
@@ -61,12 +58,12 @@ export const main = async ({ db, smtp, logger, queue }: TMain) => {
       let NextServer;
       try {
         nextJsBuildPath = path.join(__dirname, "../frontend-build");
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+
+        // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
         conf = require("../frontend-build/.next/required-server-files.json").config;
+
         NextServer =
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require, import/extensions
           require("../frontend-build/node_modules/next/dist/server/next-server").default;
       } catch (e) {
         console.log(e);
