@@ -5,7 +5,7 @@
   },
   "compilerOptions": {
     "target": "es2016",
-    "lib": ["es6", "ES2021"],
+    "lib": ["es6", "es2021"],
     "module": "commonjs",
     "allowJs": true,
     "resolveJsonModule": true,
@@ -18,7 +18,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {

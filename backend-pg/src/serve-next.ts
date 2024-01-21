@@ -1,3 +1,6 @@
+/* eslint-disable import/no-dynamic-require */
+/* eslint-disable import/extensions */
+/* eslint-disable global-require */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable prefer-rest-params */
@@ -9,14 +12,10 @@ import fastifyStatic from "@fastify/static";
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { LogLevel } from "fastify/types/logger";
 import fastifyPlugin from "fastify-plugin";
-import fs from "fs";
 import { IncomingMessage, ServerResponse } from "http";
 import path from "path";
 
 import { getConfig } from "@lib/config/env";
-
-// eslint-disable-next-line no-global-assign
-const dirname = path.resolve(path.dirname(""));
 
 export interface FastifyNextJsDecoratorArguments {
   logLevel?: LogLevel;
@@ -59,39 +58,30 @@ export interface FastifyNextJsOptions {
 const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
   const appCfg = getConfig();
 
-  const loadJSON = (path: string): object => JSON.parse(fs.readFileSync(path, "utf8"));
-
-  let conf: any;
-  let NextServer: any;
-
+  let nextJsBuildPath: string | null = null;
+  let NextServer: any = null;
+  let conf: any = null;
   try {
-    conf = loadJSON(path.join(dirname, "./frontend-build/.next/required-server-files.json"));
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.log("Error loading next js config", err);
-  }
+    nextJsBuildPath = path.join(__dirname, "../frontend-build");
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
 
-  const nextJsBuildPath = path.join(dirname, "./frontend-build");
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    conf = require(`../frontend-build/.next/required-server-files.json`).config;
 
-  try {
     NextServer =
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require, import/extensions
-      require("../frontend-build/node_modules/next/dist/server/next-server").default;
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.log("Error loading next js server", err);
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require(`../frontend-build/node_modules/next/dist/server/next-server`).default;
+  } catch (e) {
+    console.log(e);
+    console.log("next server not found");
   }
-
-  console.log("config", conf);
-  console.log("build path", nextJsBuildPath);
 
   const nextServer = new NextServer({
     dev: false,
     dir: nextJsBuildPath,
     port: appCfg.PORT,
     conf,
-    path: "/",
     hostname: "local",
     customServer: false
   });
@@ -99,7 +89,15 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
   console.log("next server created!");
 
   const nextJsProxyRequestHandler = function (request: FastifyRequest, reply: FastifyReply) {
-    nextServer.getRequestHandler()(proxyFastifyRawRequest(request), proxyFastifyRawReply(reply));
+    console.log("1");
+    const proxiedRequst = proxyFastifyRawRequest(request);
+    console.log("2");
+    const proxiedReply = proxyFastifyRawReply(reply);
+    console.log("3");
+
+    console.log("started proxy request handler");
+    nextServer.getRequestHandler()(proxiedRequst, proxiedReply);
+    console.log("finished proxy request handler");
   };
 
   const nextJsRawRequestHandler = function (request: FastifyRequest, reply: FastifyReply) {
@@ -115,14 +113,17 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
     fastify.passNextJsPageRequests(args);
   };
 
-  const passNextJsDataRequestsDecorator = ({ logLevel }: FastifyNextJsDecoratorArguments = {}) => {
-    fastify.register(
+  const passNextJsDataRequestsDecorator = async ({
+    logLevel
+  }: FastifyNextJsDecoratorArguments = {}) => {
+    await fastify.register(
       (fastify, _, done) => {
         fastify.route({
           method: ["GET", "HEAD", "OPTIONS"],
           url: "/data/*",
           handler: nextJsProxyRequestHandler
         });
+        console.log("✅ passNextJsDataRequestsDecorator registered"); // WORKS!!!
         done();
       },
       {
@@ -132,8 +133,10 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
     );
   };
 
-  const passNextJsDevRequestsDecorator = ({ logLevel }: FastifyNextJsDecoratorArguments = {}) => {
-    fastify.register(
+  const passNextJsDevRequestsDecorator = async ({
+    logLevel
+  }: FastifyNextJsDecoratorArguments = {}) => {
+    await fastify.register(
       (fastify, _, done) => {
         fastify.route({
           method: ["GET", "HEAD", "OPTIONS"],
@@ -145,6 +148,8 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
           url: "/webpack-hmr",
           handler: nextJsRawRequestHandler
         });
+
+        console.log("passNextJsDevRequestsDecorator registered"); // DOES NOT WORK
         done();
       },
       {
@@ -154,14 +159,18 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
     );
   };
 
-  const passNextJsImageRequestsDecorator = ({ logLevel }: FastifyNextJsDecoratorArguments = {}) => {
-    fastify.register(
+  const passNextJsImageRequestsDecorator = async ({
+    logLevel
+  }: FastifyNextJsDecoratorArguments = {}) => {
+    await fastify.register(
       (fastify, _, done) => {
         fastify.route({
           method: ["GET", "HEAD", "OPTIONS"],
           url: "/image",
           handler: nextJsRawRequestHandler
         });
+
+        console.log("✅ passNextJsImageRequestsDecorator registered");
         done();
       },
       {
@@ -177,13 +186,15 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
     fastify.register(fastifyStatic, {
       logLevel,
       prefix: `/_next/static/`,
-      root: `${process.cwd()}/.next/static`,
+      root: `${path.join(__dirname, "../frontend-build/.next/static")}`,
       decorateReply: false
     });
   };
 
-  const passNextJsPageRequestsDecorator = ({ logLevel }: FastifyNextJsDecoratorArguments = {}) => {
-    fastify.register(
+  const passNextJsPageRequestsDecorator = async ({
+    logLevel
+  }: FastifyNextJsDecoratorArguments = {}) => {
+    await fastify.register(
       (fastify, _, done) => {
         fastify.route({
           method: ["GET", "HEAD", "OPTIONS"],
@@ -191,6 +202,7 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
           handler: nextJsProxyRequestHandler
         });
 
+        console.log("✅ passNextJsPageRequestsDecorator registered"); // DOES NOT WORK
         done();
       },
       {
@@ -212,7 +224,7 @@ const fastifyNextJs: FastifyPluginAsync = async (fastify) => {
 
   await nextServer.prepare();
 
-  // fastify.addHook("onClose", () => nextServer.close());
+  fastify.addHook("onClose", () => nextServer.close());
 };
 
 const proxyFastifyRawRequest = (request: FastifyRequest) =>

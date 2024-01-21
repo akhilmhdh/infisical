@@ -72,15 +72,21 @@ export const main = async ({ db, smtp, logger, queue }: TMain) => {
       await server.register(serveNext, {
         logLevel: "debug"
       });
-
+      console.log("next server fully registered");
       await server.after();
+      console.log("next server fully registered after");
 
-      await server.after();
-
-      server.passNextJsDataRequests();
-      server.passNextJsImageRequests();
-      server.passNextJsStaticRequests();
-      server.passNextJsPageRequests();
+      /*
+      await server.passNextJsDataRequests();
+      console.log("next server fully registered after 2");
+      await server.passNextJsStaticRequests();
+      console.log("next server fully registered after 3");
+      await server.passNextJsPageRequests();
+      console.log("next server fully registered after 4");
+      */
+      console.log("next server fully registered after 5");
+      await server.passNextJsRequests();
+      console.log("next server fully registered after 6");
     }
 
     await server.ready();
