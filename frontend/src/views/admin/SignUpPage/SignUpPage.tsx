@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
@@ -131,7 +130,6 @@ export const SignUpPage = () => {
           >
             <div className="text-center flex flex-col items-center space-y-4">
               <img src="/images/gradientLogo.svg" height={90} width={120} alt="Infisical logo" />
-              <Image src="/images/infisical.svg" height={90} width={120} alt="Infisical logo" unoptimized />
               <div className="text-4xl">Welcome to Infisical</div>
               <div>Create your first Admin Account</div>
             </div>
