@@ -30,9 +30,11 @@ const run = async () => {
     process.exit(0);
   });
 
+  console.log(`PORT: ${appCfg.PORT}`);
+
   server.listen({
     port: appCfg.PORT,
-    host: appCfg.HOST,
+    host: "0.0.0.0",
     listenTextResolver: (address) => {
       bootstrap();
       return address;
