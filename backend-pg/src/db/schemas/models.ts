@@ -15,6 +15,7 @@ export enum TableName {
   SuperAdmin = "super_admin",
   ApiKey = "api_keys",
   Project = "projects",
+  ProjectEncryptionKey = "project_encryption_keys",
   ProjectBot = "project_bots",
   Environment = "project_environments",
   ProjectMembership = "project_memberships",

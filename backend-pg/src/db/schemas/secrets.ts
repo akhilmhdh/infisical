@@ -11,7 +11,7 @@ export const SecretsSchema = z.object({
   id: z.string().uuid(),
   version: z.number().default(1),
   type: z.string().default('shared'),
-  secretBlindIndex: z.string(),
+  secretBlindIndex: z.string().nullable().optional(),
   secretKeyCiphertext: z.string(),
   secretKeyIV: z.string(),
   secretKeyTag: z.string(),

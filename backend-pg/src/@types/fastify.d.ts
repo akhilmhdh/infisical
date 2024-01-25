@@ -29,6 +29,7 @@ import { TOrgRoleServiceFactory } from "@app/services/org/org-role-service";
 import { TOrgServiceFactory } from "@app/services/org/org-service";
 import { TProjectServiceFactory } from "@app/services/project/project-service";
 import { TProjectBotServiceFactory } from "@app/services/project-bot/project-bot-service";
+import { TProjectEncryptionKeyServiceFactory } from "@app/services/project-encryption-key/project-encryption-key-service";
 import { TProjectEnvServiceFactory } from "@app/services/project-env/project-env-service";
 import { TProjectKeyServiceFactory } from "@app/services/project-key/project-key-service";
 import { TProjectMembershipServiceFactory } from "@app/services/project-membership/project-membership-service";
@@ -82,6 +83,7 @@ declare module "fastify" {
       project: TProjectServiceFactory;
       projectMembership: TProjectMembershipServiceFactory;
       projectEnv: TProjectEnvServiceFactory;
+      projectEncryptionKey: TProjectEncryptionKeyServiceFactory;
       projectKey: TProjectKeyServiceFactory;
       projectRole: TProjectRoleServiceFactory;
       secret: TSecretServiceFactory;

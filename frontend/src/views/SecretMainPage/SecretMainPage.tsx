@@ -64,6 +64,7 @@ export const SecretMainPage = () => {
   // env slug
   const environment = router.query.env as string;
   const workspaceId = currentWorkspace?.id || "";
+  const isE2EEProject = currentWorkspace?.e2ee;
   const secretPath = (router.query.secretPath as string) || "/";
   const canReadSecret = permission.can(
     ProjectPermissionActions.Read,
@@ -74,11 +75,14 @@ export const SecretMainPage = () => {
     ProjectPermissionSub.SecretRollback
   );
 
-  const { data: decryptFileKey } = useGetUserWsKey(workspaceId);
+  const { data: decryptFileKey } = useGetUserWsKey(isE2EEProject ? workspaceId : "");
+
+  console.log("isE2EEProject", isE2EEProject);
 
   // fetch secrets
   const { data: secrets, isLoading: isSecretsLoading } = useGetProjectSecrets({
     environment,
+    e2ee: isE2EEProject,
     workspaceId,
     secretPath,
     decryptFileKey: decryptFileKey!,
@@ -193,6 +197,12 @@ export const SecretMainPage = () => {
     setSnapshotId(null);
     handlePopUpClose("snapshots");
   }, []);
+
+  console.log({
+    isSecretsLoading,
+    isSecretImportsLoading,
+    isFoldersLoading
+  });
 
   // loading screen when u have permission
   const loadingOnAccess =

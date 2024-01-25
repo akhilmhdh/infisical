@@ -4,7 +4,6 @@
 /* eslint-disable vars-on-top */
 /* eslint-disable no-var */
 /* eslint-disable func-names */
-import crypto from "crypto";
 
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -34,7 +33,6 @@ import * as yup from "yup";
 import { useNotificationContext } from "@app/components/context/Notifications/NotificationProvider";
 import { OrgPermissionCan } from "@app/components/permissions";
 import { tempLocalStorage } from "@app/components/utilities/checks/tempLocalStorage";
-import { encryptAssymmetric } from "@app/components/utilities/cryptography/crypto";
 import {
   Button,
   Checkbox,
@@ -61,17 +59,13 @@ import {
 } from "@app/context";
 import { usePopUp } from "@app/hooks";
 import {
-  fetchOrgUsers,
-  useAddUserToWs,
   useCreateWorkspace,
   useGetOrgTrialUrl,
   useGetSecretApprovalRequestCount,
   useGetUserAction,
   useLogoutUser,
   useRegisterUserAction,
-  useUploadWsKey
 } from "@app/hooks/api";
-import { fetchUserWsKey } from "@app/hooks/api/keys/queries";
 import { CreateOrgModal } from "@app/views/Org/components";
 
 interface LayoutProps {
@@ -128,9 +122,7 @@ export const AppLayout = ({ children }: LayoutProps) => {
     ? subscription.workspacesUsed < subscription.workspaceLimit
     : true;
 
-  const createWs = useCreateWorkspace();
-  const uploadWsKey = useUploadWsKey();
-  const addWsUser = useAddUserToWs();
+  const createProject = useCreateWorkspace();
   const infisicalPlatformVersion = process.env.NEXT_PUBLIC_INFISICAL_PLATFORM_VERSION;
 
   const { popUp, handlePopUpOpen, handlePopUpClose, handlePopUpToggle } = usePopUp([
@@ -226,44 +218,12 @@ export const AppLayout = ({ children }: LayoutProps) => {
         data: {
           workspace: { id: newWorkspaceId }
         }
-      } = await createWs.mutateAsync({
+      } = await createProject.mutateAsync({
         organizationId: currentOrg?.id,
-        workspaceName: name
+        projectName: name,
+        inviteAllOrgMembers: addMembers
       });
 
-      const randomBytes = crypto.randomBytes(16).toString("hex");
-      const PRIVATE_KEY = String(localStorage.getItem("PRIVATE_KEY"));
-      const { ciphertext, nonce } = encryptAssymmetric({
-        plaintext: randomBytes,
-        publicKey: user.publicKey,
-        privateKey: PRIVATE_KEY
-      });
-
-      await uploadWsKey.mutateAsync({
-        encryptedKey: ciphertext,
-        nonce,
-        userId: user?.id,
-        workspaceId: newWorkspaceId
-      });
-
-      if (addMembers) {
-        // not using hooks because need at this point only
-        const orgUsers = await fetchOrgUsers(currentOrg.id);
-        const decryptKey = await fetchUserWsKey(newWorkspaceId);
-        await addWsUser.mutateAsync({
-          workspaceId: newWorkspaceId,
-          decryptKey,
-          userPrivateKey: PRIVATE_KEY,
-          members: orgUsers
-            .filter(
-              ({ status, user: orgUser }) => status === "accepted" && user.email !== orgUser.email
-            )
-            .map(({ user: orgUser, id: orgMembershipId }) => ({
-              userPublicKey: orgUser.publicKey,
-              orgMembershipId
-            }))
-        });
-      }
       createNotification({ text: "Workspace created", type: "success" });
       handlePopUpClose("addNewWs");
       router.push(`/project/${newWorkspaceId}/secrets/overview`);

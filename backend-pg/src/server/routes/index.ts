@@ -66,6 +66,8 @@ import { projectDALFactory } from "@app/services/project/project-dal";
 import { projectServiceFactory } from "@app/services/project/project-service";
 import { projectBotDALFactory } from "@app/services/project-bot/project-bot-dal";
 import { projectBotServiceFactory } from "@app/services/project-bot/project-bot-service";
+import { projectEncryptionKeyDALFactory } from "@app/services/project-encryption-key/project-encryption-key-dal";
+import { projectEncryptionKeyServiceFactory } from "@app/services/project-encryption-key/project-encryption-key-service";
 import { projectEnvDALFactory } from "@app/services/project-env/project-env-dal";
 import { projectEnvServiceFactory } from "@app/services/project-env/project-env-service";
 import { projectKeyDALFactory } from "@app/services/project-key/project-key-dal";
@@ -184,6 +186,9 @@ export const registerRoutes = async (
     projectRoleDAL,
     serviceTokenDAL
   });
+
+  const projectEncryptionKeyDAL = projectEncryptionKeyDALFactory(db);
+
   const licenseService = licenseServiceFactory({ permissionService, orgDAL, licenseDAL });
   const trustedIpService = trustedIpServiceFactory({
     licenseService,
@@ -270,6 +275,7 @@ export const registerRoutes = async (
     permissionService,
     projectDAL,
     secretBlindIndexDAL,
+    projectEncryptionKeyDAL,
     projectEnvDAL,
     projectMembershipDAL,
     folderDAL,
@@ -335,6 +341,13 @@ export const registerRoutes = async (
     secretDAL
   });
   const projectBotService = projectBotServiceFactory({ permissionService, projectBotDAL });
+
+  const projectEncryptionKeyService = projectEncryptionKeyServiceFactory({
+    projectEncryptionKeyDAL,
+    projectBotService,
+    projectDAL
+  });
+
   const integrationAuthService = integrationAuthServiceFactory({
     integrationAuthDAL,
     integrationDAL,
@@ -342,6 +355,7 @@ export const registerRoutes = async (
     projectBotDAL,
     projectBotService
   });
+
   const secretQueueService = secretQueueFactory({
     queueService,
     secretDAL,
@@ -363,6 +377,7 @@ export const registerRoutes = async (
     secretVersionDAL,
     secretVersionTagDAL,
     secretBlindIndexDAL,
+    projectEncryptionKeyService,
     permissionService,
     secretDAL,
     secretTagDAL,
@@ -453,6 +468,7 @@ export const registerRoutes = async (
     superAdmin: superAdminService,
     project: projectService,
     projectMembership: projectMembershipService,
+    projectEncryptionKey: projectEncryptionKeyService,
     projectKey: projectKeyService,
     projectEnv: projectEnvService,
     projectRole: projectRoleService,

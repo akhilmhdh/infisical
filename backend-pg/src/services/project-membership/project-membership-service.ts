@@ -19,6 +19,7 @@ import { SmtpTemplates, TSmtpService } from "../smtp/smtp-service";
 import { TUserDALFactory } from "../user/user-dal";
 import { TProjectMembershipDALFactory } from "./project-membership-dal";
 import {
+  TAddUsersToV2ProjectDTO,
   TAddUsersToWorkspaceDTO,
   TDeleteProjectMembershipDTO,
   TGetProjectMembershipDTO,
@@ -124,6 +125,67 @@ export const projectMembershipServiceFactory = ({
     });
 
     return { invitee, latestKey };
+  };
+
+  const addUsersToV2Project = async ({
+    projectId,
+    actorId,
+    actor,
+    orgMembershipIds
+  }: TAddUsersToV2ProjectDTO) => {
+    const project = await projectDAL.findById(projectId);
+    if (!project) throw new BadRequestError({ message: "Project not found" });
+
+    const { permission } = await permissionService.getProjectPermission(actor, actorId, projectId);
+    ForbiddenError.from(permission).throwUnlessCan(
+      ProjectPermissionActions.Create,
+      ProjectPermissionSub.Member
+    );
+
+    const orgMembers = await orgDAL.findMembership({
+      orgId: project.orgId,
+      $in: {
+        [`${TableName.OrgMembership}.id` as "id"]: orgMembershipIds
+      }
+    });
+
+    if (orgMembers.length !== orgMembershipIds.length) {
+      throw new BadRequestError({ message: "Some users are not part of org" });
+    }
+
+    const existingMembers = await projectMembershipDAL.find({
+      projectId,
+      $in: { userId: orgMembers.map(({ userId }) => userId).filter(Boolean) as string[] }
+    });
+    if (existingMembers.length) {
+      throw new BadRequestError({ message: "Some users are already part of project" });
+    }
+
+    await projectMembershipDAL.transaction(async (tx) => {
+      await projectMembershipDAL.insertMany(
+        orgMembers.map(({ userId }) => ({
+          projectId,
+          userId: userId as string,
+          role: ProjectMembershipRole.Member
+        })),
+        tx
+      );
+    });
+
+    const sender = await userDAL.findById(actorId);
+    const appCfg = getConfig();
+    await smtpService.sendMail({
+      template: SmtpTemplates.WorkspaceInvite,
+      subjectLine: "Infisical workspace invitation",
+      recipients: orgMembers.map(({ email }) => email).filter(Boolean),
+      substitutions: {
+        inviterFirstName: sender.firstName,
+        inviterEmail: sender.email,
+        workspaceName: project.name,
+        callback_url: `${appCfg.SITE_URL}/login`
+      }
+    });
+    return orgMembers;
   };
 
   const addUsersToProject = async ({
@@ -268,6 +330,7 @@ export const projectMembershipServiceFactory = ({
     inviteUserToProject,
     updateProjectMembership,
     deleteProjectMembership,
-    addUsersToProject
+    addUsersToProject,
+    addUsersToV2Project
   };
 };

@@ -113,50 +113,113 @@ const fetchProjectEncryptedSecrets = async ({
 
   return data.secrets;
 };
+
+const fetchProjectRawSecrets = async ({
+  workspaceId,
+  environment,
+  secretPath
+}: TGetProjectSecretsKey) => {
+  const { data } = await apiRequest.get<{ secrets: DecryptedSecret[] }>("/api/v3/secrets/raw", {
+    params: {
+      environment,
+      workspaceId,
+      secretPath
+    }
+  });
+
+  return data.secrets;
+};
 export const useGetProjectSecrets = ({
   workspaceId,
   environment,
   decryptFileKey,
+  e2ee,
   secretPath,
   options
 }: TGetProjectSecretsDTO & {
   options?: Omit<
     UseQueryOptions<
-      EncryptedSecret[],
+      any,
       unknown,
       DecryptedSecret[],
       ReturnType<typeof secretKeys.getProjectSecret>
     >,
     "queryKey" | "queryFn"
   >;
-}) =>
-  useQuery({
+}) => {
+  const secrets = useQuery({
     ...options,
     // wait for all values to be available
-    enabled: Boolean(decryptFileKey && workspaceId && environment) && (options?.enabled ?? true),
+    enabled:
+      Boolean(decryptFileKey && workspaceId && environment && e2ee === true) &&
+      (options?.enabled ?? true),
     queryKey: secretKeys.getProjectSecret({ workspaceId, environment, secretPath }),
     queryFn: async () => fetchProjectEncryptedSecrets({ workspaceId, environment, secretPath }),
-    select: (secrets: EncryptedSecret[]) => decryptSecrets(secrets, decryptFileKey)
+    select: (secs: EncryptedSecret[]) => decryptSecrets(secs, decryptFileKey)
   });
+
+  const rawSecrets = useQuery({
+    ...options,
+    // wait for all values to be available
+    enabled: Boolean(workspaceId && environment && e2ee === false) && (options?.enabled ?? true),
+    queryKey: secretKeys.getProjectSecret({ workspaceId, environment, secretPath }),
+    queryFn: async () => fetchProjectRawSecrets({ workspaceId, environment, secretPath })
+  });
+
+  console.log("rawSecrets.isLoading", rawSecrets.isLoading);
+  console.log("secrets.isLoading", secrets.isLoading);
+
+  const data = useMemo(() => {
+    if (e2ee === true) {
+      return secrets;
+    }
+    return rawSecrets;
+  }, [e2ee, secrets, rawSecrets]);
+
+  return data;
+};
 
 export const useGetProjectSecretsAllEnv = ({
   workspaceId,
+  e2ee,
   envs,
   decryptFileKey,
   secretPath
 }: TGetProjectSecretsAllEnvDTO) => {
-  const secrets = useQueries({
+  const secs = useQueries({
     queries: envs.map((environment) => ({
       queryKey: secretKeys.getProjectSecret({ workspaceId, environment, secretPath }),
-      enabled: Boolean(decryptFileKey && workspaceId && environment),
+      enabled: Boolean(decryptFileKey && workspaceId && environment && e2ee === true),
       queryFn: async () => fetchProjectEncryptedSecrets({ workspaceId, environment, secretPath }),
-      select: (secs: EncryptedSecret[]) =>
-        decryptSecrets(secs, decryptFileKey).reduce<Record<string, DecryptedSecret>>(
+      select: (s: EncryptedSecret[]) => {
+        return decryptSecrets(s, decryptFileKey).reduce<Record<string, DecryptedSecret>>(
           (prev, curr) => ({ ...prev, [curr.key]: curr }),
           {}
-        )
+        );
+      }
     }))
   });
+
+  const rawSecs = useQueries({
+    queries: envs.map((environment) => ({
+      queryKey: secretKeys.getProjectSecret({ workspaceId, environment, secretPath }),
+      enabled: Boolean(workspaceId && environment && e2ee === false),
+      queryFn: async () => fetchProjectRawSecrets({ workspaceId, environment, secretPath }),
+      select: (s: DecryptedSecret[]) => {
+        return s.reduce<Record<string, DecryptedSecret>>(
+          (prev, curr) => ({ ...prev, [curr.key]: curr }),
+          {}
+        );
+      }
+    }))
+  });
+
+  const secrets = useMemo(() => {
+    if (e2ee === true) {
+      return secs;
+    }
+    return rawSecs;
+  }, [e2ee, secs, rawSecs]);
 
   const secKeys = useMemo(() => {
     const keys = new Set<string>();

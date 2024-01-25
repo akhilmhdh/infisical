@@ -5,6 +5,7 @@ export type Workspace = {
   orgId: string;
   autoCapitalization: boolean;
   environments: WorkspaceEnv[];
+  e2ee: boolean;
 };
 
 export type WorkspaceEnv = {
@@ -25,8 +26,9 @@ export type NameWorkspaceSecretsDTO = {
 
 // mutation dto
 export type CreateWorkspaceDTO = {
-  workspaceName: string;
+  projectName: string;
   organizationId: string;
+  inviteAllOrgMembers: boolean;
 };
 
 export type RenameWorkspaceDTO = { workspaceID: string; newWorkspaceName: string };

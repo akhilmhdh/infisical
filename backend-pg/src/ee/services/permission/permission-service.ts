@@ -100,6 +100,7 @@ export const permissionServiceFactory = ({
    * Get user permission in an organization
    * */
   const getUserOrgPermission = async (userId: string, orgId: string) => {
+    console.log(userId, orgId);
     const membership = await permissionDAL.getOrgPermission(userId, orgId);
     if (!membership) throw new UnauthorizedError({ name: "User not in org" });
     if (membership.role === OrgMembershipRole.Custom && !membership.permissions) {

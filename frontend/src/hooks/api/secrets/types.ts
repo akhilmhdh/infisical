@@ -74,16 +74,21 @@ export type TGetProjectSecretsKey = {
 
 export type TGetProjectSecretsDTO = {
   decryptFileKey: UserWsKeyPair;
+  e2ee?: boolean;
 } & TGetProjectSecretsKey;
 
-export type TGetProjectSecretsAllEnvDTO = {
+export type TQueryAllProjectSecretsDTO = {
   workspaceId: string;
   envs: string[];
   decryptFileKey: UserWsKeyPair;
-  folderId?: string;
   secretPath?: string;
-  isPaused?: boolean;
 };
+
+export type TGetProjectSecretsAllEnvDTO = {
+  e2ee?: boolean;
+  folderId?: string;
+  isPaused?: boolean;
+} & TQueryAllProjectSecretsDTO;
 
 export type GetSecretVersionsDTO = {
   secretId: string;

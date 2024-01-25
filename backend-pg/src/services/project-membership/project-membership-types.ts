@@ -22,3 +22,7 @@ export type TAddUsersToWorkspaceDTO = {
     workspaceEncryptedNonce: string;
   }[];
 } & TProjectPermission;
+
+export type TAddUsersToV2ProjectDTO = {
+  orgMembershipIds: string[];
+} & TProjectPermission;

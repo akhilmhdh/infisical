@@ -14,9 +14,11 @@ import {
 } from "@app/ee/services/permission/project-permission";
 import { getConfig } from "@app/lib/config/env";
 import { createSecretBlindIndex } from "@app/lib/crypto";
+import { generateSymmetricKey, infisicalSymmetricEncypt } from "@app/lib/crypto/encryption";
 import { BadRequestError } from "@app/lib/errors";
 import { alphaNumericNanoId } from "@app/lib/nanoid";
 
+import { TProjectEncryptionKeyDALFactory } from "../project-encryption-key/project-encryption-key-dal";
 import { TProjectEnvDALFactory } from "../project-env/project-env-dal";
 import { TProjectMembershipDALFactory } from "../project-membership/project-membership-dal";
 import { TSecretBlindIndexDALFactory } from "../secret-blind-index/secret-blind-index-dal";
@@ -34,6 +36,7 @@ type TProjectServiceFactoryDep = {
   projectDAL: TProjectDALFactory;
   folderDAL: Pick<TSecretFolderDALFactory, "insertMany">;
   projectEnvDAL: Pick<TProjectEnvDALFactory, "insertMany">;
+  projectEncryptionKeyDAL: Pick<TProjectEncryptionKeyDALFactory, "create">;
   projectMembershipDAL: Pick<TProjectMembershipDALFactory, "create">;
   secretBlindIndexDAL: Pick<TSecretBlindIndexDALFactory, "create">;
   permissionService: TPermissionServiceFactory;
@@ -46,6 +49,7 @@ export const projectServiceFactory = ({
   projectDAL,
   permissionService,
   folderDAL,
+  projectEncryptionKeyDAL,
   secretBlindIndexDAL,
   projectMembershipDAL,
   projectEnvDAL,
@@ -54,6 +58,8 @@ export const projectServiceFactory = ({
   /*
    * Create workspace. Make user the admin
    * */
+
+  // V2 PROJECTS
   const createProject = async ({ orgId, actor, actorId, workspaceName }: TCreateProjectDTO) => {
     const { permission } = await permissionService.getOrgPermission(actor, actorId, orgId);
     ForbiddenError.from(permission).throwUnlessCan(
@@ -76,7 +82,12 @@ export const projectServiceFactory = ({
 
     const newProject = projectDAL.transaction(async (tx) => {
       const project = await projectDAL.create(
-        { name: workspaceName, orgId, slug: slugify(`${workspaceName}-${alphaNumericNanoId(4)}`) },
+        {
+          name: workspaceName,
+          orgId,
+          slug: slugify(`${workspaceName}-${alphaNumericNanoId(4)}`),
+          e2ee: false // end to end encryption is DISABLED by default now
+        },
         tx
       );
       // set user as admin member for proeject
@@ -100,6 +111,21 @@ export const projectServiceFactory = ({
         },
         tx
       );
+
+      const projectEncryptionKey = infisicalSymmetricEncypt(generateSymmetricKey());
+
+      await projectEncryptionKeyDAL.create(
+        {
+          projectId: project.id,
+          projectKeyCiphertext: projectEncryptionKey.ciphertext,
+          projectKeyIV: projectEncryptionKey.iv,
+          projectKeyTag: projectEncryptionKey.tag,
+          keyEncoding: projectEncryptionKey.encoding,
+          algorithm: projectEncryptionKey.algorithm
+        },
+        tx
+      );
+
       // set default environments and root folder for provided environments
       const envs = await projectEnvDAL.insertMany(
         DEFAULT_PROJECT_ENVS.map((el, i) => ({ ...el, projectId: project.id, position: i + 1 })),

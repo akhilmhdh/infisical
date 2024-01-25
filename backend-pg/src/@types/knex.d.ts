@@ -168,6 +168,11 @@ import {
   TWebhooksInsert,
   TWebhooksUpdate
 } from "@app/db/schemas";
+import {
+  TProjectEncryptionKeys,
+  TProjectEncryptionKeysInsert,
+  TProjectEncryptionKeysUpdate
+} from "@app/db/schemas/project-encryption-keys";
 
 declare module "knex/types/tables" {
   interface Tables {
@@ -220,6 +225,11 @@ declare module "knex/types/tables" {
     >;
     [TableName.ApiKey]: Knex.CompositeTableType<TApiKeys, TApiKeysInsert, TApiKeysUpdate>;
     [TableName.Project]: Knex.CompositeTableType<TProjects, TProjectsInsert, TProjectsUpdate>;
+    [TableName.ProjectEncryptionKey]: Knex.CompositeTableType<
+      TProjectEncryptionKeys,
+      TProjectEncryptionKeysInsert,
+      TProjectEncryptionKeysUpdate
+    >;
     [TableName.ProjectMembership]: Knex.CompositeTableType<
       TProjectMemberships,
       TProjectMembershipsInsert,

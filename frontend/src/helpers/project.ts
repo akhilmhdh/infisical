@@ -1,10 +1,5 @@
-import crypto from "crypto";
-
-import { encryptAssymmetric } from "@app/components/utilities/cryptography/crypto";
 import encryptSecrets from "@app/components/utilities/secrets/encryptSecrets";
-import { uploadWsKey } from "@app/hooks/api/keys/queries";
 import { createSecret } from "@app/hooks/api/secrets/mutations";
-import { fetchUserDetails } from "@app/hooks/api/users/queries";
 import { createWorkspace } from "@app/hooks/api/workspace/queries";
 
 const secretsToBeAdded = [
@@ -93,29 +88,9 @@ const initProjectHelper = async ({
   const {
     data: { workspace }
   } = await createWorkspace({
-    workspaceName: projectName,
-    organizationId
-  });
-
-  // create and upload new (encrypted) project key
-  const randomBytes = crypto.randomBytes(16).toString("hex");
-  const PRIVATE_KEY = localStorage.getItem("PRIVATE_KEY");
-
-  if (!PRIVATE_KEY) throw new Error("Failed to find private key");
-
-  const user = await fetchUserDetails();
-
-  const { ciphertext, nonce } = encryptAssymmetric({
-    plaintext: randomBytes,
-    publicKey: user.publicKey,
-    privateKey: PRIVATE_KEY
-  });
-
-  await uploadWsKey({
-    workspaceId: workspace.id,
-    userId: user.id,
-    encryptedKey: ciphertext,
-    nonce
+    projectName,
+    organizationId,
+    inviteAllOrgMembers: false
   });
 
   // encrypt and upload secrets to new project

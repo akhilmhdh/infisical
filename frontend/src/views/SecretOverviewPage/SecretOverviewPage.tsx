@@ -73,9 +73,12 @@ export const SecretOverviewPage = () => {
   }, [parentTableRef.current]);
 
   const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+
+  console.log(currentWorkspace);
+
   const { currentOrg } = useOrganization();
   const workspaceId = currentWorkspace?.id as string;
-  const { data: latestFileKey } = useGetUserWsKey(workspaceId);
+  const { data: latestFileKey } = useGetUserWsKey(currentWorkspace?.e2ee ? workspaceId : "");
   const [searchFilter, setSearchFilter] = useState("");
   const secretPath = (router.query?.secretPath as string) || "/";
 
@@ -96,7 +99,8 @@ export const SecretOverviewPage = () => {
     workspaceId,
     envs: userAvailableEnvs.map(({ slug }) => slug),
     secretPath,
-    decryptFileKey: latestFileKey!
+    decryptFileKey: latestFileKey!,
+    e2ee: currentWorkspace?.e2ee
   });
   const { folders, folderNames, isFolderPresentInEnv } = useGetFoldersByEnv({
     projectId: workspaceId,

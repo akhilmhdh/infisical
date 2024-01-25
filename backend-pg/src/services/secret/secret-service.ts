@@ -20,6 +20,7 @@ import { groupBy, pick } from "@app/lib/fn";
 
 import { ActorType } from "../auth/auth-type";
 import { TProjectBotServiceFactory } from "../project-bot/project-bot-service";
+import { TProjectEncryptionKeyServiceFactory } from "../project-encryption-key/project-encryption-key-service";
 import { TSecretBlindIndexDALFactory } from "../secret-blind-index/secret-blind-index-dal";
 import { TSecretFolderDALFactory } from "../secret-folder/secret-folder-dal";
 import { TSecretImportDALFactory } from "../secret-import/secret-import-dal";
@@ -66,6 +67,7 @@ type TSecretServiceFactoryDep = {
   snapshotService: Pick<TSecretSnapshotServiceFactory, "performSnapshot">;
   secretQueueService: Pick<TSecretQueueFactory, "syncSecrets">;
   projectBotService: Pick<TProjectBotServiceFactory, "getBotKey">;
+  projectEncryptionKeyService: TProjectEncryptionKeyServiceFactory;
   secretImportDAL: Pick<TSecretImportDALFactory, "find">;
   secretVersionTagDAL: Pick<TSecretVersionTagDALFactory, "insertMany">;
 };
@@ -78,6 +80,7 @@ export const secretServiceFactory = ({
   folderDAL,
   secretBlindIndexDAL,
   permissionService,
+  projectEncryptionKeyService,
   snapshotService,
   secretQueueService,
   projectBotService,
@@ -840,8 +843,8 @@ export const secretServiceFactory = ({
     environment,
     includeImports
   }: TGetSecretsRawDTO) => {
-    const botKey = await projectBotService.getBotKey(projectId);
-    if (!botKey)
+    const encryptionKey = await projectEncryptionKeyService.getRawEncryptionKey(projectId);
+    if (!encryptionKey)
       throw new BadRequestError({ message: "Project bot not found", name: "bot_not_found_error" });
 
     const { secrets, imports } = await getSecrets({
@@ -854,11 +857,14 @@ export const secretServiceFactory = ({
     });
 
     return {
-      secrets: secrets.map((el) => decryptSecretRaw(el, botKey)),
+      secrets: secrets.map((el) => decryptSecretRaw(el, encryptionKey)),
       imports: (imports || [])?.map(({ secrets: importedSecrets, ...el }) => ({
         ...el,
         secrets: importedSecrets.map((sec) =>
-          decryptSecretRaw({ ...sec, environment: el.environment, workspace: projectId }, botKey)
+          decryptSecretRaw(
+            { ...sec, environment: el.environment, workspace: projectId },
+            encryptionKey
+          )
         )
       }))
     };
