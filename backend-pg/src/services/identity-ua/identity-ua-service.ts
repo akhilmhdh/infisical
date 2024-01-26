@@ -110,7 +110,6 @@ export const identityUaServiceFactory = ({
       const newToken = await identityAccessTokenDAL.create(
         {
           identityId: identityUa.identityId,
-          authType: IdentityAuthMethod.Univeral,
           isAccessTokenRevoked: false,
           identityUAClientSecretId: uaClientSecretDoc.id,
           accessTokenTTL: identityUa.accessTokenTTL,
@@ -131,7 +130,7 @@ export const identityUaServiceFactory = ({
         identityAccessTokenId: identityAccessToken.id,
         authTokenType: AuthTokenType.IDENTITY_ACCESS_TOKEN
       } as TIdentityAccessTokenJwtPayload,
-      appCfg.JWT_AUTH_SECRET,
+      appCfg.AUTH_SECRET,
       {
         expiresIn:
           identityAccessToken.accessTokenMaxTTL === 0

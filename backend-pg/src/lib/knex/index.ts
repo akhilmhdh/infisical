@@ -50,11 +50,12 @@ export const ormify = <DbOps extends object, Tname extends keyof Tables>(
       const res = await cb(trx);
       return res;
     }),
-  findById: (id: string, tx?: Knex) => {
+  findById: async (id: string, tx?: Knex) => {
     try {
-      return (tx || db)(tableName)
+      const result = await (tx || db)(tableName)
         .where({ id } as any)
         .first("*");
+      return result;
     } catch (error) {
       throw new DatabaseError({ error, name: "Find by id" });
     }

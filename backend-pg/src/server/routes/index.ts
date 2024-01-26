@@ -74,12 +74,13 @@ import { projectMembershipDALFactory } from "@app/services/project-membership/pr
 import { projectMembershipServiceFactory } from "@app/services/project-membership/project-membership-service";
 import { projectRoleDALFactory } from "@app/services/project-role/project-role-dal";
 import { projectRoleServiceFactory } from "@app/services/project-role/project-role-service";
-import { secretBlindIndexDALFactory } from "@app/services/secret/secret-blind-index-dal";
 import { secretDALFactory } from "@app/services/secret/secret-dal";
 import { secretQueueFactory } from "@app/services/secret/secret-queue";
 import { secretServiceFactory } from "@app/services/secret/secret-service";
 import { secretVersionDALFactory } from "@app/services/secret/secret-version-dal";
 import { secretVersionTagDALFactory } from "@app/services/secret/secret-version-tag-dal";
+import { secretBlindIndexDALFactory } from "@app/services/secret-blind-index/secret-blind-index-dal";
+import { secretBlindIndexServiceFactory } from "@app/services/secret-blind-index/secret-blind-index-service";
 import { secretFolderDALFactory } from "@app/services/secret-folder/secret-folder-dal";
 import { secretFolderServiceFactory } from "@app/services/secret-folder/secret-folder-service";
 import { secretFolderVersionDALFactory } from "@app/services/secret-folder/secret-folder-version-dal";
@@ -91,7 +92,8 @@ import { serviceTokenDALFactory } from "@app/services/service-token/service-toke
 import { serviceTokenServiceFactory } from "@app/services/service-token/service-token-service";
 import { TSmtpService } from "@app/services/smtp/smtp-service";
 import { superAdminDALFactory } from "@app/services/super-admin/super-admin-dal";
-import { superAdminServiceFactory } from "@app/services/super-admin/super-admin-service";
+import { getServerCfg, superAdminServiceFactory } from "@app/services/super-admin/super-admin-service";
+import { telemetryServiceFactory } from "@app/services/telemetry/telemetry-service";
 import { userDALFactory } from "@app/services/user/user-dal";
 import { userServiceFactory } from "@app/services/user/user-service";
 import { webhookDALFactory } from "@app/services/webhook/webhook-dal";
@@ -213,6 +215,7 @@ export const registerRoutes = async (
     licenseService
   });
 
+  const telemetryService = telemetryServiceFactory();
   const tokenService = tokenServiceFactory({ tokenDAL: authTokenDAL, userDAL });
   const userService = userServiceFactory({ userDAL });
   const loginService = authLoginServiceFactory({ userDAL, smtpService, tokenService });
@@ -253,6 +256,7 @@ export const registerRoutes = async (
   const apiKeyService = apiKeyServiceFactory({ apiKeyDAL, userDAL });
 
   const secretScanningQueue = secretScanningQueueFactory({
+    telemetryService,
     smtpService,
     secretScanningDAL,
     queueService,
@@ -357,6 +361,12 @@ export const registerRoutes = async (
     projectDAL
   });
 
+  const secretBlindIndexService = secretBlindIndexServiceFactory({
+    permissionService,
+    secretDAL,
+    secretBlindIndexDAL
+  });
+
   const secretService = secretServiceFactory({
     folderDAL,
     secretVersionDAL,
@@ -384,6 +394,7 @@ export const registerRoutes = async (
     secretQueueService
   });
   const secretRotationQueue = secretRotationQueueFactory({
+    telemetryService,
     secretRotationDAL,
     queue: queueService,
     secretDAL,
@@ -477,7 +488,9 @@ export const registerRoutes = async (
     auditLog: auditLogService,
     secretScanning: secretScanningService,
     license: licenseService,
-    trustedIp: trustedIpService
+    trustedIp: trustedIpService,
+    secretBlindIndex: secretBlindIndexService,
+    telemetry: telemetryService
   });
 
   server.decorate<FastifyZodProvider["store"]>("store", {
@@ -505,14 +518,14 @@ export const registerRoutes = async (
     },
     handler: () => {
       const cfg = getConfig();
-
+      const serverCfg = getServerCfg() 
       return {
         date: new Date(),
         message: "Ok" as const,
         emailConfigured: cfg.isSmtpConfigured,
-        inviteOnlySignup: false,
-        redisConfigured: false,
-        secretScanningConfigured: false
+        inviteOnlySignup: Boolean(serverCfg.allowSignUp),
+        redisConfigured: cfg.isRedisConfigured,
+        secretScanningConfigured: cfg.isSecretScanningConfigured,
       };
     }
   });

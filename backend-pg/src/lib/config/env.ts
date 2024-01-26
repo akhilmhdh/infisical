@@ -35,8 +35,15 @@ const envSchema = z
       .min(32)
       .default("#5VihU%rbXHcHwWwCot5L3vyPsx$7dWYw^iGk!EJg2bC*f$PD$%KCqx^R@#^LSEf"),
     SITE_URL: zpStr(z.string().optional()),
+    // Telemetry
+    TELEMETRY_ENABLED: zodStrBool.default("true"),
+    POSTHOG_HOST: zpStr(z.string().optional().default("https://app.posthog.com")),
+    POSTHOG_PROJECT_API_KEY: zpStr(
+      z.string().optional().default("phc_nSin8j5q2zdhpFDI1ETmFNUIuTG4DwKVyIigrY10XiE")
+    ),
+    LOOPS_API_KEY: zpStr(z.string().optional()),
     // jwt options
-    JWT_AUTH_SECRET: zpStr(z.string()),
+    AUTH_SECRET: zpStr(z.string()).default(process.env.JWT_AUTH_SECRET), // for those still using old JWT_AUTH_SECRET
     JWT_AUTH_LIFETIME: zpStr(z.string().default("10d")),
     JWT_SIGNUP_LIFETIME: zpStr(z.string().default("15m")),
     JWT_REFRESH_LIFETIME: zpStr(z.string().default("90d")),
@@ -49,7 +56,7 @@ const envSchema = z
     CLIENT_SECRET_GITHUB_LOGIN: zpStr(z.string().optional()),
     CLIENT_ID_GITLAB_LOGIN: zpStr(z.string().optional()),
     CLIENT_SECRET_GITLAB_LOGIN: zpStr(z.string().optional()),
-    CLIENT_GITLAB_LOGIN_URL: zpStr(z.string().optional().default(GITLAB_URL)),
+    CLIENT_GITLAB_LOGIN_URL: zpStr(z.string().optional().default(process.env.URL_GITLAB_LOGIN ?? GITLAB_URL)), // fallback since URL_GITLAB_LOGIN has been renamed
     // integration client secrets
     // heroku
     CLIENT_ID_HEROKU: zpStr(z.string().optional()),
@@ -73,7 +80,7 @@ const envSchema = z
     // azure
     CLIENT_ID_AZURE: zpStr(z.string().optional()),
     CLIENT_SECRET_AZURE: zpStr(z.string().optional()),
-    // google
+    // gitlab
     CLIENT_ID_GITLAB: zpStr(z.string().optional()),
     CLIENT_SECRET_GITLAB: zpStr(z.string().optional()),
     URL_GITLAB_URL: zpStr(z.string().optional().default(GITLAB_URL)),
@@ -85,13 +92,18 @@ const envSchema = z
     // LICENCE
     LICENSE_SERVER_URL: zpStr(z.string().optional()),
     LICENSE_SERVER_KEY: zpStr(z.string().optional()),
-    LICENSE_KEY: zpStr(z.string().optional())
+    LICENSE_KEY: zpStr(z.string().optional()),
+    STANDALONE_MODE: z
+      .enum(["true", "false"])
+      .transform((val) => val === "true")
+      .optional()
   })
   .transform((data) => ({
     ...data,
     isSmtpConfigured: Boolean(data.SMTP_HOST),
     isRedisConfigured: Boolean(data.REDIS_URL),
     isDevelopmentMode: data.NODE_ENV === "development",
+    isProductionMode: data.NODE_ENV === "production",
     isSecretScanningConfigured:
       Boolean(data.SECRET_SCANNING_GIT_APP_ID) &&
       Boolean(data.SECRET_SCANNING_PRIVATE_KEY) &&
@@ -109,6 +121,7 @@ export const initEnvConfig = (logger: Logger) => {
     logger.error(parsedEnv.error.issues);
     process.exit(-1);
   }
+  
   envCfg = Object.freeze(parsedEnv.data);
   return envCfg;
 };

@@ -6,7 +6,7 @@ import nacl from "tweetnacl";
 import { encodeBase64 } from "tweetnacl-util";
 
 import {
-  decryptAsymmetric,
+  // decryptAsymmetric,
   decryptSymmetric,
   encryptAsymmetric,
   encryptSymmetric
@@ -110,9 +110,9 @@ export const getUserPrivateKey = async (password: string, user: TUserEncryptionK
   });
   if (!derivedKey) throw new Error("Failed to derive key from password");
   const key = decryptSymmetric({
-    ciphertext: user.protectedKey,
-    iv: user.protectedKeyIV,
-    tag: user.protectedKeyTag,
+    ciphertext: user.protectedKey as string,
+    iv: user.protectedKeyIV as string,
+    tag: user.protectedKeyTag as string,
     key: derivedKey.toString("base64")
   });
   const privateKey = decryptSymmetric({
@@ -130,11 +130,11 @@ export const buildUserProjectKey = async (privateKey: string, publickey: string)
   return { nonce, ciphertext };
 };
 
-export const getUserProjectKey = async (privateKey: string) => {
-  const key = decryptAsymmetric({
-    ciphertext: decryptFileKey.encryptedKey,
-    nonce: decryptFileKey.nonce,
-    publicKey: decryptFileKey.sender.publicKey,
-    privateKey: PRIVATE_KEY
-  });
-};
+// export const getUserProjectKey = async (privateKey: string) => {
+//   const key = decryptAsymmetric({
+//     ciphertext: decryptFileKey.encryptedKey,
+//     nonce: decryptFileKey.nonce,
+//     publicKey: decryptFileKey.sender.publicKey,
+//     privateKey: PRIVATE_KEY
+//   });
+// };

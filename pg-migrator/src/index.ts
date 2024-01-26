@@ -78,6 +78,26 @@ const getFolderVersionKey = (folderId: string, version: number) =>
   `${folderId}:${version}`;
 
 const projectKv = kdb.sublevel(TableName.Project);
+const envPKv = kdb.sublevel(TableName.Environment);
+
+export const getEnvId = (workspace: string, environment: string) => {
+  const envKv = envPKv.sublevel(workspace);
+  return envKv.get(environment);
+};
+export const getFolderKv = (workspace: string, environment: string) => {
+  const envKv = envPKv.sublevel(workspace);
+  return envKv.sublevel(environment);
+};
+
+const checkIfFolderIsDangling = async (
+  projectId: string,
+  env_slug: string,
+  folderId: string,
+) => {
+  const kv = getFolderKv(projectId, truncateAndSlugify(env_slug));
+  const result = await kv.get(`${folderId}:dead`).catch(() => null);
+  return Boolean(result);
+};
 
 const migrationCheckPointsKv = kdb.sublevel("CHECK-POINTS");
 
@@ -104,7 +124,7 @@ export const groupBy = <T, Key extends string | number | symbol>(
     {} as Record<Key, T[]>,
   );
 
-const migrateCollection = async <
+export const migrateCollection = async <
   T extends {},
   K extends keyof Tables,
   R extends (keyof Tables[K]["base"])[] = [],
@@ -136,18 +156,15 @@ const migrateCollection = async <
 }) => {
   // check ones that have already been migrated
   const migrationCheckPointsKvRes = await migrationCheckPointsKv
-    .get(postgresTableName)
+    .get(`${postgresTableName}-${mongooseCollection.modelName}`)
     .catch(() => null);
+
   if (migrationCheckPointsKvRes) {
     console.log(
       `Skipping Postgres table '${postgresTableName}' because of check point`,
     );
     return;
   }
-  //  else {
-  //   await db(postgresTableName).del()
-  //   console.log(`Dropped table named '${postgresTableName}' to start fresh from this point on`)
-  // }
 
   const mongooseDoc: T[] = [];
   const pgDoc: Tables[K]["base"][] = []; // pre processed data ready to be inserted into PSQL
@@ -163,9 +180,7 @@ const migrateCollection = async <
   console.log("Total batches", Math.ceil(totalMongoCount / 1000));
   let batch = 1;
 
-  for await (const doc of mongooseCollection
-    .find(filter || {})
-    .cursor({ batchSize: 100 })) {
+  for await (const doc of mongooseCollection.find(filter || {}).cursor({ batchSize: 100 })) {
     mongooseDoc.push(doc);
     const preProcessedData = await preProcessing(
       doc.toObject({ virtuals: true }),
@@ -219,7 +234,7 @@ const migrateCollection = async <
     pgDoc.splice(0, pgDoc.length);
   }
 
-  migrationCheckPointsKv.put(postgresTableName, "done");
+  migrationCheckPointsKv.put(`${postgresTableName}-${mongooseCollection.modelName}`, "done");
 
   console.log(
     "Finished migration of ",
@@ -234,7 +249,6 @@ const main = async () => {
     dotenv.config();
 
     process.env.START_FRESH = "true";
-
     const prompt = promptSync({ sigint: true });
 
     let mongodb_url = process.env.MONGO_DB_URL;
@@ -255,7 +269,7 @@ const main = async () => {
       client: "pg",
       connection: postgres_url,
       migrations: {
-        directory: path.join(__dirname, "./migrations"),
+        directory: path.join(__dirname, "../../backend-pg/src/db/migrations"),
         extension: "ts",
         tableName: "infisical_migrations",
       },
@@ -268,7 +282,7 @@ const main = async () => {
 
       console.log("Starting rolling back to latest, comment this out later");
       await db.migrate.rollback({}, true);
-      await kdb.clear();
+      await kdb.clear();      
       console.log("Rolling back completed");
 
       console.log("Executing migration");
@@ -569,23 +583,13 @@ const main = async () => {
     );
     const envPKv = kdb.sublevel(TableName.Environment);
 
-    const getEnvId = (workspace: string, environment: string) => {
+    const getEnvId = async (workspace: string, environment: string) => {
       const envKv = envPKv.sublevel(workspace);
-      return envKv.get(environment);
+      return envKv.get(environment)
     };
     const getFolderKv = (workspace: string, environment: string) => {
       const envKv = envPKv.sublevel(workspace);
       return envKv.sublevel(environment);
-    };
-
-    const checkIfFolderIsDangling = async (
-      projectId: string,
-      env_slug: string,
-      folderId: string,
-    ) => {
-      const kv = getFolderKv(projectId, truncateAndSlugify(env_slug));
-      const result = await kv.get(`${folderId}:dead`).catch(() => null);
-      return Boolean(result);
     };
 
     await migrateCollection({
@@ -639,32 +643,45 @@ const main = async () => {
           : null;
         if (!orgId) return;
 
-        return Promise.all(
-          doc.environments.map(async (env) => {
-            const id = uuidV4();
-            const envId = await getEnvId(
+      let results = [];
+      for (const env of doc.environments) {
+          const id = uuidV4();
+      
+          // case: we forgot to clean up folders that belong to deleted env slugs
+          const isEnvFound = await getEnvId(
+            doc._id.toString(),
+            truncateAndSlugify(env.slug),
+          ).catch(() => null);
+      
+          if (!isEnvFound) continue;
+      
+          const envId = await getEnvId(
               doc._id.toString(),
               truncateAndSlugify(env.slug),
-            );
-
-            const folderKv = getFolderKv(
+          );
+      
+          const folderKv = getFolderKv(
               doc._id.toString(),
               truncateAndSlugify(env.slug),
-            );
-            await folderKv.put("root", id);
-            return {
+          );
+      
+          await folderKv.put("root", id);
+          results.push({
               id,
               name: "root",
               envId,
               version: 1,
               createdAt: new Date(),
               updatedAt: new Date(),
-            };
-          }),
-        );
+          });
+      }
+      
+      return results;
+
       },
     });
 
+    const projectKeyKv = kdb.sublevel(TableName.ProjectKeys);
     await migrateCollection({
       db,
       mongooseCollection: Key,
@@ -680,6 +697,7 @@ const main = async () => {
         if (!projectKvRes) return;
 
         const id = uuidV4();
+        await projectKeyKv.put(doc._id.toString(), id);
 
         const senderId = await userKv
           .get(doc.sender.toString())
@@ -786,36 +804,41 @@ const main = async () => {
           truncateAndSlugify(doc.environment),
         );
 
+        // case: we forgot to clean up folders that belong to deleted env slugs
+        const isEnvFound = await getEnvId(
+          doc.workspace.toString(),
+          truncateAndSlugify(doc.environment),
+        ).catch(() => null);
+
+        if (!isEnvFound) return;
+
         const envId = await getEnvId(
           doc.workspace.toString(),
           truncateAndSlugify(doc.environment),
         );
-        const folders = flattenFolders(doc.nodes);
 
+        const folders = flattenFolders(doc.nodes);
         if (!folders) return;
 
-        const pgFolder = await Promise.all(
-          folders
-            // already has been created
-            .filter(({ id }) => id !== "root")
-            .map(async (folder) => {
-              const { name, version } = folder;
-              const id = uuidV4();
-              await folderKv.put(folder.id, id);
-              const parentId = folder.parentId
-                ? await folderKv.get(folder.parentId)
-                : null;
-              return {
-                name,
-                version,
-                id,
-                parentId,
-                envId,
-                createdAt: (doc as any).createdAt,
-                updatedAt: (doc as any).updatedAt,
-              };
-            }),
-        );
+        const pgFolder = [];
+        for (const folder of folders) {
+          if (folder.id !== "root") {
+            const { name, version } = folder;
+            const id = uuidV4();
+            await folderKv.put(folder.id, id);  
+            const parentId = folder?.parentId ? await folderKv.get(folder?.parentId).catch((e) => {console.log("parent folder not found==>", folder); throw e;}) : null;
+      
+            pgFolder.push({
+              name,
+              version,
+              id,
+              parentId,
+              envId,
+              createdAt: (doc as any).createdAt,
+              updatedAt: (doc as any).updatedAt,
+            });
+          }
+        }
 
         return pgFolder;
       },
@@ -841,6 +864,12 @@ const main = async () => {
         // This is because some folder snap shots were taken when that env slug exists but the same env slug was later deleted
         let envId: string;
         try {
+          const isEnvFound = await getEnvId(
+            doc.workspace.toString(),
+            truncateAndSlugify(doc.environment),
+          ).catch(() => null);
+          if (!isEnvFound) return;
+          
           envId = await getEnvId(
             doc.workspace.toString(),
             truncateAndSlugify(doc.environment),
@@ -889,6 +918,7 @@ const main = async () => {
       },
     });
 
+    const secretImportKv = kdb.sublevel(TableName.SecretImport);
     await migrateCollection({
       db,
       mongooseCollection: SecretImport,
@@ -1037,11 +1067,6 @@ const main = async () => {
         ).catch(() => null);
         if (!isEnvFound) return;
 
-        const folderKv = getFolderKv(
-          doc.workspace.toString(),
-          truncateAndSlugify(doc.environment),
-        );
-
         if (
           await checkIfFolderIsDangling(
             doc.workspace.toString(),
@@ -1052,18 +1077,24 @@ const main = async () => {
           return;
         }
 
-        // Case: if folder id doesn't exist and the root of the folder also doesn;t exist, THEN put the secret at the ROOT
-        const folderId = await folderKv.get(doc.folder || "root").catch(() => {
-          console.log(
-            "secret location unknown, moving secret to root of env_slug/project",
-          );
-          return "root";
-        });
+        const folderKv = getFolderKv(
+          doc.workspace.toString(),
+          truncateAndSlugify(doc.environment),
+        );
 
+        // Case: if folder id doesn't exist and the root of the folder also doesn;t exist, THEN put the secret at the ROOT
+        // case: after deleting a folder, we don't clean up the secrets that link to that folder
+        const folderId = await folderKv.get(doc.folder || "root").catch(() => null);
+        
+        // case: when environments are renamed, there used to be a TIMEE when the related folder's slugs weren't updated with it... :( 
+        if (!folderId) return
+
+        // issue with personal 
         const userId = doc.user
           ? await userKv.get(doc.user.toString()).catch(() => null)
           : null;
-        if (!userId) return;
+
+        if ( doc.type === "personal" && !userId) return;
 
         const id = uuidV4();
         await secKv.put(doc._id.toString(), id);
@@ -1129,10 +1160,10 @@ const main = async () => {
               return;
             }
 
-            const userId = doc.user
-              ? await userKv.get(doc.user.toString()).catch(() => null)
-              : null;
-            if (!userId) return;
+            // const userId = doc.user
+            //   ? await userKv.get(doc.user.toString()).catch(() => null)
+            //   : null;
+            // if (!userId) return;
 
             const secretId = await secKv.get(doc._id.toString()).catch((e) => {
               throw e;
@@ -1209,7 +1240,7 @@ const main = async () => {
         const userId = doc.user
           ? await userKv.get(doc.user.toString()).catch(() => null)
           : null;
-        if (!userId) return;
+        if (!userId && doc.type === "personal") return;
 
         const id = uuidV4();
         await secVerKv.put(doc._id.toString(), id);
@@ -1259,15 +1290,25 @@ const main = async () => {
           .catch(() => null);
         if (!projectKvRes) return;
 
-        await projectBotKv.put(doc._id.toString(), id);
+        // if we try to process two bots for the same workspace, then skip
+        if (await projectBotKv.get(doc.workspace.toString()).catch(() => null)){
+          return
+        }
+
+        await projectBotKv.put(doc.workspace.toString(), id);
 
         // case: skip bots that are inactive (skipped specifically because 6388653a200193a667c7e3f3 has two records, one active one not)
-        let botKey = await BotKey.findOne({
+        let bot = await Bot.findOne({
           workspace: doc.workspace,
           $or: [{ isActive: true }, { isActive: false }],
         })
           .sort({ isActive: -1 })
           .lean();
+        
+        // case: when no bots are found for this project, skip  
+        if (!bot) return 
+
+        const botKey = await BotKey.findOne({bot: bot?._id})
 
         const senderId = botKey?.sender
           ? await userKv.get(botKey.sender.toString()).catch(() => null)
@@ -1277,20 +1318,20 @@ const main = async () => {
 
         return {
           id,
-          algorithm: doc.algorithm,
-          keyEncoding: doc.keyEncoding,
-          projectId: doc.workspace.toString(),
-          name: doc.name,
-          iv: doc.iv,
-          tag: doc.tag,
+          algorithm: bot.algorithm,
+          keyEncoding: bot.keyEncoding,
+          projectId: bot.workspace.toString(),
+          name: bot.name,
+          iv: bot.iv,
+          tag: bot.tag,
           senderId,
-          isActive: doc.isActive,
-          publicKey: doc.publicKey,
+          isActive: bot.isActive,
+          publicKey: bot.publicKey,
           encryptedProjectKey: botKey?.encryptedKey || null,
           encryptedProjectKeyNonce: botKey?.nonce || null,
-          encryptedPrivateKey: doc.encryptedPrivateKey,
-          createdAt: new Date((doc as any).createdAt),
-          updatedAt: new Date((doc as any).updatedAt),
+          encryptedPrivateKey: bot.encryptedPrivateKey,
+          createdAt: new Date((bot as any).createdAt),
+          updatedAt: new Date((bot as any).updatedAt),
         };
       },
     });
@@ -1337,6 +1378,7 @@ const main = async () => {
       },
     });
 
+    const integrationKv = kdb.sublevel(TableName.Integration);
     await migrateCollection({
       db,
       mongooseCollection: Integration,
@@ -1357,6 +1399,7 @@ const main = async () => {
         const integrationAuthId = await integrationAuthKv.get(
           doc.integrationAuth.toString(),
         );
+        await integrationKv.put(doc._id.toString(), id);
 
         return {
           id,
@@ -1389,8 +1432,6 @@ const main = async () => {
       postgresTableName: TableName.ServiceToken,
       returnKeys: ["id"],
       preProcessing: async (doc) => {
-        const id = uuidV4();
-
         const projectKvRes = await projectKv
           .get(doc.workspace.toString())
           .catch(() => null);
@@ -1400,7 +1441,7 @@ const main = async () => {
         if (!userId) return;
 
         return {
-          id,
+          id: doc._id.toString(),
           projectId: doc.workspace.toString(),
           name: doc.name,
           createdBy: userId,
@@ -1418,6 +1459,7 @@ const main = async () => {
       },
     });
 
+    const webhookKv = kdb.sublevel(TableName.Webhook);
     await migrateCollection({
       db,
       mongooseCollection: Webhook,
@@ -1435,6 +1477,7 @@ const main = async () => {
           doc.workspace.toString(),
           truncateAndSlugify(doc.environment),
         );
+        await webhookKv.put(doc._id.toString(), id);
         return {
           id,
           iv: doc.iv,
@@ -1533,6 +1576,7 @@ const main = async () => {
       },
     });
 
+    const identityAccessTokenKv = kdb.sublevel(TableName.IdentityAccessToken);
     await migrateCollection({
       db,
       mongooseCollection: IdentityAccessToken,
@@ -1540,6 +1584,7 @@ const main = async () => {
       returnKeys: ["id"],
       preProcessing: async (doc) => {
         const id = uuidV4();
+        await identityAccessTokenKv.put(doc._id.toString(), id);
         const identityUAClientSecretId = doc?.identityUniversalAuthClientSecret
           ? await identityUaClientSecKv.get(
               doc.identityUniversalAuthClientSecret.toString(),
@@ -1953,6 +1998,7 @@ const main = async () => {
       },
     });
 
+    const trustedIpKv = kdb.sublevel(TableName.TrustedIps);
     await migrateCollection({
       db,
       mongooseCollection: TrustedIP,
@@ -1965,6 +2011,7 @@ const main = async () => {
           .get(doc.workspace.toString())
           .catch(() => null);
         if (!projectKvRes) return;
+        await trustedIpKv.put(doc._id.toString(), id);
 
         return {
           id,
@@ -2301,6 +2348,7 @@ const main = async () => {
     //   },
     // });
 
+    console.log("MIGRATION SCRIPT COMPLETED SUCCESSFULLY")
     process.exit(1);
   } catch (error) {
     console.error(error);

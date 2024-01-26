@@ -34,11 +34,13 @@ import { TProjectKeyServiceFactory } from "@app/services/project-key/project-key
 import { TProjectMembershipServiceFactory } from "@app/services/project-membership/project-membership-service";
 import { TProjectRoleServiceFactory } from "@app/services/project-role/project-role-service";
 import { TSecretServiceFactory } from "@app/services/secret/secret-service";
+import { TSecretBlindIndexServiceFactory } from "@app/services/secret-blind-index/secret-blind-index-service";
 import { TSecretFolderServiceFactory } from "@app/services/secret-folder/secret-folder-service";
 import { TSecretImportServiceFactory } from "@app/services/secret-import/secret-import-service";
 import { TSecretTagServiceFactory } from "@app/services/secret-tag/secret-tag-service";
 import { TServiceTokenServiceFactory } from "@app/services/service-token/service-token-service";
 import { TSuperAdminServiceFactory } from "@app/services/super-admin/super-admin-service";
+import { TTelemetryServiceFactory } from "@app/services/telemetry/telemetry-service";
 import { TUserDALFactory } from "@app/services/user/user-dal";
 import { TUserServiceFactory } from "@app/services/user/user-service";
 import { TWebhookServiceFactory } from "@app/services/webhook/webhook-service";
@@ -105,6 +107,8 @@ declare module "fastify" {
       secretScanning: TSecretScanningServiceFactory;
       license: TLicenseServiceFactory;
       trustedIp: TTrustedIpServiceFactory;
+      secretBlindIndex: TSecretBlindIndexServiceFactory;
+      telemetry: TTelemetryServiceFactory;
     };
     // this is exclusive use for middlewares in which we need to inject data
     // everywhere else access using service layer
