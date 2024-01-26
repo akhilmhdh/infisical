@@ -9,6 +9,13 @@ import {
 } from "@app/db/schemas";
 import { TProjectPermission } from "@app/lib/types";
 
+type TPartialSecret = Pick<TSecrets, "id" | "secretReminderRepeatDays" | "secretReminderNote">;
+
+type TPartialInputSecret = Pick<
+  TSecrets,
+  "type" | "secretReminderNote" | "secretReminderRepeatDays" | "id"
+>;
+
 export type TCreateSecretDTO = {
   secretName: string;
   path: string;
@@ -116,6 +123,8 @@ export type TUpdateBulkSecretDTO = {
     secretCommentIV?: string;
     secretCommentTag?: string;
     skipMultilineEncoding?: boolean;
+    secretReminderRepeatDays?: number | null;
+    secretReminderNote?: string | null;
   }>;
 } & TProjectPermission;
 
@@ -166,6 +175,8 @@ export type TUpdateSecretRawDTO = TProjectPermission & {
   secretValue?: string;
   type: SecretType;
   skipMultilineEncoding?: boolean;
+  secretReminderRepeatDays?: number | null;
+  secretReminderNote?: string | null;
 };
 
 export type TDeleteSecretRawDTO = TProjectPermission & {
@@ -215,4 +226,21 @@ export type TFnSecretBlindIndexCheckV2 = {
   folderId: string;
   userId?: string;
   inputSecrets: Array<{ secretBlindIndex: string; type?: SecretType }>;
+};
+
+export type THandleReminderDTO = {
+  newSecret: TPartialInputSecret;
+  oldSecret: TPartialSecret;
+  projectId: string;
+};
+
+export type TCreateSecretReminderDTO = {
+  oldSecret: TPartialSecret;
+  newSecret: TPartialSecret;
+  projectId: string;
+};
+
+export type TRemoveSecretReminderDTO = {
+  secretId: string;
+  repeatDays: number;
 };

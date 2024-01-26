@@ -1,5 +1,8 @@
 /* eslint-disable no-await-in-loop */
+import { getConfig } from "@app/lib/config/env";
 import { decryptSymmetric128BitHexKeyUTF8 } from "@app/lib/crypto";
+import { daysToMillisecond, secondsToMillis } from "@app/lib/dates";
+import { BadRequestError } from "@app/lib/errors";
 import { isSamePath } from "@app/lib/fn";
 import { logger } from "@app/lib/logger";
 import { QueueJobs, QueueName, TQueueServiceFactory } from "@app/queue";
@@ -7,15 +10,24 @@ import { QueueJobs, QueueName, TQueueServiceFactory } from "@app/queue";
 import { TIntegrationDALFactory } from "../integration/integration-dal";
 import { TIntegrationAuthServiceFactory } from "../integration-auth/integration-auth-service";
 import { syncIntegrationSecrets } from "../integration-auth/integration-sync-secret";
+import { TOrgDALFactory } from "../org/org-dal";
+import { TProjectDALFactory } from "../project/project-dal";
 import { TProjectBotServiceFactory } from "../project-bot/project-bot-service";
 import { TProjectEnvDALFactory } from "../project-env/project-env-dal";
+import { TProjectMembershipDALFactory } from "../project-membership/project-membership-dal";
 import { TSecretFolderDALFactory } from "../secret-folder/secret-folder-dal";
 import { TSecretImportDALFactory } from "../secret-import/secret-import-dal";
 import { fnSecretsFromImports } from "../secret-import/secret-import-fns";
+import { SmtpTemplates, TSmtpService } from "../smtp/smtp-service";
 import { TWebhookDALFactory } from "../webhook/webhook-dal";
 import { fnTriggerWebhook } from "../webhook/webhook-fns";
 import { TSecretDALFactory } from "./secret-dal";
 import { interpolateSecrets } from "./secret-fns";
+import {
+  TCreateSecretReminderDTO,
+  THandleReminderDTO,
+  TRemoveSecretReminderDTO
+} from "./secret-types";
 
 export type TSecretQueueFactory = ReturnType<typeof secretQueueFactory>;
 
@@ -29,6 +41,10 @@ type TSecretQueueFactoryDep = {
   secretImportDAL: Pick<TSecretImportDALFactory, "find">;
   webhookDAL: Pick<TWebhookDALFactory, "findAllWebhooks" | "transaction" | "update" | "bulkUpdate">;
   projectEnvDAL: Pick<TProjectEnvDALFactory, "findOne">;
+  projectDAL: Pick<TProjectDALFactory, "findById">;
+  projectMembershipDAL: Pick<TProjectMembershipDALFactory, "findAllProjectMembers">;
+  smtpService: TSmtpService;
+  orgDAL: Pick<TOrgDALFactory, "findOrgByProjectId">;
 };
 
 export type TGetSecrets = {
@@ -46,7 +62,11 @@ export const secretQueueFactory = ({
   secretImportDAL,
   folderDAL,
   webhookDAL,
-  projectEnvDAL
+  projectEnvDAL,
+  orgDAL,
+  smtpService,
+  projectDAL,
+  projectMembershipDAL
 }: TSecretQueueFactoryDep) => {
   const syncIntegrations = async (dto: TGetSecrets) => {
     await queueService.queue(QueueName.IntegrationSync, QueueJobs.IntegrationSync, dto, {
@@ -76,6 +96,111 @@ export const secretQueueFactory = ({
       }
     });
     await syncIntegrations(dto);
+  };
+
+  const removeSecretReminder = async (dto: TRemoveSecretReminderDTO) => {
+    const appCfg = getConfig();
+    await queueService.stopRepeatableJob(
+      QueueName.SecretReminder,
+      QueueJobs.SecretReminder,
+      {
+        // on prod it this will be in days, in development this will be second
+        every:
+          appCfg.NODE_ENV === "development"
+            ? secondsToMillis(dto.repeatDays)
+            : daysToMillisecond(dto.repeatDays)
+      },
+      `reminder-${dto.secretId}`
+    );
+  };
+
+  const addSecretReminder = async ({
+    oldSecret,
+    newSecret,
+    projectId
+  }: TCreateSecretReminderDTO) => {
+    try {
+      const appCfg = getConfig();
+
+      if (oldSecret.id !== newSecret.id) {
+        throw new BadRequestError({
+          name: "SecretReminderIdMismatch",
+          message: "Existing secret didn't match the updated secret ID."
+        });
+      }
+
+      if (!newSecret.secretReminderRepeatDays) {
+        throw new BadRequestError({
+          name: "SecretReminderRepeatDaysMissing",
+          message: "Secret reminder repeat days is missing."
+        });
+      }
+
+      console.log("Secret reminder thingies:)!");
+      console.log(queueService);
+      // If the secret already has a reminder, we should remove the existing one first.
+      if (oldSecret.secretReminderRepeatDays) {
+        await removeSecretReminder({
+          repeatDays: oldSecret.secretReminderRepeatDays,
+          secretId: oldSecret.id
+        });
+      }
+
+      await queueService.queue(
+        QueueName.SecretReminder,
+        QueueJobs.SecretReminder,
+        {
+          note: newSecret.secretReminderNote,
+          projectId,
+          repeatDays: newSecret.secretReminderRepeatDays,
+          secretId: newSecret.id
+        },
+        {
+          jobId: `reminder-${newSecret.id}`,
+          repeat: {
+            // on prod it this will be in days, in development this will be second
+            every:
+              appCfg.NODE_ENV === "development"
+                ? secondsToMillis(newSecret.secretReminderRepeatDays)
+                : daysToMillisecond(newSecret.secretReminderRepeatDays),
+            immediately: true
+          }
+        }
+      );
+    } catch (err) {
+      logger.error(err, "Failed to create secret reminder.");
+      throw new BadRequestError({
+        name: "SecretReminderCreateFailed",
+        message: "Failed to create secret reminder."
+      });
+    }
+  };
+
+  const handleSecretReminder = async ({ newSecret, oldSecret, projectId }: THandleReminderDTO) => {
+    const { secretReminderRepeatDays, secretReminderNote } = newSecret;
+
+    if (newSecret.type !== "personal" && secretReminderRepeatDays !== undefined) {
+      if (
+        (secretReminderRepeatDays &&
+          oldSecret.secretReminderRepeatDays !== secretReminderRepeatDays) ||
+        (secretReminderNote && oldSecret.secretReminderNote !== secretReminderNote)
+      ) {
+        await addSecretReminder({
+          oldSecret,
+          newSecret,
+          projectId
+        });
+      } else if (
+        secretReminderRepeatDays === null &&
+        secretReminderNote === null &&
+        oldSecret.secretReminderRepeatDays
+      ) {
+        await removeSecretReminder({
+          secretId: oldSecret.id,
+          repeatDays: oldSecret.secretReminderRepeatDays
+        });
+      }
+    }
   };
 
   const getIntegrationSecrets = async (dto: TGetSecrets & { folderId: string }, key: string) => {
@@ -221,6 +346,49 @@ export const secretQueueFactory = ({
     logger.info("Secret integration sync ended", job.id);
   });
 
+  queueService.start(QueueName.SecretReminder, async ({ data }) => {
+    logger.info(`secretReminderQueue.process: [secretDocument=${data.secretId}]`);
+
+    const { projectId } = data;
+
+    const organization = await orgDAL.findOrgByProjectId(projectId);
+    const project = await projectDAL.findById(projectId);
+
+    if (!organization) {
+      logger.info(
+        `secretReminderQueue.process: [secretDocument=${data.secretId}] no organization found`
+      );
+      return;
+    }
+
+    if (!project) {
+      logger.info(
+        `secretReminderQueue.process: [secretDocument=${data.secretId}] no project found`
+      );
+      return;
+    }
+
+    const projectMembers = await projectMembershipDAL.findAllProjectMembers(projectId);
+
+    if (!projectMembers || !projectMembers.length) {
+      logger.info(
+        `secretReminderQueue.process: [secretDocument=${data.secretId}] no project members found`
+      );
+      return;
+    }
+
+    await smtpService.sendMail({
+      template: SmtpTemplates.SecretReminder,
+      subjectLine: "Infisical secret reminder",
+      recipients: [...projectMembers.map((m) => m.user.email)],
+      substitutions: {
+        reminderNote: data.note, // May not be present.
+        projectName: project.name,
+        organizationName: organization.name
+      }
+    });
+  });
+
   queueService.listen(QueueName.IntegrationSync, "failed", (job, err) => {
     logger.error("Failed to sync integration", job?.data, err);
   });
@@ -229,5 +397,11 @@ export const secretQueueFactory = ({
     await fnTriggerWebhook({ ...job.data, projectEnvDAL, webhookDAL });
   });
 
-  return { syncSecrets, syncIntegrations };
+  return {
+    syncSecrets,
+    syncIntegrations,
+    addSecretReminder,
+    removeSecretReminder,
+    handleSecretReminder
+  };
 };

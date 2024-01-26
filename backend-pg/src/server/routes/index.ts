@@ -354,13 +354,19 @@ export const registerRoutes = async (
     integrationDAL,
     secretImportDAL,
     projectEnvDAL,
-    webhookDAL
+    webhookDAL,
+    orgDAL,
+    projectMembershipDAL,
+    smtpService,
+    projectDAL
   });
+
   const secretBlindIndexService = secretBlindIndexServiceFactory({
     permissionService,
     secretDAL,
     secretBlindIndexDAL
   });
+
   const secretService = secretServiceFactory({
     folderDAL,
     secretVersionDAL,
@@ -395,6 +401,7 @@ export const registerRoutes = async (
     secretVersionDAL,
     projectBotService
   });
+
   const secretRotationService = secretRotationServiceFactory({
     permissionService,
     secretRotationDAL,

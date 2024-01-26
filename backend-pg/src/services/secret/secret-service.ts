@@ -17,6 +17,7 @@ import { getConfig } from "@app/lib/config/env";
 import { buildSecretBlindIndexFromName, encryptSymmetric128BitHexKeyUTF8 } from "@app/lib/crypto";
 import { BadRequestError } from "@app/lib/errors";
 import { groupBy, pick } from "@app/lib/fn";
+import { logger } from "@app/lib/logger";
 
 import { ActorType } from "../auth/auth-type";
 import { TProjectBotServiceFactory } from "../project-bot/project-bot-service";
@@ -64,7 +65,10 @@ type TSecretServiceFactoryDep = {
   secretBlindIndexDAL: TSecretBlindIndexDALFactory;
   permissionService: Pick<TPermissionServiceFactory, "getProjectPermission">;
   snapshotService: Pick<TSecretSnapshotServiceFactory, "performSnapshot">;
-  secretQueueService: Pick<TSecretQueueFactory, "syncSecrets">;
+  secretQueueService: Pick<
+    TSecretQueueFactory,
+    "syncSecrets" | "handleSecretReminder" | "removeSecretReminder"
+  >;
   projectBotService: Pick<TProjectBotServiceFactory, "getBotKey">;
   secretImportDAL: Pick<TSecretImportDALFactory, "find">;
   secretVersionTagDAL: Pick<TSecretVersionTagDALFactory, "insertMany">;
@@ -204,6 +208,21 @@ export const secretServiceFactory = ({
       actorId,
       tx
     );
+
+    for (const s of deletedSecrets) {
+      if (s.secretReminderRepeatDays) {
+        // eslint-disable-next-line no-await-in-loop
+        await secretQueueService
+          .removeSecretReminder({
+            secretId: s.id,
+            repeatDays: s.secretReminderRepeatDays
+          })
+          .catch((err) => {
+            logger.error(err, `Failed to delete secret reminder for secret with ID ${s?.id}`);
+          });
+      }
+    }
+
     return deletedSecrets;
   };
 
@@ -405,6 +424,15 @@ export const secretServiceFactory = ({
       });
       newSecretNameBlindIndex = kN2NewBlindIndex[inputSecret.newSecretName];
     }
+
+    await secretQueueService.handleSecretReminder({
+      newSecret: {
+        id: secrets[0].id,
+        ...inputSecret
+      },
+      oldSecret: secrets[0],
+      projectId
+    });
 
     const tags = inputSecret.tags
       ? await secretTagDAL.findManyTagsById(projectId, inputSecret.tags)
