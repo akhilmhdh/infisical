@@ -32,5 +32,5 @@ jobs:
         env:
           TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
-          git push https://$GITHUB_ACTOR:$TOKEN@github.com/${{ github.repository }}.git HEAD:main
+          git push https://$GITHUB_ACTOR:$TOKEN@github.com/${{ github.repository }}.git HEAD:chore/gh-action-migration-rename
 
