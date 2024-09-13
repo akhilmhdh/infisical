@@ -5,6 +5,8 @@ import { Combobox, Transition } from "@headlessui/react";
 import { ByComparator } from "@headlessui/react/dist/types";
 import { twMerge } from "tailwind-merge";
 
+import { useDebounce } from "@app/hooks";
+
 type ComboBoxProps<T extends object> = {
   value?: T;
   className?: string;
@@ -31,9 +33,12 @@ export const ComboBox = <T extends object>({
   ...props
 }: ComboBoxProps<T>) => {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
 
   const filteredResult =
-    query === "" ? items.slice(0, 20) : items.filter((el) => onFilter(el, query)).slice(0, 20);
+    debouncedQuery === ""
+      ? items.slice(0, 20)
+      : items.filter((el) => onFilter(el, debouncedQuery)).slice(0, 20);
 
   return (
     <Combobox by={by} {...props} onChange={onSelectChange}>
