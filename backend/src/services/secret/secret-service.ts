@@ -30,7 +30,10 @@ import { groupBy, pick } from "@app/lib/fn";
 import { logger } from "@app/lib/logger";
 import { alphaNumericNanoId } from "@app/lib/nanoid";
 import { OrgServiceActor } from "@app/lib/types";
-import { TGetSecretsRawByFolderMappingsDTO } from "@app/services/secret-v2-bridge/secret-v2-bridge-types";
+import {
+  SecretUpdateMode,
+  TGetSecretsRawByFolderMappingsDTO
+} from "@app/services/secret-v2-bridge/secret-v2-bridge-types";
 
 import { ActorType } from "../auth/auth-type";
 import { TProjectDALFactory } from "../project/project-dal";
@@ -2005,6 +2008,7 @@ export const secretServiceFactory = ({
     actorOrgId,
     actorAuthMethod,
     secretPath,
+    mode = SecretUpdateMode.FailOnNotFound,
     secrets: inputSecrets = []
   }: TUpdateManySecretRawDTO) => {
     if (!projectSlug && !optionalProjectId)
@@ -2069,7 +2073,8 @@ export const secretServiceFactory = ({
         actorOrgId,
         actor,
         actorId,
-        secrets: inputSecrets
+        secrets: inputSecrets,
+        mode
       });
       return { type: SecretProtectionType.Direct as const, secrets };
     }
