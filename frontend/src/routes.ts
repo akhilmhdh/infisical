@@ -63,6 +63,7 @@ const secretManagerRoutes = route("/secret-manager/$projectId", [
     route("/approval", "secret-manager/SecretApprovalsPage/route.tsx"),
     route("/secret-rotation", "secret-manager/SecretRotationPage/route.tsx"),
     route("/settings", "secret-manager/SettingsPage/route.tsx"),
+    route("/rdp-screen", "secret-manager/DynamicSecretRdpScreenPage/route.tsx"),
     route("/commits/$environment/$folderId", [
       index("secret-manager/CommitsPage/route.tsx"),
       route("/$commitId", [

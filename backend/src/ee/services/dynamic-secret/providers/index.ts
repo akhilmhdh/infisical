@@ -13,6 +13,7 @@ import { DynamicSecretProviders, TDynamicProviderFns } from "./models";
 import { MongoAtlasProvider } from "./mongo-atlas";
 import { MongoDBProvider } from "./mongo-db";
 import { RabbitMqProvider } from "./rabbit-mq";
+import { RdpProvider } from "./rdp";
 import { RedisDatabaseProvider } from "./redis";
 import { SapAseProvider } from "./sap-ase";
 import { SapHanaProvider } from "./sap-hana";
@@ -44,5 +45,6 @@ export const buildDynamicSecretProviders = ({
   [DynamicSecretProviders.SapAse]: SapAseProvider(),
   [DynamicSecretProviders.Kubernetes]: KubernetesProvider({ gatewayService }),
   [DynamicSecretProviders.Vertica]: VerticaProvider({ gatewayService }),
-  [DynamicSecretProviders.GcpIam]: GcpIamProvider()
+  [DynamicSecretProviders.GcpIam]: GcpIamProvider(),
+  [DynamicSecretProviders.Rdp]: RdpProvider()
 });

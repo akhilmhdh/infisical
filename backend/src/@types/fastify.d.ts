@@ -110,6 +110,7 @@ import { TUserServiceFactory } from "@app/services/user/user-service";
 import { TUserEngagementServiceFactory } from "@app/services/user-engagement/user-engagement-service";
 import { TWebhookServiceFactory } from "@app/services/webhook/webhook-service";
 import { TWorkflowIntegrationServiceFactory } from "@app/services/workflow-integration/workflow-integration-service";
+import { Server } from "socket.io";
 
 declare module "@fastify/request-context" {
   interface RequestContextData {
@@ -179,6 +180,7 @@ declare module "fastify" {
   }
 
   interface FastifyInstance {
+    io: Server;
     redis: Redis;
     services: {
       login: TAuthLoginFactory;

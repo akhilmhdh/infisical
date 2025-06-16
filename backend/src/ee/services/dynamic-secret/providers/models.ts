@@ -66,6 +66,14 @@ export enum TotpAlgorithm {
   SHA512 = "sha512"
 }
 
+export const DynamicSecretRdpSchema = z.object({
+  host: z.string().trim().toLowerCase(),
+  port: z.number().default(3389),
+  username: z.string().trim(), // this is often "default".
+  password: z.string().trim(),
+  ca: z.string().optional()
+});
+
 export const DynamicSecretRedisDBSchema = z.object({
   host: z.string().trim().toLowerCase(),
   port: z.number(),
@@ -492,7 +500,8 @@ export enum DynamicSecretProviders {
   SapAse = "sap-ase",
   Kubernetes = "kubernetes",
   Vertica = "vertica",
-  GcpIam = "gcp-iam"
+  GcpIam = "gcp-iam",
+  Rdp = "rdp"
 }
 
 export const DynamicSecretProviderSchema = z.discriminatedUnion("type", [
@@ -513,7 +522,8 @@ export const DynamicSecretProviderSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal(DynamicSecretProviders.Totp), inputs: DynamicSecretTotpSchema }),
   z.object({ type: z.literal(DynamicSecretProviders.Kubernetes), inputs: DynamicSecretKubernetesSchema }),
   z.object({ type: z.literal(DynamicSecretProviders.Vertica), inputs: DynamicSecretVerticaSchema }),
-  z.object({ type: z.literal(DynamicSecretProviders.GcpIam), inputs: DynamicSecretGcpIamSchema })
+  z.object({ type: z.literal(DynamicSecretProviders.GcpIam), inputs: DynamicSecretGcpIamSchema }),
+  z.object({ type: z.literal(DynamicSecretProviders.Rdp), inputs: DynamicSecretRdpSchema })
 ]);
 
 export type TDynamicProviderFns = {

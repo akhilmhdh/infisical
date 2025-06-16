@@ -32,7 +32,10 @@ import {
   TUpdateDynamicSecretDTO
 } from "./dynamic-secret-types";
 import { AzureEntraIDProvider } from "./providers/azure-entra-id";
-import { DynamicSecretProviders, TDynamicProviderFns } from "./providers/models";
+import { DynamicSecretProviders, DynamicSecretRdpSchema, TDynamicProviderFns } from "./providers/models";
+import { ActorType, AuthMethod } from "@app/services/auth/auth-type";
+import rdp from "node-rdpjs";
+import { z } from "zod";
 
 type TDynamicSecretServiceFactoryDep = {
   dynamicSecretDAL: TDynamicSecretDALFactory;
@@ -717,6 +720,89 @@ export const dynamicSecretServiceFactory = ({
     return azureEntraIdUsers;
   };
 
+  const getRdpClient = async (dto: {
+    dynamicSecretName: string;
+    environmentSlug: string;
+    secretPath: string;
+    projectSlug: string;
+    orgId: string;
+    userId: string;
+  }) => {
+    const project = await projectDAL.findProjectBySlug(dto.projectSlug, dto.orgId);
+    if (!project) throw new NotFoundError({ message: `Project with slug '${dto.projectSlug}' not found` });
+
+    const projectId = project.id;
+    const { permission } = await permissionService.getProjectPermission({
+      actor: ActorType.USER,
+      actorId: dto.userId,
+      projectId,
+      actorAuthMethod: AuthMethod.EMAIL,
+      actorOrgId: dto.orgId,
+      actionProjectType: ActionProjectType.SecretManager
+    });
+
+    const folder = await folderDAL.findBySecretPath(projectId, dto.environmentSlug, dto.secretPath);
+    if (!folder)
+      throw new NotFoundError({
+        message: `Folder with path '${dto.secretPath}' in environment '${dto.environmentSlug}' not found`
+      });
+
+    const dynamicSecretCfg = await dynamicSecretDAL.findOne({ name: dto.dynamicSecretName, folderId: folder.id });
+    if (!dynamicSecretCfg) {
+      throw new NotFoundError({
+        message: `Dynamic secret with name '${dto.dynamicSecretName} in folder '${dto.secretPath}' not found`
+      });
+    }
+
+    ForbiddenError.from(permission).throwUnlessCan(
+      ProjectPermissionDynamicSecretActions.ReadRootCredential,
+      subject(ProjectPermissionSub.DynamicSecrets, {
+        environment: dto.environmentSlug,
+        secretPath: dto.secretPath,
+        metadata: dynamicSecretCfg.metadata
+      })
+    );
+
+    ForbiddenError.from(permission).throwUnlessCan(
+      ProjectPermissionDynamicSecretActions.EditRootCredential,
+      subject(ProjectPermissionSub.DynamicSecrets, {
+        environment: dto.environmentSlug,
+        secretPath: dto.secretPath,
+        metadata: dynamicSecretCfg.metadata
+      })
+    );
+
+    const { decryptor: secretManagerDecryptor } = await kmsService.createCipherPairWithDataKey({
+      type: KmsDataKey.SecretManager,
+      projectId
+    });
+
+    const decryptedStoredInput = JSON.parse(
+      secretManagerDecryptor({ cipherTextBlob: dynamicSecretCfg.encryptedInput }).toString()
+    ) as object;
+
+    if (dynamicSecretCfg.type !== DynamicSecretProviders.Rdp) {
+      throw new BadRequestError({ message: "Invalid provider. Only RDP supported" });
+    }
+
+    const selectedProvider = dynamicSecretProviders[DynamicSecretProviders.Rdp];
+    const providerInputs = (await selectedProvider.validateProviderInputs(decryptedStoredInput, {
+      projectId
+    })) as z.infer<typeof DynamicSecretRdpSchema>;
+    const client = rdp.createClient({
+      domain: providerInputs.host,
+      userName: providerInputs.username,
+      password: providerInputs.password,
+      enablePerf: true,
+      autoLogin: true,
+      screen: true,
+      locale: "en",
+      screen: { width: 800, height: 600 },
+      logLevel: "INFO"
+    });
+    return { client, providerInputs };
+  };
+
   return {
     create,
     updateByName,
@@ -727,6 +813,7 @@ export const dynamicSecretServiceFactory = ({
     getDynamicSecretCount,
     getCountMultiEnv,
     fetchAzureEntraIdUsers,
-    listDynamicSecretsByFolderIds
+    listDynamicSecretsByFolderIds,
+    getRdpClient
   };
 };

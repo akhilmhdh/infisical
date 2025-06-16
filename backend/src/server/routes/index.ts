@@ -2,6 +2,7 @@ import { CronJob } from "cron";
 import { Knex } from "knex";
 import { monitorEventLoopDelay } from "perf_hooks";
 import { z } from "zod";
+import rdp from "node-rdpjs";
 
 import { registerCertificateEstRouter } from "@app/ee/routes/est/certificate-est-router";
 import { registerV1EERoutes } from "@app/ee/routes/v1";
@@ -2008,6 +2009,64 @@ export const registerRoutes = async (
     githubOrgSync: githubOrgSyncConfigService,
     folderCommit: folderCommitService,
     secretScanningV2: secretScanningV2Service
+  });
+
+  /* eslint-disable */
+  server.io.on("connection", (client) => {
+    let rdpClient: rdp.RdpClient | null = null;
+    client
+      .on("infos", async (infos) => {
+        console.log(">>>>>", infos);
+        if (rdpClient) {
+          // clean older connection
+          rdpClient.close();
+        }
+
+        const a = await server.services.dynamicSecret.getRdpClient(infos);
+        rdpClient = a.client;
+
+        rdpClient
+          .on("connect", function () {
+            client.emit("rdp-connect");
+          })
+          .on("bitmap", function (bitmap) {
+            client.emit("rdp-bitmap", bitmap);
+          })
+          .on("close", function () {
+            client.emit("rdp-close");
+          })
+          .on("error", function (err) {
+            console.log(err);
+            client.emit("rdp-error", err);
+          })
+          .connect(a.providerInputs.host, a.providerInputs.port);
+      })
+      .on("mouse", function (x, y, button, isPressed) {
+        if (!rdpClient) return;
+
+        rdpClient.sendPointerEvent(x, y, button, isPressed);
+      })
+      .on("wheel", function (x, y, step, isNegative, isHorizontal) {
+        if (!rdpClient) {
+          return;
+        }
+        rdpClient.sendWheelEvent(x, y, step, isNegative, isHorizontal);
+      })
+      .on("scancode", function (code, isPressed) {
+        if (!rdpClient) return;
+
+        rdpClient.sendKeyEventScancode(code, isPressed);
+      })
+      .on("unicode", function (code, isPressed) {
+        if (!rdpClient) return;
+
+        rdpClient.sendKeyEventUnicode(code, isPressed);
+      })
+      .on("disconnect", function () {
+        if (!rdpClient) return;
+
+        rdpClient.close();
+      });
   });
 
   const cronJobs: CronJob[] = [];

@@ -12,6 +12,7 @@ import type { FastifyRateLimitOptions } from "@fastify/rate-limit";
 import ratelimiter from "@fastify/rate-limit";
 import { fastifyRequestContext } from "@fastify/request-context";
 import fastify from "fastify";
+import fastifySocketIo from "fastify-socket.io";
 import { Redis } from "ioredis";
 import { Knex } from "knex";
 
@@ -59,6 +60,8 @@ export const main = async ({ db, hsmModule, auditLogDb, smtp, logger, queue, key
     ignoreTrailingSlash: true,
     pluginTimeout: 40_000
   }).withTypeProvider<ZodTypeProvider>();
+
+  await server.register(fastifySocketIo, { path: "/api/socket.io" });
 
   server.setValidatorCompiler(validatorCompiler);
   server.setSerializerCompiler(serializerCompiler);
@@ -136,6 +139,8 @@ export const main = async ({ db, hsmModule, auditLogDb, smtp, logger, queue, key
     });
 
     await server.ready();
+
+    /* eslint-enable */
     server.swagger();
     return server;
   } catch (err) {

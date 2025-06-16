@@ -35,7 +35,8 @@ export enum DynamicSecretProviders {
   SapAse = "sap-ase",
   Kubernetes = "kubernetes",
   Vertica = "vertica",
-  GcpIam = "gcp-iam"
+  GcpIam = "gcp-iam",
+  Rdp = "rdp"
 }
 
 export enum KubernetesDynamicSecretCredentialType {
@@ -70,6 +71,16 @@ export type TDynamicSecretProvider =
         renewStatement?: string;
         ca?: string | undefined;
         gatewayId?: string;
+      };
+    }
+  | {
+      type: DynamicSecretProviders.Rdp;
+      inputs: {
+        host: string;
+        port: number;
+        username: string;
+        password: string;
+        ca?: string | undefined;
       };
     }
   | {

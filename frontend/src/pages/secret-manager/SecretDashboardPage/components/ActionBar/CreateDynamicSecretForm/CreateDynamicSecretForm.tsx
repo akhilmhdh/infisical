@@ -11,7 +11,7 @@ import {
   SiSnowflake
 } from "react-icons/si";
 import { VscAzure } from "react-icons/vsc";
-import { faAws, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { faAws, faGoogle, faWindows } from "@fortawesome/free-brands-svg-icons";
 import { faClock, faDatabase } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
@@ -38,6 +38,7 @@ import { SnowflakeInputForm } from "./SnowflakeInputForm";
 import { SqlDatabaseInputForm } from "./SqlDatabaseInputForm";
 import { TotpInputForm } from "./TotpInputForm";
 import { VerticaInputForm } from "./VerticaInputForm";
+import { RdpInputForm } from "./RdpInputForm";
 
 type Props = {
   isOpen?: boolean;
@@ -143,6 +144,11 @@ const DYNAMIC_SECRET_LIST = [
     icon: <FontAwesomeIcon icon={faGoogle} size="lg" />,
     provider: DynamicSecretProviders.GcpIam,
     title: "GCP IAM"
+  },
+  {
+    icon: <FontAwesomeIcon icon={faWindows} size="lg" />,
+    provider: DynamicSecretProviders.Rdp,
+    title: "RDP"
   }
 ];
 
@@ -520,6 +526,25 @@ export const CreateDynamicSecretForm = ({
                 exit={{ opacity: 0, translateX: -30 }}
               >
                 <VerticaInputForm
+                  onCompleted={handleFormReset}
+                  onCancel={handleFormReset}
+                  projectSlug={projectSlug}
+                  secretPath={secretPath}
+                  environments={environments}
+                  isSingleEnvironmentMode={isSingleEnvironmentMode}
+                />
+              </motion.div>
+            )}
+          {wizardStep === WizardSteps.ProviderInputs &&
+            selectedProvider === DynamicSecretProviders.Rdp && (
+              <motion.div
+                key="dynamic-rdp-step"
+                transition={{ duration: 0.1 }}
+                initial={{ opacity: 0, translateX: 30 }}
+                animate={{ opacity: 1, translateX: 0 }}
+                exit={{ opacity: 0, translateX: -30 }}
+              >
+                <RdpInputForm
                   onCompleted={handleFormReset}
                   onCancel={handleFormReset}
                   projectSlug={projectSlug}

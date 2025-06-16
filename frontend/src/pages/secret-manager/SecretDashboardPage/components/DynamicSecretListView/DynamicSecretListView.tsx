@@ -18,7 +18,11 @@ import {
   Tag,
   Tooltip
 } from "@app/components/v2";
-import { ProjectPermissionDynamicSecretActions, ProjectPermissionSub } from "@app/context";
+import {
+  ProjectPermissionDynamicSecretActions,
+  ProjectPermissionSub,
+  useWorkspace
+} from "@app/context";
 import { usePopUp } from "@app/hooks";
 import { useDeleteDynamicSecret } from "@app/hooks/api";
 import {
@@ -49,6 +53,7 @@ export const DynamicSecretListView = ({
   projectSlug,
   secretPath = "/"
 }: Props) => {
+  const { currentWorkspace } = useWorkspace();
   const { popUp, handlePopUpToggle, handlePopUpOpen, handlePopUpClose } = usePopUp([
     "dynamicSecretLeases",
     "createDynamicSecretLease",
@@ -142,30 +147,59 @@ export const DynamicSecretListView = ({
                 )}
               </div>
               <div className="flex items-center space-x-2 px-4 py-2">
-                <ProjectPermissionCan
-                  I={ProjectPermissionDynamicSecretActions.Lease}
-                  a={subject(ProjectPermissionSub.DynamicSecrets, {
-                    environment,
-                    secretPath,
-                    metadata: secret.metadata
-                  })}
-                  renderTooltip
-                  allowedLabel="Edit"
-                >
-                  {(isAllowed) => (
-                    <Button
-                      size="xs"
-                      className="m-0 px-2 py-0.5 opacity-0 group-hover:opacity-100"
-                      isDisabled={isRevoking || !isAllowed}
-                      onClick={(evt) => {
-                        evt.stopPropagation();
-                        handlePopUpOpen("createDynamicSecretLease", secret);
-                      }}
-                    >
-                      Generate
-                    </Button>
-                  )}
-                </ProjectPermissionCan>
+                {secret.type === DynamicSecretProviders.Rdp ? (
+                  <ProjectPermissionCan
+                    I={ProjectPermissionDynamicSecretActions.Lease}
+                    a={subject(ProjectPermissionSub.DynamicSecrets, {
+                      environment,
+                      secretPath,
+                      metadata: secret.metadata
+                    })}
+                    renderTooltip
+                    allowedLabel="Edit"
+                  >
+                    {(isAllowed) => (
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`/secret-manager/${currentWorkspace.id}/rdp-screen?dynamicSecretName=${secret.name}&secretPath=${secretPath}&environment=${environment}`}
+                      >
+                        <Button
+                          size="xs"
+                          className="m-0 px-2 py-0.5 opacity-0 group-hover:opacity-100"
+                          isDisabled={!isAllowed}
+                        >
+                          Start Session
+                        </Button>
+                      </a>
+                    )}
+                  </ProjectPermissionCan>
+                ) : (
+                  <ProjectPermissionCan
+                    I={ProjectPermissionDynamicSecretActions.Lease}
+                    a={subject(ProjectPermissionSub.DynamicSecrets, {
+                      environment,
+                      secretPath,
+                      metadata: secret.metadata
+                    })}
+                    renderTooltip
+                    allowedLabel="Edit"
+                  >
+                    {(isAllowed) => (
+                      <Button
+                        size="xs"
+                        className="m-0 px-2 py-0.5 opacity-0 group-hover:opacity-100"
+                        isDisabled={isRevoking || !isAllowed}
+                        onClick={(evt) => {
+                          evt.stopPropagation();
+                          handlePopUpOpen("createDynamicSecretLease", secret);
+                        }}
+                      >
+                        Generate
+                      </Button>
+                    )}
+                  </ProjectPermissionCan>
+                )}
 
                 {secret.status === DynamicSecretStatus.FailedDeletion && (
                   <Tooltip content="This action will remove the secret from internal storage, but it will remain in external systems. Use this option only after you've confirmed that your external leases are handled.">

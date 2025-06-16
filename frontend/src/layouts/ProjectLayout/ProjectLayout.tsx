@@ -55,11 +55,11 @@ export const ProjectLayout = () => {
 
   const { data: secretApprovalReqCount } = useGetSecretApprovalRequestCount({
     workspaceId,
-    options: { enabled: isSecretManager }
+    options: { enabled: false }
   });
   const { data: accessApprovalRequestCount } = useGetAccessRequestsCount({
     projectSlug,
-    options: { enabled: isSecretManager }
+    options: { enabled: false }
   });
 
   // we only show the secret rotations v1 tab if they have existing rotations

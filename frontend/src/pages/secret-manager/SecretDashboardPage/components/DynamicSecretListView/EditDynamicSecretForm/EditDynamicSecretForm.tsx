@@ -22,6 +22,7 @@ import { EditDynamicSecretSnowflakeForm } from "./EditDynamicSecretSnowflakeForm
 import { EditDynamicSecretSqlProviderForm } from "./EditDynamicSecretSqlProviderForm";
 import { EditDynamicSecretTotpForm } from "./EditDynamicSecretTotpForm";
 import { EditDynamicSecretVerticaForm } from "./EditDynamicSecretVertica";
+import { EditDynamicSecretRdpForm } from "./EditDynamicSecretRdpForm";
 
 type Props = {
   onClose: () => void;
@@ -82,6 +83,23 @@ export const EditDynamicSecretForm = ({
           exit={{ opacity: 0, translateX: -30 }}
         >
           <EditDynamicSecretCassandraForm
+            onClose={onClose}
+            projectSlug={projectSlug}
+            secretPath={secretPath}
+            dynamicSecret={dynamicSecretDetails}
+            environment={environment}
+          />
+        </motion.div>
+      )}
+      {dynamicSecretDetails?.type === DynamicSecretProviders.Rdp && (
+        <motion.div
+          key="rdp-provider-edit"
+          transition={{ duration: 0.1 }}
+          initial={{ opacity: 0, translateX: 30 }}
+          animate={{ opacity: 1, translateX: 0 }}
+          exit={{ opacity: 0, translateX: -30 }}
+        >
+          <EditDynamicSecretRdpForm
             onClose={onClose}
             projectSlug={projectSlug}
             secretPath={secretPath}
