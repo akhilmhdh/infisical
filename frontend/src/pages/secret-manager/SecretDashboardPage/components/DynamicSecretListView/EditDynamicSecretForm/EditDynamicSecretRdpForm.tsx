@@ -224,6 +224,7 @@ export const EditDynamicSecretRdpForm = ({
                     label="User"
                     isError={Boolean(error?.message)}
                     errorText={error?.message}
+                    className="flex-1"
                   >
                     <Input {...field} autoComplete="off" />
                   </FormControl>
@@ -237,6 +238,7 @@ export const EditDynamicSecretRdpForm = ({
                     label="Password"
                     isError={Boolean(error?.message)}
                     errorText={error?.message}
+                    className="flex-1"
                   >
                     <Input {...field} type="password" autoComplete="new-password" />
                   </FormControl>

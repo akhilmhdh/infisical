@@ -219,6 +219,7 @@ export const RdpInputForm = ({
                       label="User"
                       isError={Boolean(error?.message)}
                       errorText={error?.message}
+                      className="flex-1"
                     >
                       <Input {...field} autoComplete="off" />
                     </FormControl>
@@ -232,6 +233,7 @@ export const RdpInputForm = ({
                       label="Password"
                       isError={Boolean(error?.message)}
                       errorText={error?.message}
+                      className="flex-1"
                     >
                       <Input {...field} type="password" autoComplete="new-password" />
                     </FormControl>
