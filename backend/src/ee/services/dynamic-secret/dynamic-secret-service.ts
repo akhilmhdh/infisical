@@ -727,6 +727,8 @@ export const dynamicSecretServiceFactory = ({
     projectSlug: string;
     orgId: string;
     userId: string;
+    width?: number;
+    height?: number;
   }) => {
     const project = await projectDAL.findProjectBySlug(dto.projectSlug, dto.orgId);
     if (!project) throw new NotFoundError({ message: `Project with slug '${dto.projectSlug}' not found` });
@@ -797,7 +799,7 @@ export const dynamicSecretServiceFactory = ({
       autoLogin: true,
       screen: true,
       locale: "en",
-      screen: { width: 800, height: 600 },
+      screen: { width: dto.width || 800, height: dto.height || 600 },
       logLevel: "INFO"
     });
     return { client, providerInputs };

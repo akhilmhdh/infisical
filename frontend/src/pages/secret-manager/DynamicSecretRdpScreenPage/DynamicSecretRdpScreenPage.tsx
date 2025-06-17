@@ -9,22 +9,15 @@ export const DynamicSecretRdpScreenPage = () => {
     from: "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen"
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (canvasRef.current) {
+    if (canvasRef.current && canvasContainerRef.current) {
       canvasRef.current.style.display = "inline";
-      canvasRef.current.width = window.innerWidth;
-      canvasRef.current.height = window.innerHeight;
+      canvasRef.current.width = canvasContainerRef.current.clientWidth;
+      canvasRef.current.height = canvasContainerRef.current.clientHeight;
 
       const client = window.Mstsc.client.create(canvasRef.current);
-      console.log({
-        dynamicSecretName: search.dynamicSecretName,
-        environmentSlug: search.environment,
-        secretPath: search.secretPath,
-        projectSlug: currentWorkspace.slug,
-        orgId: currentWorkspace.orgId,
-        userId: user.id
-      });
       client.connect(
         {
           dynamicSecretName: search.dynamicSecretName,
@@ -32,19 +25,25 @@ export const DynamicSecretRdpScreenPage = () => {
           secretPath: search.secretPath,
           projectSlug: currentWorkspace.slug,
           orgId: currentWorkspace.orgId,
-          userId: user.id
+          userId: user.id,
+          width: canvasContainerRef.current.clientWidth,
+          height: canvasContainerRef.current.clientHeight
         },
         function (err) {
           console.log(err);
-          canvasRef.current.style.display = "none";
+          // canvasRef.current.style.display = "none";
         }
       );
     }
   }, [canvasRef.current]);
 
   return (
-    <div>
-      <canvas id="myCanvas" ref={canvasRef} style={{ display: "none" }} />
+    <div
+      className="container mx-auto max-w-7xl"
+      ref={canvasContainerRef}
+      style={{ height: "calc(100% - 4rem)" }}
+    >
+      <canvas id="myCanvas" ref={canvasRef} />
     </div>
   );
 };
