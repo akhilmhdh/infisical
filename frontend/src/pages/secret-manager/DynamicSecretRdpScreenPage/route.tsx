@@ -11,18 +11,8 @@ const querySchema = z.object({
 });
 
 export const Route = createFileRoute(
-  "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen"
+  "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen"
 )({
   component: DynamicSecretRdpScreenPage,
-  validateSearch: zodValidator(querySchema),
-  beforeLoad: ({ context }) => {
-    return {
-      breadcrumbs: [
-        ...context.breadcrumbs,
-        {
-          label: "RDP Screen"
-        }
-      ]
-    };
-  }
+  validateSearch: zodValidator(querySchema)
 });

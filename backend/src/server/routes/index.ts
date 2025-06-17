@@ -2016,7 +2016,6 @@ export const registerRoutes = async (
     let rdpClient: rdp.RdpClient | null = null;
     client
       .on("infos", async (infos) => {
-        console.log(">>>>>", infos);
         if (rdpClient) {
           // clean older connection
           rdpClient.close();

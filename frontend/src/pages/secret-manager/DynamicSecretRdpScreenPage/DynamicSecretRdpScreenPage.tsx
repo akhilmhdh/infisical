@@ -1,4 +1,6 @@
+import { Spinner } from "@app/components/v2";
 import { useUser, useWorkspace } from "@app/context";
+import { useToggle } from "@app/hooks";
 import { useSearch } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
@@ -6,10 +8,11 @@ export const DynamicSecretRdpScreenPage = () => {
   const { currentWorkspace } = useWorkspace();
   const { user } = useUser();
   const search = useSearch({
-    from: "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen"
+    from: "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen"
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useToggle(true);
 
   useEffect(() => {
     if (canvasRef.current && canvasContainerRef.current) {
@@ -29,7 +32,8 @@ export const DynamicSecretRdpScreenPage = () => {
           width: canvasContainerRef.current.clientWidth,
           height: canvasContainerRef.current.clientHeight
         },
-        function (err) {
+        () => setIsLoading.off(),
+        (err) => {
           console.log(err);
           // canvasRef.current.style.display = "none";
         }
@@ -38,11 +42,12 @@ export const DynamicSecretRdpScreenPage = () => {
   }, [canvasRef.current]);
 
   return (
-    <div
-      className="container mx-auto max-w-7xl"
-      ref={canvasContainerRef}
-      style={{ height: "calc(100% - 4rem)" }}
-    >
+    <div ref={canvasContainerRef} className="relative h-full">
+      {isLoading && (
+        <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      )}
       <canvas id="myCanvas" ref={canvasRef} />
     </div>
   );

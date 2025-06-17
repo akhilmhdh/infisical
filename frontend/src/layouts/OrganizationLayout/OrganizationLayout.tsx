@@ -85,7 +85,7 @@ export const OrganizationLayout = () => {
       >
         {!window.isSecureContext && <InsecureConnectionBanner />}
         <div className="flex flex-grow flex-col overflow-y-hidden md:flex-row">
-          <MinimizedOrgSidebar />
+          {!location.pathname.includes("/rdp-screen") && <MinimizedOrgSidebar />}
           <AnimatePresence mode="popLayout">
             {shouldShowOrgSidebar && (
               <motion.div

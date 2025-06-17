@@ -170,7 +170,7 @@
      * @param next {function} asynchrone end callback
      */
     // akhilmhdh: missing validation for this info
-    connect: function (dto, next) {
+    connect: function (dto, cb, next) {
       // compute socket.io path (cozy cloud integration)
 
       // start connection
@@ -184,6 +184,7 @@
           self.activeSession = true;
         })
         .on("rdp-bitmap", function (bitmap) {
+          cb();
           console.log("[mstsc.js] bitmap update bpp : " + bitmap.bitsPerPixel);
           self.render.update(bitmap);
         })

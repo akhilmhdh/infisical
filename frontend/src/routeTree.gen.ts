@@ -60,6 +60,7 @@ import { Route as certManagerLayoutImport } from './pages/cert-manager/layout'
 import { Route as adminUserIdentitiesResourcesPageRouteImport } from './pages/admin/UserIdentitiesResourcesPage/route'
 import { Route as adminOrganizationResourcesPageRouteImport } from './pages/admin/OrganizationResourcesPage/route'
 import { Route as adminMachineIdentitiesResourcesPageRouteImport } from './pages/admin/MachineIdentitiesResourcesPage/route'
+import { Route as secretManagerDynamicSecretRdpScreenPageRouteImport } from './pages/secret-manager/DynamicSecretRdpScreenPage/route'
 import { Route as organizationSshSettingsPageRouteImport } from './pages/organization/SshSettingsPage/route'
 import { Route as organizationSshOverviewPageRouteImport } from './pages/organization/SshOverviewPage/route'
 import { Route as organizationSecretSharingSettingsPageRouteImport } from './pages/organization/SecretSharingSettingsPage/route'
@@ -101,7 +102,6 @@ import { Route as secretScanningSettingsPageRouteImport } from './pages/secret-s
 import { Route as secretScanningSecretScanningFindingsPageRouteImport } from './pages/secret-scanning/SecretScanningFindingsPage/route'
 import { Route as secretManagerSettingsPageRouteImport } from './pages/secret-manager/SettingsPage/route'
 import { Route as secretManagerSecretRotationPageRouteImport } from './pages/secret-manager/SecretRotationPage/route'
-import { Route as secretManagerDynamicSecretRdpScreenPageRouteImport } from './pages/secret-manager/DynamicSecretRdpScreenPage/route'
 import { Route as secretManagerOverviewPageRouteImport } from './pages/secret-manager/OverviewPage/route'
 import { Route as secretManagerSecretApprovalsPageRouteImport } from './pages/secret-manager/SecretApprovalsPage/route'
 import { Route as secretManagerIPAllowlistPageRouteImport } from './pages/secret-manager/IPAllowlistPage/route'
@@ -721,6 +721,14 @@ const adminMachineIdentitiesResourcesPageRouteRoute =
     getParentRoute: () => adminLayoutRoute,
   } as any)
 
+const secretManagerDynamicSecretRdpScreenPageRouteRoute =
+  secretManagerDynamicSecretRdpScreenPageRouteImport.update({
+    id: '/rdp-screen',
+    path: '/rdp-screen',
+    getParentRoute: () =>
+      AuthenticateInjectOrgDetailsOrgLayoutSecretManagerProjectIdRoute,
+  } as any)
+
 const organizationSshSettingsPageRouteRoute =
   organizationSshSettingsPageRouteImport.update({
     id: '/ssh/settings',
@@ -1067,13 +1075,6 @@ const secretManagerSecretRotationPageRouteRoute =
   secretManagerSecretRotationPageRouteImport.update({
     id: '/secret-rotation',
     path: '/secret-rotation',
-    getParentRoute: () => secretManagerLayoutRoute,
-  } as any)
-
-const secretManagerDynamicSecretRdpScreenPageRouteRoute =
-  secretManagerDynamicSecretRdpScreenPageRouteImport.update({
-    id: '/rdp-screen',
-    path: '/rdp-screen',
     getParentRoute: () => secretManagerLayoutRoute,
   } as any)
 
@@ -2564,6 +2565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof organizationSshSettingsPageRouteImport
       parentRoute: typeof AuthenticateInjectOrgDetailsOrgLayoutOrganizationImport
     }
+    '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen': {
+      id: '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen'
+      path: '/rdp-screen'
+      fullPath: '/secret-manager/$projectId/rdp-screen'
+      preLoaderRoute: typeof secretManagerDynamicSecretRdpScreenPageRouteImport
+      parentRoute: typeof AuthenticateInjectOrgDetailsOrgLayoutSecretManagerProjectIdImport
+    }
     '/_authenticate/_inject-org-details/admin/_admin-layout/resources/machine-identities': {
       id: '/_authenticate/_inject-org-details/admin/_admin-layout/resources/machine-identities'
       path: '/resources/machine-identities'
@@ -2695,13 +2703,6 @@ declare module '@tanstack/react-router' {
       path: '/overview'
       fullPath: '/secret-manager/$projectId/overview'
       preLoaderRoute: typeof secretManagerOverviewPageRouteImport
-      parentRoute: typeof secretManagerLayoutImport
-    }
-    '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen': {
-      id: '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen'
-      path: '/rdp-screen'
-      fullPath: '/secret-manager/$projectId/rdp-screen'
-      preLoaderRoute: typeof secretManagerDynamicSecretRdpScreenPageRouteImport
       parentRoute: typeof secretManagerLayoutImport
     }
     '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/secret-rotation': {
@@ -4293,7 +4294,6 @@ interface secretManagerLayoutRouteChildren {
   secretManagerIPAllowlistPageRouteRoute: typeof secretManagerIPAllowlistPageRouteRoute
   secretManagerSecretApprovalsPageRouteRoute: typeof secretManagerSecretApprovalsPageRouteRoute
   secretManagerOverviewPageRouteRoute: typeof secretManagerOverviewPageRouteRoute
-  secretManagerDynamicSecretRdpScreenPageRouteRoute: typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   secretManagerSecretRotationPageRouteRoute: typeof secretManagerSecretRotationPageRouteRoute
   secretManagerSettingsPageRouteRoute: typeof secretManagerSettingsPageRouteRoute
   projectAccessControlPageRouteSecretManagerRoute: typeof projectAccessControlPageRouteSecretManagerRoute
@@ -4312,8 +4312,6 @@ const secretManagerLayoutRouteChildren: secretManagerLayoutRouteChildren = {
   secretManagerSecretApprovalsPageRouteRoute:
     secretManagerSecretApprovalsPageRouteRoute,
   secretManagerOverviewPageRouteRoute: secretManagerOverviewPageRouteRoute,
-  secretManagerDynamicSecretRdpScreenPageRouteRoute:
-    secretManagerDynamicSecretRdpScreenPageRouteRoute,
   secretManagerSecretRotationPageRouteRoute:
     secretManagerSecretRotationPageRouteRoute,
   secretManagerSettingsPageRouteRoute: secretManagerSettingsPageRouteRoute,
@@ -4339,11 +4337,14 @@ const secretManagerLayoutRouteWithChildren =
   secretManagerLayoutRoute._addFileChildren(secretManagerLayoutRouteChildren)
 
 interface AuthenticateInjectOrgDetailsOrgLayoutSecretManagerProjectIdRouteChildren {
+  secretManagerDynamicSecretRdpScreenPageRouteRoute: typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   secretManagerLayoutRoute: typeof secretManagerLayoutRouteWithChildren
 }
 
 const AuthenticateInjectOrgDetailsOrgLayoutSecretManagerProjectIdRouteChildren: AuthenticateInjectOrgDetailsOrgLayoutSecretManagerProjectIdRouteChildren =
   {
+    secretManagerDynamicSecretRdpScreenPageRouteRoute:
+      secretManagerDynamicSecretRdpScreenPageRouteRoute,
     secretManagerLayoutRoute: secretManagerLayoutRouteWithChildren,
   }
 
@@ -4744,6 +4745,7 @@ export interface FileRoutesByFullPath {
   '/organization/secret-sharing/settings': typeof organizationSecretSharingSettingsPageRouteRoute
   '/organization/ssh/overview': typeof organizationSshOverviewPageRouteRoute
   '/organization/ssh/settings': typeof organizationSshSettingsPageRouteRoute
+  '/secret-manager/$projectId/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/admin/resources/machine-identities': typeof adminMachineIdentitiesResourcesPageRouteRoute
   '/admin/resources/organizations': typeof adminOrganizationResourcesPageRouteRoute
   '/admin/resources/user-identities': typeof adminUserIdentitiesResourcesPageRouteRoute
@@ -4758,7 +4760,6 @@ export interface FileRoutesByFullPath {
   '/secret-manager/$projectId/allowlist': typeof secretManagerIPAllowlistPageRouteRoute
   '/secret-manager/$projectId/approval': typeof secretManagerSecretApprovalsPageRouteRoute
   '/secret-manager/$projectId/overview': typeof secretManagerOverviewPageRouteRoute
-  '/secret-manager/$projectId/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/secret-manager/$projectId/secret-rotation': typeof secretManagerSecretRotationPageRouteRoute
   '/secret-manager/$projectId/settings': typeof secretManagerSettingsPageRouteRoute
   '/secret-scanning/$projectId/findings': typeof secretScanningSecretScanningFindingsPageRouteRoute
@@ -4962,6 +4963,7 @@ export interface FileRoutesByTo {
   '/organization/secret-sharing/settings': typeof organizationSecretSharingSettingsPageRouteRoute
   '/organization/ssh/overview': typeof organizationSshOverviewPageRouteRoute
   '/organization/ssh/settings': typeof organizationSshSettingsPageRouteRoute
+  '/secret-manager/$projectId/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/admin/resources/machine-identities': typeof adminMachineIdentitiesResourcesPageRouteRoute
   '/admin/resources/organizations': typeof adminOrganizationResourcesPageRouteRoute
   '/admin/resources/user-identities': typeof adminUserIdentitiesResourcesPageRouteRoute
@@ -4976,7 +4978,6 @@ export interface FileRoutesByTo {
   '/secret-manager/$projectId/allowlist': typeof secretManagerIPAllowlistPageRouteRoute
   '/secret-manager/$projectId/approval': typeof secretManagerSecretApprovalsPageRouteRoute
   '/secret-manager/$projectId/overview': typeof secretManagerOverviewPageRouteRoute
-  '/secret-manager/$projectId/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/secret-manager/$projectId/secret-rotation': typeof secretManagerSecretRotationPageRouteRoute
   '/secret-manager/$projectId/settings': typeof secretManagerSettingsPageRouteRoute
   '/secret-scanning/$projectId/findings': typeof secretScanningSecretScanningFindingsPageRouteRoute
@@ -5188,6 +5189,7 @@ export interface FileRoutesById {
   '/_authenticate/_inject-org-details/_org-layout/organization/secret-sharing/settings': typeof organizationSecretSharingSettingsPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/organization/ssh/overview': typeof organizationSshOverviewPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/organization/ssh/settings': typeof organizationSshSettingsPageRouteRoute
+  '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/_authenticate/_inject-org-details/admin/_admin-layout/resources/machine-identities': typeof adminMachineIdentitiesResourcesPageRouteRoute
   '/_authenticate/_inject-org-details/admin/_admin-layout/resources/organizations': typeof adminOrganizationResourcesPageRouteRoute
   '/_authenticate/_inject-org-details/admin/_admin-layout/resources/user-identities': typeof adminUserIdentitiesResourcesPageRouteRoute
@@ -5207,7 +5209,6 @@ export interface FileRoutesById {
   '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/allowlist': typeof secretManagerIPAllowlistPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/approval': typeof secretManagerSecretApprovalsPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/overview': typeof secretManagerOverviewPageRouteRoute
-  '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen': typeof secretManagerDynamicSecretRdpScreenPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/secret-rotation': typeof secretManagerSecretRotationPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/settings': typeof secretManagerSettingsPageRouteRoute
   '/_authenticate/_inject-org-details/_org-layout/secret-scanning/$projectId/_secret-scanning-layout/findings': typeof secretScanningSecretScanningFindingsPageRouteRoute
@@ -5421,6 +5422,7 @@ export interface FileRouteTypes {
     | '/organization/secret-sharing/settings'
     | '/organization/ssh/overview'
     | '/organization/ssh/settings'
+    | '/secret-manager/$projectId/rdp-screen'
     | '/admin/resources/machine-identities'
     | '/admin/resources/organizations'
     | '/admin/resources/user-identities'
@@ -5435,7 +5437,6 @@ export interface FileRouteTypes {
     | '/secret-manager/$projectId/allowlist'
     | '/secret-manager/$projectId/approval'
     | '/secret-manager/$projectId/overview'
-    | '/secret-manager/$projectId/rdp-screen'
     | '/secret-manager/$projectId/secret-rotation'
     | '/secret-manager/$projectId/settings'
     | '/secret-scanning/$projectId/findings'
@@ -5638,6 +5639,7 @@ export interface FileRouteTypes {
     | '/organization/secret-sharing/settings'
     | '/organization/ssh/overview'
     | '/organization/ssh/settings'
+    | '/secret-manager/$projectId/rdp-screen'
     | '/admin/resources/machine-identities'
     | '/admin/resources/organizations'
     | '/admin/resources/user-identities'
@@ -5652,7 +5654,6 @@ export interface FileRouteTypes {
     | '/secret-manager/$projectId/allowlist'
     | '/secret-manager/$projectId/approval'
     | '/secret-manager/$projectId/overview'
-    | '/secret-manager/$projectId/rdp-screen'
     | '/secret-manager/$projectId/secret-rotation'
     | '/secret-manager/$projectId/settings'
     | '/secret-scanning/$projectId/findings'
@@ -5862,6 +5863,7 @@ export interface FileRouteTypes {
     | '/_authenticate/_inject-org-details/_org-layout/organization/secret-sharing/settings'
     | '/_authenticate/_inject-org-details/_org-layout/organization/ssh/overview'
     | '/_authenticate/_inject-org-details/_org-layout/organization/ssh/settings'
+    | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen'
     | '/_authenticate/_inject-org-details/admin/_admin-layout/resources/machine-identities'
     | '/_authenticate/_inject-org-details/admin/_admin-layout/resources/organizations'
     | '/_authenticate/_inject-org-details/admin/_admin-layout/resources/user-identities'
@@ -5881,7 +5883,6 @@ export interface FileRouteTypes {
     | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/allowlist'
     | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/approval'
     | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/overview'
-    | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen'
     | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/secret-rotation'
     | '/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/settings'
     | '/_authenticate/_inject-org-details/_org-layout/secret-scanning/$projectId/_secret-scanning-layout/findings'
@@ -6386,6 +6387,7 @@ export const routeTree = rootRoute
       "filePath": "",
       "parent": "/_authenticate/_inject-org-details/_org-layout",
       "children": [
+        "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout"
       ]
     },
@@ -6479,6 +6481,10 @@ export const routeTree = rootRoute
       "filePath": "organization/SshSettingsPage/route.tsx",
       "parent": "/_authenticate/_inject-org-details/_org-layout/organization"
     },
+    "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/rdp-screen": {
+      "filePath": "secret-manager/DynamicSecretRdpScreenPage/route.tsx",
+      "parent": "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId"
+    },
     "/_authenticate/_inject-org-details/admin/_admin-layout/resources/machine-identities": {
       "filePath": "admin/MachineIdentitiesResourcesPage/route.tsx",
       "parent": "/_authenticate/_inject-org-details/admin/_admin-layout"
@@ -6531,7 +6537,6 @@ export const routeTree = rootRoute
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/allowlist",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/approval",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/overview",
-        "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/secret-rotation",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/settings",
         "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/access-management",
@@ -6617,10 +6622,6 @@ export const routeTree = rootRoute
     },
     "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/overview": {
       "filePath": "secret-manager/OverviewPage/route.tsx",
-      "parent": "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout"
-    },
-    "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/rdp-screen": {
-      "filePath": "secret-manager/DynamicSecretRdpScreenPage/route.tsx",
       "parent": "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout"
     },
     "/_authenticate/_inject-org-details/_org-layout/secret-manager/$projectId/_secret-manager-layout/secret-rotation": {
