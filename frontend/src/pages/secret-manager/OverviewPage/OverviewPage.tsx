@@ -3157,7 +3157,7 @@ const OverviewPageContent = () => {
                                   <TooltipContent>
                                     {isOverviewBatchMode
                                       ? "Changes are batched together into a single commit. Click to switch to single edit mode."
-                                      : "Click to enable batch edit mode. Changes will be grouped into a single commit."}
+                                      : "Click to enable batch edit mode. Changes will be grouped into a single commit. Hllo"}
                                   </TooltipContent>
                                 </Tooltip>
                                 <SecretSyncStatusBadgeOverview
