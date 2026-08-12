@@ -2583,7 +2583,7 @@ const OverviewPageContent = () => {
         <div className="flex w-full items-baseline justify-between">
           <PageHeader
             scope={ProjectType.SecretManager}
-            title="Project Overview"
+            title="Project Overview Page"
             description={
               <p className="text-md text-bunker-300">
                 Inject your secrets using
