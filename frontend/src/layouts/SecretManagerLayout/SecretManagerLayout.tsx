@@ -9,7 +9,7 @@ export const SecretManagerLayout = () => {
 
   return (
     <div className="flex h-full w-full flex-col overflow-x-hidden">
-      {assumedPrivilegeDetails && <AssumePrivilegeModeBanner />}
+      <div className="w-full h-5 bg-red">WTH!!</div>
       <div className="flex-1 overflow-x-hidden overflow-y-auto bg-bunker-800 px-12 pt-10 pb-4">
         <Outlet />
       </div>
