@@ -135,7 +135,8 @@ export const registerSecretFolderRouter = async (server: FastifyZodProvider) => 
           .transform(prefixWithSlash) // Transformations get skipped if path is undefined
           .transform(removeTrailingSlash)
           .describe(FOLDERS.UPDATE.path),
-        description: z.string().optional().nullable().describe(FOLDERS.UPDATE.description)
+        description: z.string().optional().nullable().describe(FOLDERS.UPDATE.description),
+        changeReason: z.string().trim().min(1).max(256).describe(FOLDERS.UPDATE.changeReason)
       }),
       response: {
         200: z.object({
@@ -165,7 +166,8 @@ export const registerSecretFolderRouter = async (server: FastifyZodProvider) => 
             folderId: folder.id,
             folderPath: req.body.path,
             newFolderName: folder.name,
-            oldFolderName: old.name
+            oldFolderName: old.name,
+            changeReason: req.body.changeReason
           }
         }
       });

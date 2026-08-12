@@ -20,6 +20,8 @@ export type TUpdateFolderDTO = {
   id: string;
   name: string;
   description?: string | null;
+  // Optional on the service DTO so the deprecated v1 router keeps compiling; the v2 API requires it.
+  changeReason?: string;
 } & TProjectPermission;
 
 export type TUpdateManyFoldersDTO = {

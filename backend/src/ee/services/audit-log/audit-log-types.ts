@@ -2453,6 +2453,7 @@ interface UpdateFolderEvent {
     newFolderName: string;
     newFolderDescription?: string;
     folderPath: string;
+    changeReason?: string;
   };
 }
 

@@ -1255,7 +1255,8 @@ export const FOLDERS = {
     directory: "The new directory of the folder to update. (Deprecated in favor of path)",
     projectSlug: "The slug of the project where the folder is located.",
     projectId: "The ID of the project where the folder is located.",
-    description: "An optional description label for the folder."
+    description: "An optional description label for the folder.",
+    changeReason: "A short reason describing why the folder is being changed. Recorded in the audit log."
   },
   DELETE: {
     folderIdOrName: "The ID or name of the folder to delete.",

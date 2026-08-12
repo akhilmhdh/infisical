@@ -21,6 +21,7 @@ type Props = {
   onUpdateFolder?: (
     folderName: string,
     description: string | null,
+    changeReason: string,
     oldFolderName?: string,
     oldFolderDescription?: string
   ) => Promise<void>;
@@ -33,15 +34,30 @@ type Props = {
 const descriptionOverwriteWarningMessage =
   "Warning: Any changes made here will overwrite any custom edits in individual environment folders.";
 
-const formSchema = z.object({
+const baseFormSchema = z.object({
   name: z
     .string()
     .trim()
     .max(255, "Name cannot exceed 255 characters")
     .regex(/^[a-zA-Z0-9-_]+$/, "Name can only contain letters, numbers, dashes, and underscores"),
-  description: z.string().optional()
+  description: z.string().optional(),
+  changeReason: z.string().trim().max(256, "Change reason cannot exceed 256 characters")
 });
-type TFormData = z.infer<typeof formSchema>;
+
+// Editing an existing folder is audited, so the reason is mandatory there. Creation is not audited the
+// same way and keeps the field optional.
+const getFormSchema = (isEdit: boolean) =>
+  isEdit
+    ? baseFormSchema.extend({
+        changeReason: z
+          .string()
+          .trim()
+          .min(1, "Change reason is required")
+          .max(256, "Change reason cannot exceed 256 characters")
+      })
+    : baseFormSchema;
+
+type TFormData = z.infer<typeof baseFormSchema>;
 
 export const FolderForm = ({
   isEdit,
@@ -57,10 +73,11 @@ export const FolderForm = ({
     formState: { isSubmitting },
     handleSubmit
   } = useForm<TFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(Boolean(isEdit))),
     defaultValues: {
       name: defaultFolderName,
-      description: defaultDescription || ""
+      description: defaultDescription || "",
+      changeReason: ""
     }
   });
 
@@ -78,11 +95,17 @@ export const FolderForm = ({
     }
   };
 
-  const onSubmit = async ({ name, description }: TFormData) => {
+  const onSubmit = async ({ name, description, changeReason }: TFormData) => {
     const descriptionShaped = description && description.trim() !== "" ? description : null;
 
     if (isEdit) {
-      await onUpdateFolder?.(name, descriptionShaped, defaultFolderName, defaultDescription);
+      await onUpdateFolder?.(
+        name,
+        descriptionShaped,
+        changeReason,
+        defaultFolderName,
+        defaultDescription
+      );
     } else {
       await onCreateFolder?.(name, descriptionShaped);
     }
@@ -130,6 +153,21 @@ export const FolderForm = ({
           </Field>
         )}
       />
+      {isEdit && (
+        <Controller
+          control={control}
+          name="changeReason"
+          defaultValue=""
+          render={({ field }) => (
+            <Field className="mt-4">
+              <FieldLabel>Change reason</FieldLabel>
+              <FieldContent>
+                <Input {...field} placeholder="Why is this folder changing?" maxLength={256} />
+              </FieldContent>
+            </Field>
+          )}
+        />
+      )}
       <DialogFooter className="mt-4">
         <DialogClose asChild>
           <Button variant="ghost">Cancel</Button>

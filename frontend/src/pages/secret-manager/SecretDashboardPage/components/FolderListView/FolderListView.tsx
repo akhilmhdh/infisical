@@ -73,6 +73,7 @@ export const FolderListView = ({
   const handleFolderUpdate = async (
     newFolderName: string,
     newFolderDescription: string | null,
+    changeReason: string,
     oldFolderName?: string,
     oldFolderDescription?: string
   ) => {
@@ -128,7 +129,8 @@ export const FolderListView = ({
       path: secretPath,
       environment,
       projectId,
-      description: newFolderDescription
+      description: newFolderDescription,
+      changeReason
     });
     handlePopUpClose("updateFolder");
     createNotification({

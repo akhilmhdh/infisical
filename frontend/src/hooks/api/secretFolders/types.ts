@@ -52,6 +52,7 @@ export type TUpdateFolderDTO = {
   folderId: string;
   path?: string;
   description?: string | null;
+  changeReason: string;
 };
 
 export type TDeleteFolderDTO = {
