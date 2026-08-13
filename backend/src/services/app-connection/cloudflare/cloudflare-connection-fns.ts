@@ -10,6 +10,7 @@ import { CloudflareConnectionMethod, CloudflareR2Jurisdiction } from "./cloudfla
 import {
   TCloudflareConnection,
   TCloudflareConnectionConfig,
+  TCloudflareDnsRecord,
   TCloudflarePagesProject,
   TCloudflarePermissionGroup,
   TCloudflareR2Bucket,
@@ -190,6 +191,28 @@ const $listCloudflareR2BucketsForJurisdiction = async ({
   }
 
   return buckets;
+};
+
+export const listCloudflareDnsRecords = async (
+  appConnection: TCloudflareConnection,
+  zoneId: string
+): Promise<TCloudflareDnsRecord[]> => {
+  const {
+    credentials: { apiToken }
+  } = appConnection;
+
+  const { data } = await safeRequest.get<{ result: { id: string; name: string; type: string }[] }>(
+    `${IntegrationUrls.CLOUDFLARE_API_URL}/client/v4/zones/${zoneId}/dns_records`,
+    {
+      headers: getCloudflareAuthHeaders(apiToken)
+    }
+  );
+
+  return data.result.map((r) => ({
+    id: r.id,
+    name: r.name,
+    type: r.type
+  }));
 };
 
 export const listCloudflareR2Buckets = async (appConnection: TCloudflareConnection): Promise<TCloudflareR2Bucket[]> => {

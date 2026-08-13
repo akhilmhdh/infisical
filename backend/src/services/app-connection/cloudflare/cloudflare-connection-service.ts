@@ -7,6 +7,7 @@ import {
   listCloudflarePermissionGroups,
   listCloudflareR2Buckets,
   listCloudflareWorkersScripts,
+  listCloudflareDnsRecords,
   listCloudflareZones
 } from "./cloudflare-connection-fns";
 import { TCloudflareConnection } from "./cloudflare-connection-types";
@@ -85,11 +86,26 @@ export const cloudflareConnectionService = (getAppConnection: TGetAppConnectionF
     }
   };
 
+  const listDnsRecords = async (connectionId: string, zoneId: string, actor: OrgServiceActor) => {
+    const appConnection = await getAppConnection(AppConnection.Cloudflare, connectionId, actor);
+    try {
+      const records = await listCloudflareDnsRecords(appConnection, zoneId);
+      return records;
+    } catch (error) {
+      logger.error(
+        error,
+        `Failed to list Cloudflare DNS records for Cloudflare connection [connectionId=${connectionId}] [zoneId=${zoneId}]`
+      );
+      return [];
+    }
+  };
+
   return {
     listPagesProjects,
     listWorkersScripts,
     listZones,
     listPermissionGroups,
-    listR2Buckets
+    listR2Buckets,
+    listDnsRecords
   };
 };

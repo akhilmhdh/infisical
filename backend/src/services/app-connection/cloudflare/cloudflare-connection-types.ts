@@ -62,3 +62,9 @@ export type TCloudflareR2BucketsApiResponse = {
   } | null;
   result_info?: { cursor?: string };
 };
+
+export type TCloudflareDnsRecord = {
+  id: string;
+  name: string;
+  type: string;
+};

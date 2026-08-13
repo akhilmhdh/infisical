@@ -111,6 +111,44 @@ export const registerCloudflareConnectionRouter = async (server: FastifyZodProvi
 
   server.route({
     method: "GET",
+    url: `/:connectionId/cloudflare-dns-records`,
+    config: {
+      rateLimit: readLimit
+    },
+    schema: {
+      operationId: "listCloudflareDnsRecords",
+      params: z.object({
+        connectionId: z.string().uuid()
+      }),
+      querystring: z.object({
+        zoneId: z.string().trim().min(1).max(64)
+      }),
+      response: {
+        200: z
+          .object({
+            id: z.string(),
+            name: z.string(),
+            type: z.string()
+          })
+          .array()
+      }
+    },
+    onRequest: verifyAuth([AuthMode.JWT]),
+    handler: async (req) => {
+      const { connectionId } = req.params;
+      const { zoneId } = req.query;
+
+      const records = await server.services.appConnection.cloudflare.listDnsRecords(
+        connectionId,
+        zoneId,
+        req.permission
+      );
+      return records;
+    }
+  });
+
+  server.route({
+    method: "GET",
     url: `/:connectionId/cloudflare-permission-groups`,
     config: {
       rateLimit: readLimit
