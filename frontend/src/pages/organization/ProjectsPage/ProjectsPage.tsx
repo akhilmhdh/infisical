@@ -60,7 +60,7 @@ export const ProjectsPage = () => {
         <AlertTitle>Secret Sharing Has Moved</AlertTitle>
         <AlertDescription>
           <p>
-            Secret sharing now lives under Secrets Management. Go to{" "}
+            Secret sharing now lives under somewhere far. Go to{" "}
             <Link
               to="/organizations/$orgId/projects/secret-management/secret-sharing"
               params={{ orgId: currentOrg.id }}
