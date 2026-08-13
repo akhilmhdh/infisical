@@ -129,6 +129,19 @@ export const useDeleteSecretRequest = () => {
   });
 };
 
+export const useDeleteSecretRequestsBulk = () => {
+  return useMutation<{ deletedCount: number }, unknown, { secretRequestIds: string[] }>({
+    mutationFn: async ({ secretRequestIds }) => {
+      const { data } = await apiRequest.delete<{ deletedCount: number }>(
+        "/api/v1/shared-secrets/requests/bulk",
+        { data: { secretRequestIds } }
+      );
+
+      return data;
+    }
+  });
+};
+
 export const useUploadBrandingAsset = () => {
   const queryClient = useQueryClient();
   return useMutation<

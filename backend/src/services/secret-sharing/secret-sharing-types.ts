@@ -7,6 +7,10 @@ export enum SecretSharingType {
   Request = "request"
 }
 
+export type TDeleteSecretRequestsBulkDTO = {
+  secretRequestIds: string[];
+} & TGenericPermission;
+
 export type TGetSharedSecretsDTO = {
   type: SecretSharingType;
   offset: number;

@@ -195,6 +195,48 @@ export const registerSecretRequestsRouter = async (server: FastifyZodProvider) =
 
   server.route({
     method: "DELETE",
+    url: "/bulk",
+    config: {
+      rateLimit: writeLimit
+    },
+    schema: {
+      operationId: "deleteSecretRequestsBulk",
+      body: z.object({
+        secretRequestIds: z.array(z.string())
+      }),
+      response: {
+        200: z.object({
+          deletedCount: z.number()
+        })
+      }
+    },
+    onRequest: verifyAuth([AuthMode.JWT]),
+    handler: async (req) => {
+      const { deletedCount } = await req.server.services.secretSharing.deleteSecretRequestsBulk({
+        actor: req.permission.type,
+        actorId: req.permission.id,
+        actorAuthMethod: req.permission.authMethod,
+        actorOrgId: req.permission.orgId,
+        secretRequestIds: req.body.secretRequestIds
+      });
+
+      await server.services.telemetry.sendPostHogEvents({
+        event: PostHogEventTypes.SecretRequestDeleted,
+        distinctId: getTelemetryDistinctId(req),
+        organizationId: req.permission.orgId,
+        properties: {
+          secretRequestId: req.body.secretRequestIds.join(","),
+          organizationId: req.permission.orgId,
+          ...req.auditLogInfo
+        }
+      });
+
+      return { deletedCount };
+    }
+  });
+
+  server.route({
+    method: "DELETE",
     url: "/:id",
     config: {
       rateLimit: writeLimit
