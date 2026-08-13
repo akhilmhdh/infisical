@@ -88,11 +88,18 @@ export function createResolver(ref) {
         const bodyEnd = findMountEnd(src, start);
         if (bodyEnd === -1) continue;
         const chunk = src.slice(start, bodyEnd);
-        const prefix = (chunk.match(/\{\s*prefix:\s*["'`]([^"'`]*)["'`]/) || [])[1];
-        if (!prefix) continue;
-        for (const inner of chunk.matchAll(/register\(\s*([A-Za-z0-9_$.]*register[A-Za-z0-9_$.]*)/g)) {
+        // The mount's own prefix is the options object AFTER the callback, so read it from the end of the
+        // chunk. Taking the first `prefix:` inside picked up a sub-router's instead: every shared-secrets
+        // endpoint came out as `/api/v1/requests`, a wrong path stated with full confidence.
+        const outer = (chunk.match(/\{\s*prefix:\s*["'`]([^"'`]*)["'`]\s*\}\s*\)?\s*$/) || [])[1];
+        if (!outer) continue;
+        // A sub-router registered with its own prefix sits under the outer one, not instead of it.
+        for (const inner of chunk.matchAll(
+          /register\(\s*([A-Za-z0-9_$.]*register[A-Za-z0-9_$.]*)\s*(?:,\s*\{\s*prefix:\s*["'`]([^"'`]*)["'`])?/g
+        )) {
           const fn = inner[1].split(".").pop();
-          if (!child.has(fn)) child.set(fn, { prefix, parentFn });
+          const full = `${outer}${inner[2] || ""}`;
+          if (!child.has(fn)) child.set(fn, { prefix: full, parentFn });
         }
       }
     }
@@ -132,12 +139,19 @@ export function createResolver(ref) {
       for (const span of exportSpans) if (span.at <= idx) chosen = span.fn;
       return chosen && prefix.has(chosen) ? prefix.get(chosen) : "";
     };
-    const routeRe = /server\.route\(\s*\{([\s\S]{0,600}?)\}\s*\)/g;
-    for (const m of src.matchAll(routeRe)) {
-      const body = m[1];
+    // Anchor on `server.route({` and read method/url from the text that follows, capped at the next route.
+    // Requiring a matching close brace within 600 characters silently dropped any route whose schema ran
+    // longer than that, and the list endpoints with a querystring plus a response schema are exactly the
+    // ones that do: the shared-secrets list route was missing from every report.
+    const starts = [...src.matchAll(/server\.route\(\s*\{/g)].map((m) => m.index);
+    for (let si = 0; si < starts.length; si += 1) {
+      const from = starts[si];
+      const to = si + 1 < starts.length ? starts[si + 1] : src.length;
+      const body = src.slice(from, Math.min(to, from + 4000));
       const method = (body.match(/method:\s*["'`](\w+)["'`]/) || [])[1];
       const url = (body.match(/url:\s*["'`]([^"'`]*)["'`]/) || [])[1];
       if (!method || url === undefined) continue;
+      const m = { index: from };
       const line = src.slice(0, m.index).split("\n").length;
       const base = baseFor(m.index);
       out.push({ method: method.toUpperCase(), path: normPath(`${base}${url}`), line, base, url });

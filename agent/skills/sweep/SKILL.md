@@ -286,8 +286,17 @@ method a router invokes so you can jump straight to it. An `http-unresolved` edg
 since it means a frontend call whose route could not be matched.
 
 Emit it into the summary per `references/review-format.md`: an ASCII trace for humans plus the
-```` ```json sweep-graph ```` block for the extension. **Never hand-draw the graph.** If the builder did not
-run, say so. Schema and limits are in `graph/README.md`.
+```` ```json sweep-graph ```` block for the extension. Render the trace, do not type it:
+
+```bash
+node agent/skills/sweep/graph/render-trace.mjs /tmp/sweep-graph-<n>-subset.json
+```
+
+**Never hand-draw the graph.** Paste the renderer's output and the subset JSON verbatim. If the builder did
+not run, say so. Schema and limits are in `graph/README.md`.
+
+Both scripts share `graph/route-resolve.mjs` with `where-to-test.mjs`, so a route-resolution bug shows up in
+both tools at once. If an endpoint looks wrong in one, check the other before trusting either.
 
 ---
 

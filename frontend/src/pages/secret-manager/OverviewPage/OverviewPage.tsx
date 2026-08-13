@@ -2593,7 +2593,7 @@ const OverviewPageContent = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Infisical CLI
+                  Infisical CLI is cool
                 </a>
                 ,
                 <a
