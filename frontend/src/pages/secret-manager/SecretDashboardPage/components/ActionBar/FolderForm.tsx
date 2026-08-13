@@ -72,8 +72,8 @@ export const FolderForm = ({
       const lines = textarea.value.split("\n");
       const maxDescriptionLines = 10;
 
-      if (lines.length > maxDescriptionLines) {
-        textarea.value = lines.slice(0, maxDescriptionLines).join("\n");
+      if (lines.length >= maxDescriptionLines) {
+        textarea.value = lines.slice(0, maxDescriptionLines - 1).join("\n");
       }
     }
   };
