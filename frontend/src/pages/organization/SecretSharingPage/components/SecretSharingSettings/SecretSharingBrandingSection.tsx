@@ -23,6 +23,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DocumentationLinkBadge,
   ColorPicker,
   Field,
   FieldError,
@@ -303,6 +304,7 @@ export const SecretSharingBrandingSection = () => {
       <CardHeader>
         <CardTitle>
           Custom Branding
+          <DocumentationLinkBadge href="/docs/documentation/platform/secret-sharing#custom-branding" />
           {!isFeatureEnabled && (
             <Badge variant="info">
               <LockIcon />

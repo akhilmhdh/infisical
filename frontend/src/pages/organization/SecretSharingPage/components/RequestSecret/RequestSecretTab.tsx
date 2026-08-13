@@ -53,7 +53,7 @@ export const RequestSecretTab = () => {
       <CardHeader>
         <CardTitle>
           Secret Requests
-          <DocumentationLinkBadge href="https://infisical.com/docs/documentation/platform/secret-sharing" />
+          <DocumentationLinkBadge href="https://infisical.com/docs/documentation/platform/secret-sharing#requesting-a-secret" />
         </CardTitle>
         <CardDescription>Request and manage secrets from your team</CardDescription>
         <CardAction>
