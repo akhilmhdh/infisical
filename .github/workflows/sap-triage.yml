@@ -1,0 +1,168 @@
+name: SAP triage
+
+on:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: sap-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sap:
+    if: github.event.label.name == 'zap'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PREVIEW_TEST_EMAIL: test@localhost.local
+      PREVIEW_TEST_PASSWORD: testInfisical@1
+      PREVIEW_TEST_ORG: Sweep Test Org
+    steps:
+      # Drop the label immediately, so re-applying it re-runs the triage.
+      # Left on, a second run would need a manual remove first.
+      - name: Release the label
+        run: |
+          gh api -X DELETE \
+            "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/zap" \
+            --silent || true
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # triage.mjs diffs base against head, so both commits have to be present.
+      - name: Fetch base and head
+        run: |
+          git fetch --no-tags --force origin \
+            "+refs/pull/${PR_NUMBER}/head:refs/remotes/pr/${PR_NUMBER}" \
+            "+${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}"
+
+      # Claude Code only discovers skills under .claude/skills.
+      - name: Stage the repo skills
+        run: |
+          mkdir -p .claude/skills
+          cp -R agent/skills/. .claude/skills/
+
+      # The preview is the build-health gate: SAP can recommend a merge, so it
+      # should not run against a PR whose build never came up. Northflank posts
+      # the URL when the deploy lands, so wait for the comment rather than
+      # sampling once. Newest wins; a redeploy retires the old host.
+      - name: Wait for the Northflank preview
+        id: preview
+        run: |
+          deadline=$(( $(date +%s) + 1800 ))
+          url=""
+          while [ -z "$url" ]; do
+            url=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" --paginate \
+                    --jq '.[] | select((.user.login // "") | startswith("northflank-cloud-build-run")) | .body' \
+                  | grep -oE 'https://p01--infisical--[a-z0-9]+\.code\.run' \
+                  | tail -1 || true)
+            [ -n "$url" ] && break
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::no Northflank preview comment on PR #${PR_NUMBER} after 30m"
+              exit 1
+            fi
+            echo "waiting for the Northflank preview comment..."
+            sleep 20
+          done
+          echo "preview: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the preview to answer /api/status
+        env:
+          BASE_URL: ${{ steps.preview.outputs.url }}
+        run: |
+          deadline=$(( $(date +%s) + 900 ))
+          until curl -sf "$BASE_URL/api/status" >/dev/null; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::$BASE_URL/api/status did not come up within 15m"
+              exit 1
+            fi
+            echo "waiting for $BASE_URL/api/status ..."
+            sleep 10
+          done
+          echo "preview is healthy"
+
+      # Best effort. A preview that Northflank already seeded returns a non-200 here,
+      # which is fine: the account exists either way.
+      - name: Bootstrap the test account
+        env:
+          BASE_URL: ${{ steps.preview.outputs.url }}
+        run: |
+          code=$(curl -s -o /tmp/sap-bootstrap.json -w '%{http_code}' \
+                   -X POST "$BASE_URL/api/v1/admin/bootstrap" \
+                   -H 'content-type: application/json' \
+                   -d "$(jq -nc \
+                         --arg e "$PREVIEW_TEST_EMAIL" \
+                         --arg p "$PREVIEW_TEST_PASSWORD" \
+                         --arg o "$PREVIEW_TEST_ORG" \
+                         '{email:$e, password:$p, organization:$o}')")
+          if [ "$code" = 200 ]; then
+            echo "bootstrapped a fresh instance"
+          else
+            echo "::notice::bootstrap returned $code, assuming the account already exists"
+          fi
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          label_trigger: zap
+          track_progress: true
+          claude_args: |
+            --model claude-haiku-4-5
+            --max-turns 30
+            --allowedTools Bash,Read,Glob,Grep,TodoWrite
+          prompt: |
+            Run the SAP skill on pull request #${{ github.event.pull_request.number }}
+            in ${{ github.repository }}.
+
+            Start with the gate, which is deterministic and costs nothing:
+
+              node agent/skills/sap/triage.mjs ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} --json /tmp/sap-${{ github.event.pull_request.number }}.json
+
+            Then follow the skill. If the gate says needs-review, stop and report it:
+            do not read the diff, and do not analyse it harder. That restraint is the
+            point of SAP.
+
+            You are running inside GitHub Actions on an ubuntu-latest runner.
+
+            1. You have explicit permission, for this turn, to post the triage verdict as
+               a PR comment. Keep it to the three or four lines the skill specifies. Put
+               <!-- sap-triage --> in the body and upsert it, so a re-run edits in place
+               rather than stacking comments:
+
+                 gh api repos/:owner/:repo/issues/${{ github.event.pull_request.number }}/comments --jq \
+                   '.[] | select(.body | contains("<!-- sap-triage -->")) | .id'
+
+            2. Approval. If, and only if, your verdict is "Safe to merge", you may also
+               approve the PR:
+
+                 gh pr review ${{ github.event.pull_request.number }} --approve --body "<your triage text>"
+
+               Never approve on "Needs a review" or "Do not merge". Never request changes
+               and never merge. If you are between two verdicts, take the lower one and
+               do not approve: rule 1 of the skill is that deferring is cheap and a wrong
+               pass is not.
+
+            3. The PR build is deployed and healthy at ${{ steps.preview.outputs.url }}
+               (its /api/status answered before you started) and has a bootstrapped
+               super admin, test@localhost.local / testInfisical@1. That is context for
+               the merge decision, not a thing to go and test. SAP does no browser work:
+               no live test, no screenshots, no fan-out. If you want any of those, that
+               is the signal to defer to SWEEP and stop.
+
+            4. gh is already authenticated against ${{ github.repository }}, so skip the
+               gh repo set-default check. Do not push commits.
