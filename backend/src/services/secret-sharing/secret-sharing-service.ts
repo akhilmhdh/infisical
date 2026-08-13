@@ -29,6 +29,7 @@ import {
   TCreatePublicSharedSecretDTO,
   TCreateSecretRequestDTO,
   TCreateSharedSecretDTO,
+  TDeleteSecretRequestsBulkDTO,
   TDeleteSharedSecretDTO,
   TGetActiveSharedSecretByIdDTO,
   TGetSecretRequestByIdDTO,
@@ -785,6 +786,30 @@ export const secretSharingServiceFactory = ({
     return result;
   };
 
+  const deleteSecretRequestsBulk = async ({
+    actor,
+    actorId,
+    actorAuthMethod,
+    actorOrgId,
+    secretRequestIds
+  }: TDeleteSecretRequestsBulkDTO) => {
+    if (!actorOrgId) throw new ForbiddenRequestError();
+
+    const { permission } = await permissionService.getOrgPermission({
+      scope: OrganizationActionScope.Any,
+      actor,
+      actorId,
+      orgId: actorOrgId,
+      actorAuthMethod,
+      actorOrgId
+    });
+    if (!permission) throw new ForbiddenRequestError({ name: "User does not belong to the specified organization" });
+
+    const deleted = await secretSharingDAL.deleteManyByIds(secretRequestIds);
+
+    return { deletedCount: deleted.length };
+  };
+
   const deleteSharedSecretById = async (deleteSharedSecretInput: TDeleteSharedSecretDTO) => {
     const { actor, actorId, orgId, actorAuthMethod, actorOrgId, sharedSecretId } = deleteSharedSecretInput;
     const { permission } = await permissionService.getOrgPermission({
@@ -971,6 +996,7 @@ export const secretSharingServiceFactory = ({
     createPublicSharedSecret,
     getSharedSecrets,
     deleteSharedSecretById,
+    deleteSecretRequestsBulk,
     getSharedSecretById,
     accessSharedSecret,
     getSharedSecretOrgId,

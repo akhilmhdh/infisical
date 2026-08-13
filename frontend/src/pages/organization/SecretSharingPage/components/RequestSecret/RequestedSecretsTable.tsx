@@ -1,6 +1,11 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
+
+import { createNotification } from "@app/components/notifications";
 
 import {
+  Button,
+  Checkbox,
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -14,7 +19,7 @@ import {
   TableHeader,
   TableRow
 } from "@app/components/v3";
-import { useGetSecretRequests } from "@app/hooks/api/secretSharing";
+import { useDeleteSecretRequestsBulk, useGetSecretRequests } from "@app/hooks/api/secretSharing";
 import { UsePopUpState } from "@app/hooks/usePopUp";
 
 import { RequestedSecretsRow } from "./RequestedSecretsRow";
@@ -29,19 +34,58 @@ type Props = {
 export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { isPending, data } = useGetSecretRequests({
     offset: (page - 1) * perPage,
     limit: perPage
   });
+  const { mutateAsync: deleteBulk, isPending: isDeleting } = useDeleteSecretRequestsBulk();
 
   const hasSecrets = !isPending && data?.secrets && data.secrets.length > 0;
+  const rows = data?.secrets ?? [];
+  const allSelected = rows.length > 0 && selectedIds.length === rows.length;
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? [] : rows.map((row) => row.id));
+  };
+
+  const handleDeleteSelected = async () => {
+    const { deletedCount } = await deleteBulk({ secretRequestIds: selectedIds });
+    createNotification({
+      text: `Successfully deleted ${deletedCount} secret requests`,
+      type: "success"
+    });
+  };
 
   return (
     <div>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm text-mineshaft-400">{selectedIds.length} selected</p>
+        <Button
+          variant="outline"
+          size="xs"
+          isPending={isDeleting}
+          onClick={handleDeleteSelected}
+        >
+          <Trash2 />
+          Delete {selectedIds.length} requests
+        </Button>
+      </div>
       {(isPending || hasSecrets) && (
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-5">
+                <Checkbox
+                  id="select-all-requests"
+                  isChecked={allSelected}
+                  onCheckedChange={toggleAll}
+                />
+              </TableHead>
               <TableHead className="w-1/4">Name</TableHead>
               <TableHead>Access Type</TableHead>
               <TableHead>Created</TableHead>
@@ -65,7 +109,13 @@ export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
               ))}
             {hasSecrets &&
               data.secrets.map((row) => (
-                <RequestedSecretsRow key={row.id} row={row} handlePopUpOpen={handlePopUpOpen} />
+                <RequestedSecretsRow
+                  key={row.id}
+                  row={row}
+                  handlePopUpOpen={handlePopUpOpen}
+                  isSelected={selectedIds.includes(row.id)}
+                  onToggleSelect={() => toggleRow(row.id)}
+                />
               ))}
           </TableBody>
         </Table>

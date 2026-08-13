@@ -13,6 +13,19 @@ export type TSecretSharingDALFactory = ReturnType<typeof secretSharingDALFactory
 export const secretSharingDALFactory = (db: TDbClient) => {
   const sharedSecretOrm = ormify(db, TableName.SecretSharing);
 
+  const deleteManyByIds = async (ids: string[], tx?: Knex) => {
+    try {
+      const deleted = await (tx || db)(TableName.SecretSharing)
+        .whereIn(`${TableName.SecretSharing}.id`, ids)
+        .delete()
+        .returning("*");
+
+      return deleted;
+    } catch (error) {
+      throw new DatabaseError({ error, name: "DeleteManyByIds" });
+    }
+  };
+
   const getSecretRequestById = async (id: string) => {
     const repDb = db.replicaNode();
 
@@ -146,6 +159,7 @@ export const secretSharingDALFactory = (db: TDbClient) => {
   return {
     ...sharedSecretOrm,
     countAllUserOrgSharedSecrets,
+    deleteManyByIds,
     pruneExpiredSharedSecrets,
     pruneExpiredSecretRequests,
     softDeleteById,

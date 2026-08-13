@@ -14,6 +14,7 @@ import { createNotification } from "@app/components/notifications";
 import {
   Badge,
   Button,
+  Checkbox,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,13 +36,17 @@ import { UsePopUpState } from "@app/hooks/usePopUp";
 
 export const RequestedSecretsRow = ({
   row,
-  handlePopUpOpen
+  handlePopUpOpen,
+  isSelected,
+  onToggleSelect
 }: {
   row: TSharedSecret;
   handlePopUpOpen: (
     popUpName: keyof UsePopUpState<["deleteSecretRequestConfirmation", "revealSecretRequestValue"]>,
     data: unknown
   ) => void;
+  isSelected: boolean;
+  onToggleSelect: () => void;
 }) => {
   const { mutateAsync: revealSecretValue, isPending } = useRevealSecretRequestValue();
 
@@ -52,6 +57,13 @@ export const RequestedSecretsRow = ({
 
   return (
     <TableRow key={row.id}>
+      <TableCell>
+        <Checkbox
+          id={`select-request-${row.id}`}
+          isChecked={isSelected}
+          onCheckedChange={onToggleSelect}
+        />
+      </TableCell>
       <TableCell isTruncatable>{row.name || <span className="text-muted">&mdash;</span>}</TableCell>
       <TableCell>
         <Tooltip>
