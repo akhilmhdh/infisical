@@ -163,7 +163,7 @@ export function createResolver(ref) {
   const EXTS = [".ts", ".tsx", ".mts", "/index.ts", "/index.tsx"];
   const IMPORT_RE = /import\s+(type\s+)?(?:([\w*\s{},$]+?)\s+from\s+)?["']([^"']+)["']/g;
   // `export * from "./queries"` / `export { x } from "./queries"`. Barrel files re-export rather than
-  // import, so a scan that only understands `import` treats every barrel as a dead end — which is how a
+  // import, so a scan that only understands `import` treats every barrel as a dead end, which is how a
   // component importing from `@app/hooks/api` looked like it never touched the hook it plainly uses.
   const EXPORT_FROM_RE = /export\s+(type\s+)?(?:\*|\{[^}]*\})\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g;
 
@@ -215,7 +215,7 @@ export function createResolver(ref) {
 
   /**
    * Who imports this file. `git grep` on the module basename is the cheap way to get the reverse edge,
-   * but the basename alone is dangerously generic here — every API domain has a `queries.tsx`, so a
+   * but the basename alone is dangerously generic here: every API domain has a `queries.tsx`, so a
    * name-only match claims the whole frontend imports one domain's hooks. Every hit is therefore
    * re-resolved and kept only if it genuinely resolves to this exact path.
    */

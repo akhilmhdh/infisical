@@ -28,19 +28,45 @@ risk, and the decoration says whether it blocks.
 
 ---
 
+## How to write it
+
+The author is busy and did not write this code five minutes ago. Every sentence has to earn its place.
+
+**Write it so a smart teenager could follow it.** Not because the author is one, but because plain
+language is the fastest way to be understood and the hardest place to hide a vague claim. If you cannot
+say what breaks in one plain sentence, you do not understand the finding yet.
+
+Rules, in order of how often they get broken:
+
+1. **Say what happens, not what category it belongs to.** "The button does nothing when the field is
+   empty" beats "improper validation feedback handling".
+2. **One idea per sentence.** If a sentence has a comma and two clauses, split it.
+3. **Name the thing.** Not "the handler" or "the component", but `updateFolder` and `FolderForm.tsx:161`.
+4. **No em dashes.** Use a full stop or a colon. Short sentences do the same job better.
+5. **Cut hedges.** No "it seems", "arguably", "potentially problematic". Either it breaks or it does not.
+   If you are unsure, say "I did not verify this" in plain words.
+6. **No jargon where a normal word exists.** "runs twice" not "double invocation". "slow" not
+   "performance degradation". "not allowed" not "unauthorized access vector".
+7. **Do not pad.** No "Great work overall, however". No restating the diff back at the author.
+
+A quick test: read the finding out loud. If you run out of breath or hear yourself sounding like a
+compliance document, rewrite it.
+
+---
+
 ## The finding line
 
 ```
-<label> (<decoration>) · <severity> · <category> — <subject>
+<label> (<decoration>) · <severity> · <category> · <what breaks>
 ```
 
 Rendered:
 
 ```
-issue (blocking) · critical · security — Certificate policy read is not scoped to the caller's project
-suggestion (non-blocking) · low · maintainability — Extract the three profile lookups into one query
-question (non-blocking) — Is the 1h TTL floor still safe now that renewal is unattended?
-nitpick (non-blocking) — `dataHash` here, `dataDigest` two files over
+issue (blocking) · critical · security · Anyone logged in can read folders from other companies
+suggestion (non-blocking) · low · maintainability · Three profile lookups could be one query
+question (non-blocking) · Is a 1 hour TTL still safe now that renewal runs unattended?
+nitpick (non-blocking) · `dataHash` here, `dataDigest` two files over
 ```
 
 Rules:
@@ -49,7 +75,9 @@ Rules:
 - **`decoration` is required** for `issue`, optional elsewhere. Default `non-blocking`.
 - **`severity` and `category` are required for `issue`, omitted for `nitpick`, `praise`, `note`, and
   usually `question`.** A nit with a severity is a contradiction.
-- **`subject` states the defect, not the topic.** "Read is not scoped to the project", not "scoping".
+- **The last part says what breaks, in plain words.** "Anyone logged in can read folders from other
+  companies", not "insufficient tenant scoping on lookup". Someone skimming the PR list should
+  understand the risk without opening the comment.
 
 ### Labels
 
@@ -109,48 +137,64 @@ Notes on the ones that get misused:
 
 ## Anatomy of a finding
 
-Six parts. A candidate that cannot fill location, impact, and evidence is not a finding.
+Four questions, in this order. They are the questions the author will ask anyway.
+
+1. **What breaks?** One sentence.
+2. **Why does it matter?** Who notices, and what do they see.
+3. **How do I check it?** Steps to reproduce, or the command to run.
+4. **How do I fix it?** A diff where possible.
+
+Nothing else is required. Drop any part that would only restate another.
 
 ```markdown
-#### issue (blocking) · high · contract — Renaming the audit event breaks external detections
+#### issue (blocking) · high · contract · Renaming this audit event breaks customer alerts
 
-**Where:** `backend/src/ee/routes/v1/kmip-server-router.ts:608`
+Customers write alerts against `audit_log.event_type`. This renames
+`REGISTER_KMIP_SERVER` to `KMIP_SERVER_CONNECT`, so every alert watching the old
+name goes quiet. Nothing errors. It just stops firing, which is the worst way for
+an alert to fail.
 
-**Impact:** `audit_log.event_type` is shipped to customer SIEMs (`audit-log-queue.ts:134`) and is
-filterable in the audit log UI. Any saved filter or detection keyed on `register-kmip-server` silently
-stops matching, and the same activity is now split across two event types with no migration.
+It also splits one activity across two names: `kmip-router.ts:379` still emits the
+old one, and rows already in the database keep it too.
 
-**Evidence:** the `/connect` handler previously emitted `EventType.REGISTER_KMIP_SERVER`; it now emits
-`KMIP_SERVER_CONNECT`. `REGISTER_KMIP_SERVER` is still emitted from `kmip-router.ts:379`, so both types
-are live and historical rows keep the old value. Verified the stream path carries the type string.
+**How to check:** search the audit log UI for `register-kmip-server` before and
+after this branch. Old rows still match, new ones do not appear.
 
-**Expected:** either keep emitting the old type alongside the new one for a deprecation window, or call
-the break out in the PR description and the changelog so operators can update detections.
+**How to fix:** emit both names for one release so customers can migrate, or say
+in the PR description and changelog that the name changed.
 
-**Verified:** yes, by reading the queue and stream paths.
+I traced this by reading `audit-log-queue.ts:134` to the stream. I did not run it.
 ```
 
-For a live-test finding, replace **Evidence** with the reproduction and attach artifacts:
+A live-test finding replaces "How to check" with what you actually did, and attaches the evidence:
 
 ```markdown
-#### issue (blocking) · high · ux — Saving certificate config reports success but discards the TTL
+#### issue (blocking) · high · ux · Saving says it worked, but the TTL you cleared comes back
 
-**Where:** `KmipServerCertConfigModal.tsx:84` (found by live test, no exact line in the diff)
+Clear the certificate TTL, press Save, and a green "Certificate configuration
+updated" appears. Reopen the dialog and the old value is still there. Nothing was
+saved, and nothing said so.
 
-**Impact:** an operator clears a custom TTL, sees "Certificate configuration updated", and the old value
-is still stored. Subsequent renewals keep the longer validity the operator meant to remove.
+This matters because the operator moves on believing the change stuck. Renewals
+keep using the longer validity they meant to remove.
 
-**Reproduction:** create a KMIP server with TTL `2d` → open Edit Certificate Configuration → clear the
-TTL field → Save. Toast reports success. Re-open the modal: TTL is still `2d`.
+**How to reproduce:** create a KMIP server with TTL `2d`. Open Edit Certificate
+Configuration. Clear the TTL field. Press Save. Reopen the dialog: still `2d`.
 
-**Evidence:** ![Step 4: success toast with stale TTL](https://<artifacts>/sweep/<run>/step-04.png)
-▶ [Watch the replay](https://<artifacts>/sweep/<run>/replay)
+![The success toast, with the TTL still set behind it](https://<artifacts>/step-04.png)
 
-**Expected:** clearing the field should send `ttl: null` so the stored value is cleared, or the field
-should be read-only with an explicit "reset to default" action.
+▶️ **Recording:** [step-04.webm](https://<artifacts>/run.mp4) (12s)
 
-**Verified:** yes, reproduced twice on a clean org.
+**How to fix:** send `ttl: null` when the field is empty so the stored value clears.
+If clearing is not meant to be allowed, disable the field and add an explicit
+"reset to default" button.
+
+Reproduced twice on a fresh organisation.
 ```
+
+Notice what neither example does: no "Impact:" label on an obvious impact, no "Verified: yes", no restating
+the diff. The verification note is one plain sentence at the end, and only when it changes how much the
+reader should trust the finding.
 
 ---
 
@@ -174,21 +218,21 @@ One per PR, upserted behind `<!-- sweep-summary -->`. Re-runs edit it in place.
 
 ```markdown
 > [!NOTE]
-> 🤖 Automated review by **SWEEP** — not written by a human
+> 🤖 **SWEEP** review
 
 ## ⚠️ REQUEST CHANGES · `9e7122f`
 
-Adds auto-renewal for KMIP server certificates: a new connect audit event, TTL removed from the UI,
-docs updated. Reviewed the diff across 5 lenses and exercised the KMIP server create and cert-config
-flows in a browser.
+This adds automatic renewal for KMIP server certificates. It also renames an audit event, hides the TTL
+field, and updates the docs.
 
-**Live test:** 6 steps run, 1 failure. [Replay](https://…/replay)
+I read the diff and ran the create and certificate-config flows in a browser. 6 steps, 1 failed.
+[Recording](https://…/run.mp4)
 
-| # | Finding | Severity | Category | Where |
-|---|---|---|---|---|
-| 1 | Renaming the audit event breaks external detections | high | contract | `kmip-server-router.ts:608` |
-| 2 | 1h TTL floor permits ~8,760 issuances/server/year | medium | reliability | `kmip-server-router.ts:34` |
-| 3 | TTL is now invisible in the UI but still honoured by the API | low | ux | `KmipServerCertConfigModal.tsx:43` |
+| # | What breaks | Severity | Where |
+|---|---|---|---|
+| 1 | Customer alerts on the old audit event name go quiet | high | `kmip-server-router.ts:608` |
+| 2 | A 1 hour minimum TTL allows ~8,760 certificates per server per year | medium | `kmip-server-router.ts:34` |
+| 3 | The TTL field is hidden in the UI but the API still applies it | low | `KmipServerCertConfigModal.tsx:43` |
 
 <details><summary>Findings in full</summary>
 
@@ -221,10 +265,14 @@ useWebAccessSession.ts  (hook, changed)
 
 <details><summary>What was checked, and what was not</summary>
 
-**Lenses:** tenancy ✅ · concurrency ✅ · data ⏭️ skipped (no schema change) · contract ✅ · product ✅
-**Live test:** create server, edit cert config, clear TTL, verify persistence, deploy modal, docs links
-**Not checked:** the KMIP daemon side (separate repository), AWS auth enrollment (no AWS creds in the
-test org), audit log stream delivery to a real SIEM.
+**Checked:** who is allowed to do what, database and queue behaviour, the API contract, and the UI.
+Skipped the data lens because nothing in the schema changed.
+
+**Ran in a browser:** create a server, edit the certificate config, clear the TTL, reopen to check it
+saved, the deploy dialog, and the docs links.
+
+**Did not check:** the KMIP daemon (it lives in another repository), AWS auth enrollment (no AWS
+credentials here), and whether the audit event actually reaches a real SIEM.
 
 </details>
 ```
@@ -255,9 +303,9 @@ bodies short and put the long reasoning in the summary if it runs past a screen.
 
 ```markdown
 > [!NOTE]
-> 🤖 Automated review by **SWEEP** — not written by a human
+> 🤖 **SWEEP** review
 
-**issue (blocking) · high · contract** — Renaming the audit event breaks external detections
+**issue (blocking) · high · contract** · Renaming the audit event breaks external detections
 
 `audit_log.event_type` ships to customer SIEMs, so a saved detection on `register-kmip-server` silently
 stops matching. Historical rows keep the old value, splitting the same activity across two types.

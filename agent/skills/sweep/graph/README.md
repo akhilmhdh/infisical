@@ -161,11 +161,11 @@ Known limits, none of them silent:
 
 ---
 
-## `route-resolve.mjs` — shared route resolution
+## `route-resolve.mjs`: shared route resolution
 
 `build-graph.mjs` and `../where-to-test.mjs` both need to know a backend route's real path and who imports
 a given file. That logic lives in `route-resolve.mjs` rather than in either consumer, because working out a
-router's prefix is the part that has been wrong the most often — registration is a tree
+router's prefix is the part that has been wrong the most often: registration is a tree
 (`/api/v1` → `/pam` → `/sessions`), some mounts are anonymous arrow functions carrying the prefix, and one
 router file can export several register functions at different prefixes. Two copies would drift, and a
 drifted copy tells a reviewer to curl an endpoint that does not exist.
@@ -175,7 +175,7 @@ reproducible regardless of which branch is checked out):
 
 | Export | Purpose |
 | --- | --- |
-| `files` | every path at `ref`, as a Set — import resolution probes candidate suffixes, and a `git show` per candidate took minutes |
+| `files` | every path at `ref`, as a Set: import resolution probes candidate suffixes, and a `git show` per candidate took minutes |
 | `show(path)` | file contents at `ref`, cached |
 | `prefix` | `registerFn` → full mounted prefix, resolved up the whole registration chain |
 | `routesOf(path)` | a router file's routes as `{method, path, line}`, each bound to the export block it sits in |
@@ -191,7 +191,7 @@ Extracting this was verified by diffing the graph JSON for the same base/head be
 
 ---
 
-## `--subset` — the block that gets posted
+## `--subset`: the block that gets posted
 
 `--out` writes the full graph for tooling. `--subset` writes the pruned graph that goes in the review
 comment, inside a ```` ```json sweep-graph ```` fence. It carries the same node and edge shape plus
@@ -206,7 +206,7 @@ comment, inside a ```` ```json sweep-graph ```` fence. It carries the same node 
 
 Selection rule: every seed, plus every node directly connected to a **behaviour-carrying** seed (router,
 service, dal, fns, queue, page, component, hook, migration). Seeds that are types, constants or api-docs
-modules stay as nodes but do not pull their neighbours in — they are imported by half the codebase, so
+modules stay as nodes but do not pull their neighbours in, they are imported by half the codebase, so
 their neighbourhood describes the codebase rather than the change.
 
 This exists because it was once assembled by hand for a single PR, and then silently stopped being

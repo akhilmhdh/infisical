@@ -74,7 +74,7 @@ const page = await context.newPage();
  * Playwright's recordVideo never shows the cursor: Chromium's screencast captures the page surface, and
  * the pointer is drawn by the OS compositor above it. A recording of someone clicking things therefore
  * shows fields changing and dialogs opening with nothing indicating what was pressed, which is close to
- * useless as review evidence. So the cursor becomes part of the DOM — a fixed, pointer-events:none
+ * useless as review evidence. So the cursor becomes part of the DOM: a fixed, pointer-events:none
  * overlay that tracks real mouse events and pulses on click. It composites into the video because it is
  * genuinely on the page.
  *
@@ -124,7 +124,7 @@ if (CURSOR_ENABLED) {
  * Move the pointer to an element and click it, instead of teleporting.
  *
  * `page.click()` jumps straight to the target in one event, so the overlay above appears at the
- * destination with no travel — a viewer cannot see where the click came from or that it was deliberate.
+ * destination with no travel: a viewer cannot see where the click came from or that it was deliberate.
  * Stepping the move makes the intent legible in the recording, and costs a few hundred milliseconds.
  */
 async function tracedClick(target, selector, timeout) {

@@ -28,9 +28,9 @@ drag into the comment by hand.
 
 ### Match the artifact to the defect: video for behaviour, image for appearance
 
-**A behavioural defect gets a video.** Anything that is about a sequence — a toast that fires twice, a
+**A behavioural defect gets a video.** Anything that is about a sequence: a toast that fires twice, a
 value that reverts on reopen, a button that stays enabled, a state that only breaks on the second
-submit — is not provable in a still. The still shows one moment and invites the reply "how do you know
+submit: is not provable in a still. The still shows one moment and invites the reply "how do you know
 that is what happened".
 
 **A visual defect gets a PNG.** Misalignment, wrong spacing, clipped text, a broken empty state, wrong
@@ -42,7 +42,7 @@ multi-megabyte for a few seconds, palette-quantised so text goes mushy, no seek 
 real `.mp4` and let it be a link.
 
 **The recording draws its own pointer.** Playwright's `recordVideo` captures the page surface, and the
-real cursor is drawn by the OS compositor *above* that — so an unmodified recording shows dialogs opening
+real cursor is drawn by the OS compositor *above* that, so an unmodified recording shows dialogs opening
 and fields filling with nothing indicating what was pressed. The local runner injects a fixed,
 `pointer-events:none` overlay that tracks mouse events and pulses on click, so the pointer composites into
 the video because it is genuinely in the DOM. Clicks also travel to their target in ~18 steps rather than
@@ -55,7 +55,7 @@ appear from nowhere.
 
 **Producing the `.mp4` with no ffmpeg on the box.** Playwright records `.webm` and its bundled ffmpeg is a
 stripped build with only `png` and `libvpx` encoders, so it cannot make H.264. macOS AVFoundation can, via
-`agent/skills/sweep/frames-to-mp4.swift` — no Homebrew, no new dependency:
+`agent/skills/sweep/frames-to-mp4.swift`: no Homebrew, no new dependency:
 
 ```bash
 ffmpeg-mac -i in.webm -r 10 /tmp/frames/f%04d.png    # decode; -vf fps=10 FAILS, filter parser absent
@@ -63,7 +63,7 @@ swiftc -O agent/skills/sweep/frames-to-mp4.swift -o /tmp/frames-to-mp4
 /tmp/frames-to-mp4 /tmp/frames out.mp4 10 2.5        # 10fps, hold final frame 2.5s
 ```
 
-H.264 needs even dimensions and the tool crops to that. Drop the leading page-load frames — a recording
+H.264 needs even dimensions and the tool crops to that. Drop the leading page-load frames: a recording
 that opens on a spinner reads as a broken artifact. Hold the final frame a couple of seconds so the end
 state is legible. 17s at 10fps and full 1440x900 lands under 1MB, smaller than the GIF it replaces.
 
@@ -72,10 +72,10 @@ state is legible. 17s at 10fps and full 1440x900 lands under 1MB, smaller than t
 | Reference | Image | Video |
 | --- | --- | --- |
 | `![](raw.githubusercontent…)` | **renders inline** | becomes `<img>` → broken alt text |
-| `<video src="raw…">` or `<video><source></video>` | — | **tag stripped**; renders as an empty paragraph |
+| `<video src="raw…">` or `<video><source></video>` | n/a | **tag stripped**; renders as an empty paragraph |
 | GitHub blob view (`/blob/<branch>/<path>`) | renders (`"image":true`) | no player (`"image":false`, `richText:null`) |
 | Direct raw URL in a browser | `image/png` | `.webm` → `audio/webm`; `.mp4` → `application/octet-stream`, downloads |
-| GitHub attachment CDN (`user-attachments/assets/…`) | player | **player — the only one that works** |
+| GitHub attachment CDN (`user-attachments/assets/…`) | player | **player. The only one that works** |
 
 Verify with GitHub's own pipeline rather than trusting markup: `gh api -X POST /markdown -f mode=gfm
 -f text='<video src="…"></video>'` returns the sanitised HTML.
@@ -91,7 +91,7 @@ for the redaction rules below.
 
 **5. Never reference media you have not verified is fetchable.** This is the one that has actually bitten:
 a review was posted embedding three `raw.githubusercontent.com` URLs whose commit existed only locally.
-Every URL 404'd, so the review shipped broken-image alt text where its evidence should have been — worse
+Every URL 404'd, so the review shipped broken-image alt text where its evidence should have been: worse
 than having posted no image at all, because it reads as a malfunction.
 
 Bytes committed locally are not published. `raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`

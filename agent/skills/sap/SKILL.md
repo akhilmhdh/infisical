@@ -5,12 +5,11 @@ description: Fast merge-safety triage for small pull requests. Decides whether a
 
 # SAP
 
-Triage, not review. SAP answers one question — **can a human merge this on sight?** — and answers it in
-about a minute.
+Triage, not review. SAP answers one question. **Can a human merge this on sight?** It answers in about a minute.
 
 It is the cheap front door to SWEEP. Most pull requests in this repository are small: 41% are under 100
 lines. Running five independent lenses and a browser over a typo fix is waste, and waste is the thing SAP
-exists to remove. When a change is not obviously dull, SAP does not analyse it harder — it stops and hands
+exists to remove. When a change is not obviously dull, SAP does not analyse it harder, it stops and hands
 it to SWEEP.
 
 ## Two rules that never bend
@@ -24,7 +23,7 @@ Report the verdict in the terminal by default.
 
 ## Cost
 
-**Run SAP on Haiku.** There is no lens fan-out, no verification round and no second opinion — one gate
+**Run SAP on Haiku.** There is no lens fan-out, no verification round and no second opinion: one gate
 and at most one short diff read. Measured on this repository: the gate is **0.2s when a size or critical
 path trips** (it short-circuits before resolving blast radius) and **~2.5s otherwise**, at zero model
 cost. The only tokens spent are one pass over a diff that is already known to be under 200 lines.
@@ -34,7 +33,7 @@ If you catch yourself opening a third file, you have left SAP's job. Defer.
 ## What SAP does not do
 
 No live browser test. No video. No screenshots. No lens fan-out. No graph. No verification round. If you
-find yourself wanting any of those, that *is* the signal to defer — say so and stop.
+find yourself wanting any of those, that *is* the signal to defer: say so and stop.
 
 ---
 
@@ -49,9 +48,9 @@ the added lines for danger patterns, and resolves how many files import what was
 
 It returns one of two verdicts:
 
-- **`needs-review`** — a gate tripped. **Stop. Do not read the diff.** The gate is the finding; further
+- **`needs-review`**: a gate tripped. **Stop. Do not read the diff.** The gate is the finding; further
   analysis is exactly the spend SAP is avoiding. Report it and recommend SWEEP.
-- **`review-diff`** — nothing tripped. The change is small and boring on paper, so now read it.
+- **`review-diff`**: nothing tripped. The change is small and boring on paper, so now read it.
 
 ## 2. The gates, and why each one exists
 
@@ -69,11 +68,11 @@ that plainly: the reason is what it touches, not what it does wrong.
 
 One pass. You are looking for the kind of defect visible in a small diff without leaving it:
 
-- An error path that swallows the failure — a `catch` that logs and continues, a promise with no
+- An error path that swallows the failure: a `catch` that logs and continues, a promise with no
   rejection handling.
 - A validation rule tightened or a field made required, which breaks existing callers.
 - A form field, prop or handler wired on one side only. **Compare it against its siblings in the same
-  file** — divergence between two things that should look alike is the highest-yield signal at this size.
+  file**: divergence between two things that should look alike is the highest-yield signal at this size.
 - An off-by-one, an inverted condition, a `!` dropped or added.
 - Copy that contradicts the behaviour around it.
 
@@ -88,23 +87,48 @@ Exactly one of three, and nothing else:
 | --- | --- |
 | ✅ **Safe to merge** | Small, non-critical, nothing found. |
 | 🔶 **Needs a review** | A gate tripped, or the diff has something worth a second look. Recommend SWEEP. |
-| ⛔ **Do not merge** | An outright defect visible in the diff. Rare from SAP — say what breaks. |
+| ⛔ **Do not merge** | An outright defect visible in the diff. Rare from SAP: say what breaks. |
 
-Keep the output to a few lines. The value is the decision, not the prose:
+### How to write it
+
+Three or four lines. Plain words. The author wants the decision and the reason, nothing else.
+
+No em dashes. No hedging. No jargon where a normal word works. Say what you looked at and what you
+decided. If you deferred, say exactly what tripped so the author knows whether to shorten the PR, split
+it, or just accept that a migration gets a second reader. "Looks risky" is not a triage result.
 
 ```
-✅ Safe to merge — 14 lines, 1 file, frontend only.
-Tooltip copy only. No gate tripped, no behaviour change.
+> 🤖 **SAP** triage
+
+✅ Safe to merge. 14 lines, 1 file, frontend only.
+
+Tooltip wording only. Nothing critical, nothing widely used, no behaviour change.
 ```
 
 ```
-🔶 Needs a review — 31 lines, 2 files.
-[critical-path] backend/src/db/migrations/20260812_add_index.ts — runs against every customer.
-The change looks correct; the reason is what it touches. Hand to SWEEP.
+> 🤖 **SAP** triage
+
+🔶 Needs a review. 31 lines, 2 files.
+
+This adds a database migration, which runs against every customer's data. The
+change looks correct: the index matches the query and `down` undoes `up`. I am
+handing it over because of what it touches, not because I found a problem.
 ```
 
-**Say which gate tripped, always.** "Looks risky" is not a triage result — the author needs to know
-whether to shorten the PR, split it, or just accept that a migration gets a second reader.
+```
+> 🤖 **SAP** triage
+
+⛔ Do not merge. 4 lines, 1 file.
+
+The line cap now trims at 10 lines instead of 11, and keeps 9 instead of 10. So a
+description that is exactly 10 lines long loses its last line as you type.
+
+The description says the old code let an 11th line through. It did not: `> 10`
+fires on the 11th line and keeps 10.
+```
+
+**When you defer because of what a change touches, say that it looks correct if it does.** Otherwise the
+author reads a deferral as an accusation and argues with you instead of finding a second reader.
 
 ## 5. When SAP is the wrong tool
 

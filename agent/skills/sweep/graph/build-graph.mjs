@@ -308,8 +308,8 @@ for (let d = 0; d < DEPTH; d += 1) {
 /**
  * A hub is a module so widely imported that its importers say nothing about *this* change.
  *
- * `audit-log-types.ts` has 208 importers, `auth-type.ts` 230. When one of those is in the diff — adding
- * a field to an audit event is a one-line change that happens often — expanding it pulls in essentially
+ * `audit-log-types.ts` has 208 importers, `auth-type.ts` 230. When one of those is in the diff (adding
+ * a field to an audit event is a one-line change that happens often) expanding it pulls in essentially
  * every router in the backend, and then each of their service calls, so the graph fills with pki-scep and
  * access-approval edges that have nothing to do with the change. The signal drowns.
  *
@@ -528,7 +528,7 @@ writeFileSync(out, JSON.stringify(graph, null, 2));
 /**
  * The postable subset: seeds plus whatever is directly wired to them.
  *
- * The full graph is the right thing to hand a tool, and the wrong thing to paste into a comment — a
+ * The full graph is the right thing to hand a tool, and the wrong thing to paste into a comment: a
  * few hundred nodes is unreadable and megabytes of JSON. What a reviewer wants is the change and its
  * immediate neighbours, including the unchanged routers and services it calls, with the call labels
  * intact. Emitting this from the builder rather than assembling it by hand is the point: the last time
@@ -548,7 +548,7 @@ if (SUBSET_OUT) {
   }
   // Only behaviour-carrying seeds radiate. A shared types, constants or api-docs module is imported by
   // half the backend, so an edge into it means "this file uses a shared definition" and says nothing
-  // about the change's flow — radiating from `api-docs/constants.ts` filled a folder change with PAM
+  // about the change's flow: radiating from `api-docs/constants.ts` filled a folder change with PAM
   // routers. Degree alone cannot separate them (that module scored 25 against the router's 23), so the
   // rule is the node's kind, with degree kept as a backstop for an unusually connected router.
   const BEHAVIOURAL = new Set([

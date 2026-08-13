@@ -44,7 +44,7 @@ for (const file of files) {
 }
 
 if (refs.size === 0) {
-  console.log("no media referenced — nothing to verify");
+  console.log("no media referenced: nothing to verify");
   process.exit(0);
 }
 
@@ -71,14 +71,14 @@ for (const [url, { ext, isEmbed, file }] of refs) {
   const verdict = [];
 
   if (BANNED.has(ext)) {
-    verdict.push(`.${ext} is banned — encode behaviour as .mp4 and link it; use .png for appearance defects`);
+    verdict.push(`.${ext} is banned: encode behaviour as .mp4 and link it; use .png for appearance defects`);
   }
 
   if (code !== 200) {
-    verdict.push(`HTTP ${code} — not published (a local commit is not a pushed one)`);
+    verdict.push(`HTTP ${code}: not published (a local commit is not a pushed one)`);
   } else {
     if (isEmbed && NEVER_EMBEDS.has(ext)) {
-      verdict.push(`.${ext} written as an embed — GitHub turns it into <img>, so it renders as broken alt text; make it a plain link and embed a still frame instead`);
+      verdict.push(`.${ext} written as an embed: GitHub turns it into <img>, so it renders as broken alt text; make it a plain link and embed a still frame instead`);
     }
     if (isEmbed && !ctype.startsWith("image/")) {
       verdict.push(`content-type "${ctype}" is not an image, so it will not render inline`);
@@ -96,8 +96,8 @@ for (const [url, { ext, isEmbed, file }] of refs) {
 }
 
 if (problems.length) {
-  console.log(`\nDO NOT POST — ${problems.length} of ${refs.size} media reference(s) would not render.`);
+  console.log(`\nDO NOT POST: ${problems.length} of ${refs.size} media reference(s) would not render.`);
   console.log("Publish the bytes to a remote ref, or drop the embed and describe the evidence in prose.");
   process.exit(1);
 }
-console.log(`\nall ${refs.size} media reference(s) verified — safe to post`);
+console.log(`\nall ${refs.size} media reference(s) verified: safe to post`);

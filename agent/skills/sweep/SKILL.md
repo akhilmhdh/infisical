@@ -40,7 +40,7 @@ always write artifacts to `/tmp`. Permission granted in one turn does not carry 
 **3. Test against the fork, not the org repo.** `origin` is `akhilmhdh/infisical` and `upstream` is
 `Infisical/infisical`. Every test branch, evidence ref, and posted comment goes to **origin**; `gh` resolves
 `repos/:owner/:repo` from the default repo, which is set to the fork. Read from `upstream` when you need the
-real `main` to diff against. Confirm with `gh repo set-default --view` before posting anywhere — posting a
+real `main` to diff against. Confirm with `gh repo set-default --view` before posting anywhere: posting a
 test review onto the org repo is not something you can quietly take back.
 
 ---
@@ -130,20 +130,20 @@ that did not need one is the expensive mistake; running the lenses on a cheaper 
 
 | Stage | Tier | Effort | Why |
 | --- | --- | --- | --- |
-| Router / danger scan | Haiku | — | Reading `--stat` and grep output against a fixed table. No judgement to lose. |
+| Router / danger scan | Haiku | n/a | Reading `--stat` and grep output against a fixed table. No judgement to lose. |
 | Lenses 1-4 (tenancy, concurrency, data, contract) | **Opus** | `medium` | This is the bug-finding. Do not downgrade it. |
 | Lens 5 (product / behaviour) | Sonnet | `high` | Behavioural reasoning, not the high-consequence classes. |
 | Live e2e test | Sonnet | `high` | Driving a browser and asserting DOM. Cost is transcript volume, not reasoning. |
 | Verification | **Opus** | `high` | It overturns real findings. Cheapening it defeats the point. |
 | Synthesis | **Opus** | `high` | Writes the artifact a human reads. |
-| Graph builder | *(none)* | — | `graph/build-graph.mjs` is deterministic. Zero model cost. Never ask a model to do this. |
+| Graph builder | *(none)* | n/a | `graph/build-graph.mjs` is deterministic. Zero model cost. Never ask a model to do this. |
 
 **On Opus, lower the effort before you lower the tier.** Opus at `medium` costs about the same as Sonnet
 at `high` and finds more. Reserve `xhigh` for a diff over ~800 lines; it buys little below that.
 
 **Batch verification.** One verifier per finding is the single worst cost/value trade in the pipeline
 (one agent's whole fixed prefix to check one claim). Give each verifier ~4 findings. Verification still
-earns its place — it has overturned findings that were already posted — so batch it, do not skip it.
+earns its place, because it has overturned findings that were already posted. Batch it, do not skip it.
 
 **Share the lens prefix.** Order every lens prompt as `[repo docs + calibration + diff]` then
 `[lens-specific brief]`, so the large half caches once and the other lenses read it at 0.1x. One caveat:
@@ -160,7 +160,7 @@ justify a swarm at all:
 | > 800 lines, or any danger factor above | Full swarm, lenses at `high`/`xhigh`, 3 verifiers. |
 
 Do not run the full swarm on every PR by reflex. **If the router's plan is empty, the router's findings
-are the review** — that path is the normal one, and it is also the cheapest.
+are the review**: that path is the normal one, and it is also the cheapest.
 
 ---
 
@@ -274,7 +274,7 @@ it, and the call labels on each edge.
 
 Two things it deliberately does not expand, both reported in the output rather than dropped silently:
 
-- **Hub modules** (over 40 importers). `audit-log-types.ts` has 208 — adding one field to an audit event
+- **Hub modules** (over 40 importers). `audit-log-types.ts` has 208: adding one field to an audit event
   otherwise pulls in every router in the backend and buries the change in unrelated PAM and SCEP edges.
 - **Definitional seeds.** A changed `*-types.ts`, `*-constants.ts` or `api-docs` module stays visible as a
   node but does not radiate; an edge into it means "uses a shared definition", which says nothing about
@@ -321,7 +321,7 @@ here, including "proving an absence with a grep", which cost a previous SWEEP ru
 `references/review-format.md` is the spec. Every finding gets:
 
 ```
-<label> (<decoration>) · <severity> · <category> — <subject>
+<label> (<decoration>) · <severity> · <category>: <subject>
 ```
 
 Labels from Conventional Comments (`issue`, `suggestion`, `question`, `nitpick`, `todo`, `note`,
@@ -349,11 +349,15 @@ the PR does, whether the app was exercised, a findings table, findings in full i
 **Default output is the terminal.** Posting to GitHub needs explicit permission in the current turn. When
 posting is authorised:
 
-- Every comment starts with the bot header:
+**Write it plainly.** Short sentences, no jargon, no em dashes, no hedging. Say what breaks, why it
+matters, how to check it, how to fix it. Full rules in `references/review-format.md`. A reviewer should
+be able to act on a finding without rereading it.
+
+- Every comment starts with the header:
 
   ```
   > [!NOTE]
-  > 🤖 Automated review by **SWEEP** — not written by a human
+  > 🤖 **SWEEP** review
   ```
 
 - Inline comments batched into one review, one per finding with a real file and line. A finding whose line
@@ -365,7 +369,7 @@ posting is authorised:
     '.[] | select(.body | contains("<!-- sweep-summary -->")) | .id'
   ```
 
-**Post a "where to test this" comment whenever the change touches UI or a route.** It is a `note` —
+**Post a "where to test this" comment whenever the change touches UI or a route.** It is a `note` -
 informational, no severity, not a finding, and it does not affect the verdict. Reviewers here ask "which
 screen is this on" and "what do I curl" on almost every full-stack PR, and both answers are derivable, so
 nobody should be guessing:
@@ -391,7 +395,7 @@ drifts to pages that touch none of the changed code.
 
 **Gate: every media URL must return 200 before the comment is posted.** Extract every URL from the
 composed body and check it. A local commit is not a published one, so `raw.githubusercontent.com` 404s
-until that commit is on the remote branch — this has already shipped a review whose three embeds were all
+until that commit is on the remote branch: this has already shipped a review whose three embeds were all
 broken alt text.
 
 ```bash
@@ -403,7 +407,7 @@ done
 
 On failure, do not post the embed. **Replace it with a sentence describing what the frame showed** and say
 the artifact is unpublished. Broken images read as a malfunction and cost more credibility than plain prose.
-`.webm` never renders as a player anywhere — use an animated GIF for motion and keep the `.webm` as a plain
+`.webm` never renders as a player anywhere: use an animated GIF for motion and keep the `.webm` as a plain
 file link. Details and the Pillow recipe: `references/live-testing.md`.
 
 ---

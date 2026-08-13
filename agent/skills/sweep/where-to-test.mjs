@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * "Where to test this" — the informational comment SWEEP posts alongside a review.
+ * "Where to test this": the informational comment SWEEP posts alongside a review.
  *
  * A reviewer's first question on a UI change is "which screen is this even on", and on an API change
  * it is "what do I curl". Both answers are derivable from the source, so nobody should be guessing:
@@ -17,7 +17,7 @@
  *   - A screen reached only through 2+ import hops is not reported at all; on this repo those drift to
  *     pages that touch none of the changed code.
  *   - Endpoints come from changed router files only. A changed *service* reached by an unchanged router is
- *     not listed here — use the graph for that.
+ *     not listed here: use the graph for that.
  *
  * Usage:
  *   node agent/skills/sweep/where-to-test.mjs <base-ref> <head-ref> [--out where.md] [--json where.json]
@@ -101,7 +101,7 @@ function buildRouteMap() {
     const id = keyMatch[1];
     // Skip pathless layouts and middlewares (`_authenticate`, `_org-layout`, `_inject-org-details`).
     // They wrap other routes and have no URL of their own, so stripping their underscore segments
-    // collapses them to "/" — which made every changed layout look like it rendered the root page and
+    // collapses them to "/", which made every changed layout look like it rendered the root page and
     // turned their directories into owners of large parts of the tree. The genuine index route keeps its
     // bare "/" id, which has no trailing segment at all, so it survives this check.
     const lastSegment = id.split("/").filter(Boolean).pop();
@@ -114,7 +114,7 @@ function buildRouteMap() {
   return byFile;
 }
 
-/** Strip pathless layout segments (`_authenticate`) — they structure the tree but are not in the URL. */
+/** Strip pathless layout segments (`_authenticate`), they structure the tree but are not in the URL. */
 const idToUrl = (id) => {
   const url = id
     .split("/")
@@ -129,7 +129,7 @@ const ROUTE_BY_FILE = buildRouteMap();
  * Directories that hold a route file, plus the ones too coarse to own a descendant.
  *
  * `frontend/src/pages/index.tsx` is the route for `/` and its directory is the root of the whole pages
- * tree, so a plain nearest-ancestor walk made it the owner of every page lacking its own route file — a
+ * tree, so a plain nearest-ancestor walk made it the owner of every page lacking its own route file: a
  * project-settings sheet came out as `/`. The fix is NOT "a directory containing other route directories
  * cannot own files": `ProjectsPage/` holds both its own `route.tsx` and a nested `ProjectTypePage/route.tsx`,
  * and that rule attributed `ProjectsPage.tsx` to the nested `$type` route instead of its own. So: a
@@ -204,7 +204,7 @@ function exportedSymbols(path) {
  *
  * Symbol-level rather than path-level on purpose. Walking the import graph through a barrel means
  * fanning out to every one of the hundreds of files that import `@app/hooks/api`, which is both far too
- * slow and far too broad — most of them never touch the hook that changed. Grepping the exported
+ * slow and far too broad: most of them never touch the hook that changed. Grepping the exported
  * identifiers finds exactly the call sites, through any number of barrels, in one pass.
  */
 function referencingFiles(symbols) {
@@ -239,8 +239,8 @@ function referencingFiles(symbols) {
 /**
  * Screens that reference the change, reported at the SHALLOWEST hop that finds any.
  *
- * Symbol grep already sees through barrels — `useUpdateFolder` is the same identifier however it was
- * imported — so hop 1 is precise for a changed hook or component. Extra hops exist only for a leaf whose
+ * Symbol grep already sees through barrels: `useUpdateFolder` is the same identifier however it was
+ * imported, so hop 1 is precise for a changed hook or component. Extra hops exist only for a leaf whose
  * direct users are themselves non-page files, and they drift fast: on this repo hop 3 from a folder hook
  * reached `/cli-redirect` and `/admin/integrations`, which touch no folder code at all. So deeper levels
  * are used only when the shallower ones found nothing, and anything suppressed is reported rather than
@@ -322,7 +322,7 @@ for (const f of ROUTER_CHANGED) {
   for (let i = 0; i < declared.length; i += 1) {
     const r = declared[i];
     // A route is "changed" when a hunk lands anywhere in its block, not just on the `url:` line. The
-    // interesting edits are almost always in the zod schema or the handler below the declaration — the
+    // interesting edits are almost always in the zod schema or the handler below the declaration: the
     // description field that started this whole review being a case in point.
     const blockEnd = i + 1 < declared.length ? declared[i + 1].line - 1 : totalLines;
     const touched = ranges.some(([a, b]) => a <= blockEnd && b >= r.line);
@@ -352,23 +352,22 @@ const paramNote = (url) => /\$|:/.test(url);
 
 let md = "";
 if (screens.size || endpoints.length) {
-  md += "> [!NOTE]\n> 🤖 Automated review by **SWEEP** — not written by a human\n\n";
+  md += "> [!NOTE]\n> 🤖 **SWEEP** review\n\n";
   md += "## Where to test this\n\n";
-  md += "Derived from the diff, not suggested from memory. Routes come from `routeTree.gen.ts` and the\n";
-  md += "router prefix chain, so they are the paths this change actually surfaces on.\n\n";
+  md += "Where this change actually shows up, worked out from the diff rather than guessed.\n\n";
 }
 
 if (screens.size) {
-  md += `### UI — ${screens.size} screen${screens.size === 1 ? "" : "s"} to visit\n\n`;
-  md += "One screenshot per screen is enough; the components listed under each are all visible there.\n\n";
+  md += `### Screens to open (${screens.size})\n\n`;
+  md += "One screenshot per screen is enough. Everything listed under a screen is visible on it.\n\n";
   const rows = [...screens.entries()].sort(
     (a, b) => a[1].depth - b[1].depth || b[1].components.size - a[1].components.size || a[0].localeCompare(b[0])
   );
   // Cap what is rendered inline: a wide PR can reach a hundred screens, and a comment that long stops
-  // being read at all. The remainder is listed, not dropped — a hidden cap reads as "this is everything".
+  // being read at all. The remainder is listed, not dropped: a hidden cap reads as "this is everything".
   const INLINE_CAP = 12;
   const render = (url, entry) => {
-    const how = entry.depth === 0 ? "owns the changed file" : `${entry.depth} import hop(s) away`;
+    const how = entry.depth === 0 ? "contains the changed file" : "uses the changed code indirectly";
     let t = `#### \`${url}\`\n\n_${how}_\n\n`;
     for (const c of [...entry.components].sort()) t += `- \`${c}\`\n`;
     return `${t}\n`;
@@ -380,18 +379,17 @@ if (screens.size) {
     md += "</details>\n\n";
   }
   if (deeperUnexplored) {
-    md += "Screens that reference this only through further import hops were not explored — on this repo\n";
-    md += "those reach pages that touch none of the changed code.\n\n";
+    md += "Screens further away were not checked. On this repo they turn out to be pages that do not\n";
+    md += "touch the change at all.\n\n";
   }
   if (rows.some(([u]) => paramNote(u))) {
-    md += "Segments like `$projectId` / `$envSlug` are route params — substitute your own org, project,\n";
-    md += "and environment.\n\n";
+    md += "`$projectId` and `$envSlug` are placeholders. Use your own project and environment.\n\n";
   }
 }
 
 if (uiUnmapped.length) {
   md += "<details><summary>Changed frontend files with no owning screen</summary>\n\n";
-  md += "Shared code with no single screen, or reached beyond the import-walk depth. Worth a manual look.\n\n";
+  md += "Shared code that does not belong to one screen. Worth a look by hand.\n\n";
   for (const f of uiUnmapped.sort()) md += `- \`${f}\`\n`;
   md += "\n</details>\n\n";
 }
@@ -399,7 +397,7 @@ if (uiUnmapped.length) {
 if (endpoints.length) {
   const touched = endpoints.filter((e) => e.touched);
   const rest = endpoints.filter((e) => !e.touched);
-  md += `### API — ${endpoints.length} endpoint${endpoints.length === 1 ? "" : "s"} in changed routers\n\n`;
+  md += `### Endpoints to try (${endpoints.length})\n\n`;
   const table = (list) => {
     let t = "| Method | Path | Declared in |\n| --- | --- | --- |\n";
     for (const e of list.sort((a, b) => a.path.localeCompare(b.path) || a.method.localeCompare(b.method))) {
@@ -409,21 +407,20 @@ if (endpoints.length) {
     return `${t}\n`;
   };
   if (touched.length) {
-    md += `**Declaration changed in this PR** — test these first.\n\n${table(touched)}`;
+    md += `**Changed in this PR. Try these first.**\n\n${table(touched)}`;
   }
   if (rest.length) {
-    md += `<details><summary>Other endpoints in the same router files (${rest.length}) — regression surface</summary>\n\n`;
-    md += "Their declarations did not change, but they share a router with something that did.\n\n";
+    md += `<details><summary>Other endpoints in the same files (${rest.length}). Worth a look if something regresses.</summary>\n\n`;
+    md += "These did not change, but they live in the same file as something that did.\n\n";
     md += table(rest);
     md += "</details>\n\n";
   }
   if (endpoints.some((e) => !e.prefixResolved)) {
-    md += "⚠️ marks a route whose mount prefix could not be resolved statically — the path shown is the\n";
-    md += "route's own url, not the full one. These are mounted in a loop (app-connection routers go\n";
-    md += "through `withRoutePrefix`), so read the prefix off the registration before curling it.\n\n";
+    md += "⚠️ means the full path could not be worked out. What is shown is only the tail of it. These\n";
+    md += "routes are registered in a loop, so check the registration for the missing prefix.\n\n";
   }
-  md += "Auth mode per route is in its `onRequest: verifyAuth([...])`; check that before assuming a\n";
-  md += "session token works.\n\n";
+  md += "Each route lists what can call it in `onRequest: verifyAuth([...])`. Check that before assuming\n";
+  md += "a browser session works.\n\n";
 }
 
 if (grepBudgetHit) {
@@ -431,7 +428,7 @@ if (grepBudgetHit) {
 }
 
 if (!screens.size && !endpoints.length) {
-  md += "No UI screens or API endpoints are reached by this change.\n";
+  md += "This change does not reach any screen or endpoint.\n";
 }
 
 md += "<!-- sweep-where-to-test -->\n";

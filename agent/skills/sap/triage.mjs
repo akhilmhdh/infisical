@@ -6,7 +6,7 @@
  * can merge it on sight, or does it need a real review?
  *
  * Everything here is deterministic and costs no model tokens. The agent reads the JSON, and only reads
- * the diff itself when this says the change is small and non-critical — which is the only case where
+ * the diff itself when this says the change is small and non-critical, which is the only case where
  * judgement adds anything. A change that trips a gate is deferred without further analysis, because the
  * point of deferring is to not spend the analysis.
  *
@@ -47,18 +47,18 @@ const git = (...a) => execFileSync("git", a, { encoding: "utf8", maxBuffer: 1 <<
  * ten deep, audit event names ship to customer SIEMs, and crypto/PKI failures are silent.
  */
 const CRITICAL_PATHS = [
-  [/^backend\/src\/db\/migrations\//, "database migration — runs against every customer, cloud and self-hosted"],
-  [/permission|casl/i, "permission logic — the highest-value bug class in this repository"],
-  [/^backend\/src\/server\/plugins\/auth\//, "authentication plugin"],
-  [/(^|\/)(auth|identity|saml|oidc|ldap|scim)[-/]/i, "authentication or identity"],
-  [/crypto|kms|hsm|pkcs11|certificate|(^|\/)pki/i, "cryptography, KMS or PKI"],
-  [/queue-service\.ts$|cron-job\.ts$|-queue\.ts$/, "queue or scheduled job"],
-  [/audit-log-types\.ts$/, "audit event contract — the type string ships to customer SIEMs"],
-  [/secret-v2-bridge|secret-encryption|encrypt/i, "secret encryption path"],
+  [/^backend\/src\/db\/migrations\//, "a database migration, so it runs against every customer, cloud and self-hosted"],
+  [/permission|casl/i, "permission logic, the bug class that has cost this repository the most"],
+  [/^backend\/src\/server\/plugins\/auth\//, "an authentication plugin"],
+  [/(^|\/)(auth|identity|saml|oidc|ldap|scim)[-/]/i, "authentication or identity code"],
+  [/crypto|kms|hsm|pkcs11|certificate|(^|\/)pki/i, "cryptography, KMS or PKI code"],
+  [/queue-service\.ts$|cron-job\.ts$|-queue\.ts$/, "a queue or a scheduled job"],
+  [/audit-log-types\.ts$/, "an audit event name, and customers write alerts against it"],
+  [/secret-v2-bridge|secret-encryption|encrypt/i, "the secret encryption path"],
   [/^backend\/src\/lib\/config\/env\.ts$/, "runtime configuration"],
-  [/^\.github\/workflows\//, "CI workflow"],
-  [/Dockerfile|docker-compose/, "deployment image or stack"],
-  [/(^|\/)package\.json$/, "dependency manifest"]
+  [/^\.github\/workflows\//, "a CI workflow"],
+  [/Dockerfile|docker-compose/, "a deployment image or the local stack"],
+  [/(^|\/)package\.json$/, "a dependency manifest"]
 ];
 
 /** Patterns inside the added lines that are worth a second pair of eyes regardless of size. */
@@ -99,7 +99,7 @@ const reasons = [];
 if (churn > LINE_LIMIT) {
   reasons.push({
     gate: "size",
-    detail: `${churn} changed lines across ${files.length} file(s), over the ${LINE_LIMIT}-line ceiling`
+    detail: `${churn} changed lines, over the ${LINE_LIMIT}-line limit. Too big to read in one pass.`
   });
 }
 
@@ -113,7 +113,7 @@ for (const f of files) {
   }
 }
 for (const h of criticalHits) {
-  reasons.push({ gate: "critical-path", detail: `${h.path} — ${h.why}` });
+  reasons.push({ gate: "critical-path", detail: `${h.path}: ${h.why}` });
 }
 
 const dangerHits = [];
@@ -122,13 +122,13 @@ for (const [re, why] of DANGER_PATTERNS) {
   if (hit) dangerHits.push({ why, sample: hit.slice(1).trim().slice(0, 120) });
 }
 for (const d of dangerHits) {
-  reasons.push({ gate: "danger-pattern", detail: `${d.why}: \`${d.sample}\`` });
+  reasons.push({ gate: "danger-pattern", detail: `it ${d.why}: \`${d.sample}\`` });
 }
 
 /**
  * Blast radius: how much of the codebase imports what this touches.
  *
- * "Correct but widely referenced" is its own reason to slow down — a one-line change to a module 200
+ * "Correct but widely referenced" is its own reason to slow down: a one-line change to a module 200
  * files import is not a one-line change in effect. Only resolved for source files, and only when the
  * change is otherwise small, since a deferral is already decided by then.
  */
@@ -141,7 +141,7 @@ if (churn <= LINE_LIMIT) {
     if (n >= BLAST_LIMIT) blast.push({ path: f.path, importers: n });
   }
   for (const b of blast) {
-    reasons.push({ gate: "blast-radius", detail: `${b.path} is imported by ${b.importers} files` });
+    reasons.push({ gate: "blast-radius", detail: `${b.path} is used by ${b.importers} other files` });
   }
 }
 
@@ -171,7 +171,7 @@ const out = {
 
 if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify(out, null, 2));
 
-const tag = verdict === "needs-review" ? "NEEDS REVIEW" : "small and non-critical";
-console.log(`${tag} — ${churn} lines, ${files.length} file(s)${uiOnly ? ", frontend only" : ""}`);
+const tag = verdict === "needs-review" ? "NEEDS REVIEW" : "Small and non-critical";
+console.log(`${tag}. ${churn} lines, ${files.length} file${files.length === 1 ? "" : "s"}${uiOnly ? ", frontend only" : ""}.`);
 for (const r of reasons) console.log(`  [${r.gate}] ${r.detail}`);
-if (verdict === "review-diff") console.log("  no gate tripped — read the diff and decide");
+if (verdict === "review-diff") console.log("  Nothing tripped. Read the diff and decide.");
