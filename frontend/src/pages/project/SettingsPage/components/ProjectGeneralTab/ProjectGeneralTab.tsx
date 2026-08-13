@@ -3,6 +3,7 @@ import { ProjectOverviewChangeSection } from "@app/components/project/ProjectOve
 import { AuditLogsRetentionSection } from "../AuditLogsRetentionSection";
 import { DeleteProjectProtection } from "../DeleteProjectProtection";
 import { DeleteProjectSection } from "../DeleteProjectSection";
+import { SecretSharingSection } from "../SecretSharingSection";
 
 export const ProjectGeneralTab = () => {
   return (
@@ -10,6 +11,7 @@ export const ProjectGeneralTab = () => {
       <ProjectOverviewChangeSection showSlugField />
       <AuditLogsRetentionSection />
       <DeleteProjectProtection />
+      <SecretSharingSection />
       <DeleteProjectSection />
     </div>
   );
