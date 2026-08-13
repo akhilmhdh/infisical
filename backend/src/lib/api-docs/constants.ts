@@ -3770,7 +3770,8 @@ export const EventSubscriptions = {
 export const SECRET_SHARING = {
   LIST: {
     offset: "The offset to start listing shared secrets from. Used for pagination.",
-    limit: "The maximum number of shared secrets to return. Max is 100."
+    limit: "The maximum number of shared secrets to return. Max is 100.",
+    search: "Only return shared secrets whose name contains this text."
   },
   GET_BY_ID: {
     id: "The ID of the shared secret to retrieve."

@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { Search } from "lucide-react";
 
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
   Pagination,
   Skeleton,
   Table,
@@ -35,14 +39,29 @@ type Props = {
 export const ShareSecretsTable = ({ handlePopUpOpen }: Props) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
   const { isPending, data } = useGetSharedSecrets({
     offset: (page - 1) * perPage,
-    limit: perPage
+    limit: perPage,
+    search: search || undefined
   });
   const hasSecrets = !isPending && data?.secrets && data.secrets.length > 0;
 
   return (
     <div>
+      <InputGroup className="mb-4">
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+        <InputGroupInput
+          placeholder="Search shared secrets by name"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
+      </InputGroup>
       {(isPending || hasSecrets) && (
         <Table>
           <TableHeader>
@@ -88,8 +107,10 @@ export const ShareSecretsTable = ({ handlePopUpOpen }: Props) => {
       {!isPending && !data?.secrets?.length && (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>No secrets shared yet</EmptyTitle>
-            <EmptyDescription>Share a secret to get started</EmptyDescription>
+            <EmptyTitle>{search ? "No secrets match your search" : "No secrets shared yet"}</EmptyTitle>
+            <EmptyDescription>
+              {search ? "Try a different name" : "Share a secret to get started"}
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}

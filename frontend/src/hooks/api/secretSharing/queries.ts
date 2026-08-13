@@ -11,8 +11,15 @@ import {
 
 export const secretSharingKeys = {
   allSharedSecrets: () => ["sharedSecrets"] as const,
-  specificSharedSecrets: ({ offset, limit }: { offset: number; limit: number }) =>
-    [...secretSharingKeys.allSharedSecrets(), { offset, limit }] as const,
+  specificSharedSecrets: ({
+    offset,
+    limit,
+    search
+  }: {
+    offset: number;
+    limit: number;
+    search?: string;
+  }) => [...secretSharingKeys.allSharedSecrets(), { offset, limit, search }] as const,
   allSecretRequests: () => ["secretRequests"] as const,
   specificSecretRequests: ({ offset, limit }: { offset: number; limit: number }) =>
     [...secretSharingKeys.allSecretRequests(), { offset, limit }] as const,
@@ -24,17 +31,20 @@ export const secretSharingKeys = {
 
 export const useGetSharedSecrets = ({
   offset = 0,
-  limit = 25
+  limit = 25,
+  search
 }: {
   offset: number;
   limit: number;
+  search?: string;
 }) => {
   return useQuery({
-    queryKey: secretSharingKeys.specificSharedSecrets({ offset, limit }),
+    queryKey: secretSharingKeys.specificSharedSecrets({ offset, limit, search }),
     queryFn: async () => {
       const params = new URLSearchParams({
         offset: String(offset),
-        limit: String(limit)
+        limit: String(limit),
+        ...(search ? { search } : {})
       });
 
       const { data } = await apiRequest.get<{ secrets: TSharedSecret[]; totalCount: number }>(

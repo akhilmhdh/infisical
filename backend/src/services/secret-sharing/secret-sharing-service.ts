@@ -557,7 +557,8 @@ export const secretSharingServiceFactory = ({
     actorOrgId,
     offset,
     limit,
-    type
+    type,
+    search
   }: TGetSharedSecretsDTO) => {
     if (!actorOrgId) throw new ForbiddenRequestError();
 
@@ -576,7 +577,8 @@ export const secretSharingServiceFactory = ({
         ...(actor === ActorType.USER && { userId: actorId }),
         ...(actor === ActorType.IDENTITY && { identityId: actorId }),
         orgId: actorOrgId,
-        type
+        type,
+        ...(search && { $search: { name: search } })
       },
       { offset, limit, sort: [["createdAt", "desc"]] }
     );

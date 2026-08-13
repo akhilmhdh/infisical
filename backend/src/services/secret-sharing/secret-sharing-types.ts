@@ -11,6 +11,7 @@ export type TGetSharedSecretsDTO = {
   type: SecretSharingType;
   offset: number;
   limit: number;
+  search?: string;
 } & TGenericPermission;
 
 export type TSharedSecretPermission = {

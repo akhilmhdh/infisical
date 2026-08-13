@@ -50,7 +50,8 @@ export const registerSecretSharingRouter = async (server: FastifyZodProvider) =>
       operationId: "listSharedSecrets",
       querystring: z.object({
         offset: z.coerce.number().min(0).max(100).default(0).describe(SECRET_SHARING.LIST.offset),
-        limit: z.coerce.number().min(1).max(100).default(25).describe(SECRET_SHARING.LIST.limit)
+        limit: z.coerce.number().min(1).max(100).default(25).describe(SECRET_SHARING.LIST.limit),
+        search: z.string().trim().max(64).optional().describe(SECRET_SHARING.LIST.search)
       }),
       response: {
         200: z.object({
