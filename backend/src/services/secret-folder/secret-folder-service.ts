@@ -56,6 +56,7 @@ import {
   TDeleteFolderDTO,
   TDeleteManyFoldersDTO,
   TFolderMoveEligibility,
+  TGetFolderBreadcrumbDTO,
   TGetFolderByIdDTO,
   TGetFolderByPathDTO,
   TGetFolderDTO,
@@ -981,6 +982,26 @@ export const secretFolderServiceFactory = ({
     );
 
     return Number(folders[0]?.count ?? 0);
+  };
+
+  // Lightweight breadcrumb resolver for deep links. Returns only the folder's location, never its
+  // contents, so the caller just needs a valid session.
+  const getFolderBreadcrumbById = async ({ id }: TGetFolderBreadcrumbDTO) => {
+    const folder = await folderDAL.findById(id);
+    if (!folder) throw new NotFoundError({ message: `Folder with ID '${id}' not found` });
+
+    const [folderWithPath] = await folderDAL.findSecretPathByFolderIds(folder.projectId, [folder.id]);
+    if (!folderWithPath) {
+      throw new NotFoundError({ message: `Folder with ID '${id}' not found` });
+    }
+
+    return {
+      id: folder.id,
+      name: folder.name,
+      path: folderWithPath.path,
+      envId: folder.envId,
+      projectId: folder.projectId
+    };
   };
 
   const getFolderById = async ({ actor, actorId, actorOrgId, actorAuthMethod, id }: TGetFolderByIdDTO) => {
@@ -2020,6 +2041,7 @@ export const secretFolderServiceFactory = ({
     deleteFolder,
     getFolders,
     getFolderById,
+    getFolderBreadcrumbById,
     getFolderMoveEligibility,
     moveFolder,
     getFolderByPath,

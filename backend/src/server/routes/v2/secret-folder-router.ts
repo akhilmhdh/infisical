@@ -398,6 +398,44 @@ export const registerSecretFolderRouter = async (server: FastifyZodProvider) => 
 
   server.route({
     method: "GET",
+    url: "/:folderId/breadcrumb",
+    config: {
+      rateLimit: readLimit
+    },
+    schema: {
+      hide: false,
+      operationId: "getSecretFolderBreadcrumb",
+      tags: [ApiDocsTags.Folders],
+      description: "Resolve a folder's location for deep links",
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      params: z.object({
+        folderId: z.string().uuid().describe(FOLDERS.GET_BY_ID.folderId)
+      }),
+      response: {
+        200: z.object({
+          folder: z.object({
+            id: z.string(),
+            name: z.string(),
+            path: z.string(),
+            envId: z.string(),
+            projectId: z.string()
+          })
+        })
+      }
+    },
+    onRequest: verifyAuth([AuthMode.JWT, AuthMode.IDENTITY_ACCESS_TOKEN]),
+    handler: async (req) => {
+      const folder = await server.services.folder.getFolderBreadcrumbById({ id: req.params.folderId });
+      return { folder };
+    }
+  });
+
+  server.route({
+    method: "GET",
     url: "/:id",
     config: {
       rateLimit: readLimit

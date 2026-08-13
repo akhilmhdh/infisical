@@ -56,6 +56,10 @@ export type TGetFolderByIdDTO = {
   id: string;
 } & Omit<TProjectPermission, "projectId">;
 
+export type TGetFolderBreadcrumbDTO = {
+  id: string;
+};
+
 // eligibility can optionally be checked against a destination; when provided, the result also reports whether the
 // destination is governed by a secret approval policy (a move into such a path is rejected by moveFolder).
 export type TGetFolderMoveEligibilityDTO = TGetFolderByIdDTO & {
