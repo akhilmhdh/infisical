@@ -43,7 +43,7 @@ export const RequestedSecretsRow = ({
     data: unknown
   ) => void;
 }) => {
-  const { mutateAsync: revealSecretValue, isPending } = useRevealSecretRequestValue();
+  const { mutateAsync: revealSecretValue } = useRevealSecretRequestValue();
 
   let isExpired = false;
   if (row.expiresAt !== null && new Date(row.expiresAt) < new Date()) {
@@ -52,7 +52,11 @@ export const RequestedSecretsRow = ({
 
   return (
     <TableRow key={row.id}>
-      <TableCell isTruncatable>{row.name || <span className="text-muted">&mdash;</span>}</TableCell>
+      <TableCell>
+        <span className="block max-w-[10rem] truncate">
+          {row.name || <span className="text-muted">&mdash;</span>}
+        </span>
+      </TableCell>
       <TableCell>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -72,17 +76,17 @@ export const RequestedSecretsRow = ({
           </TooltipContent>
         </Tooltip>
       </TableCell>
-      <TableCell>{format(new Date(row.createdAt), "MMM d, yyyy h:mm a")}</TableCell>
+      <TableCell>{format(new Date(row.createdAt), "MM/dd/yy")}</TableCell>
       <TableCell>
         {row.expiresAt ? (
-          format(new Date(row.expiresAt), "MMM d, yyyy h:mm a")
+          format(new Date(row.expiresAt), "MM/dd/yy")
         ) : (
           <span className="text-muted">&mdash;</span>
         )}
       </TableCell>
       <TableCell>
         {isExpired && !row.encryptedSecret ? (
-          <Badge variant="danger">
+          <Badge variant="success">
             <ClockAlertIcon />
             Expired
           </Badge>
@@ -104,7 +108,6 @@ export const RequestedSecretsRow = ({
                   secretRequestName: secretRequest.name
                 });
               }}
-              isPending={isPending}
               variant="ghost"
               size="xs"
             >
@@ -134,7 +137,6 @@ export const RequestedSecretsRow = ({
                 Copy Link
               </DropdownMenuItem>
               <DropdownMenuItem
-                variant="danger"
                 onClick={() =>
                   handlePopUpOpen("deleteSecretRequestConfirmation", {
                     name: "delete",
