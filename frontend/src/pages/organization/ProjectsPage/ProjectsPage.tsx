@@ -66,7 +66,7 @@ export const ProjectsPage = () => {
               params={{ orgId: currentOrg.id }}
               className="inline underline hover:opacity-80"
             >
-              Secret Sharing
+              Secret Sharing Nice
             </Link>
             .
           </p>
