@@ -1,6 +1,7 @@
 import { faGlobe, faPencil, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { createNotification } from "@app/components/notifications";
 import { UpgradePlanModal } from "@app/components/license/UpgradePlanModal";
 import { ProjectPermissionCan } from "@app/components/permissions";
 import {
@@ -21,8 +22,10 @@ import {
   useProject,
   useSubscription
 } from "@app/context";
-import { useGetTrustedIps } from "@app/hooks/api";
+import { useGetTrustedIps, useUpdateTrustedIp } from "@app/hooks/api";
 import { UsePopUpState } from "@app/hooks/usePopUp";
+
+import { Switch } from "@app/components/v3";
 
 type Props = {
   popUp: UsePopUpState<["upgradePlan"]>;
@@ -42,6 +45,24 @@ type Props = {
 export const IPAllowlistTable = ({ popUp, handlePopUpOpen, handlePopUpToggle }: Props) => {
   const { subscription } = useSubscription();
   const { currentProject } = useProject();
+  const { mutateAsync: updateTrustedIp } = useUpdateTrustedIp();
+
+  const handleToggleActive = async (
+    trustedIpId: string,
+    ipAddress: string,
+    comment: string,
+    isActive: boolean
+  ) => {
+    await updateTrustedIp({
+      projectId: currentProject.id,
+      trustedIpId,
+      ipAddress,
+      comment,
+      isActive: !isActive
+    });
+    createNotification({ type: "success", text: `IP ${!isActive ? "enabled" : "disabled"}` });
+  };
+
   const { data, isPending } = useGetTrustedIps(currentProject?.id ?? "");
 
   const formatType = (type: string, prefix?: number) => {
@@ -59,7 +80,7 @@ export const IPAllowlistTable = ({ popUp, handlePopUpOpen, handlePopUpToggle }: 
               <Th className="flex-1">IP Address / Range</Th>
               <Th className="flex-1">Format</Th>
               <Th className="flex-1">Comment</Th>
-              {/* <Th className="flex-1">Status</Th> */}
+              <Th className="flex-1">Status</Th>
               <Th className="w-5" />
             </Tr>
           </THead>
@@ -75,15 +96,24 @@ export const IPAllowlistTable = ({ popUp, handlePopUpOpen, handlePopUpToggle }: 
                       <Td>{`${ipAddress}${prefix !== undefined ? `/${prefix}` : ""}`}</Td>
                       <Td>{formatType(type, prefix)}</Td>
                       <Td>{comment}</Td>
-                      {/* <Td>
-                                        <div className="flex items-center">
-                                            <FontAwesomeIcon
-                                                icon={faCircle}
-                                                color="#2ecc71"
-                                            />
-                                            <p className="ml-4">Active</p>
-                                        </div>
-                                    </Td> */}
+                      <Td>
+                        <ProjectPermissionCan
+                          I={ProjectPermissionActions.Edit}
+                          a={ProjectPermissionSub.IpAllowList}
+                        >
+                          {(isAllowed) => (
+                            <Switch
+                              id={`ip-active-${id}`}
+                              aria-label={`toggle-ip-${ipAddress}`}
+                              checked={isActive ?? true}
+                              disabled={!isAllowed}
+                              onCheckedChange={() =>
+                                handleToggleActive(id, ipAddress, comment ?? "", isActive ?? true)
+                              }
+                            />
+                          )}
+                        </ProjectPermissionCan>
+                      </Td>
                       <Td className="flex items-center">
                         <ProjectPermissionCan
                           I={ProjectPermissionActions.Edit}

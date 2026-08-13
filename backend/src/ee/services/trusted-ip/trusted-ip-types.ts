@@ -11,6 +11,7 @@ export type TUpdateIpDTO = TProjectPermission & {
   trustedIpId: string;
   ipAddress: string;
   comment: string;
+  isActive?: boolean;
 };
 
 export type TDeleteIpDTO = TProjectPermission & {

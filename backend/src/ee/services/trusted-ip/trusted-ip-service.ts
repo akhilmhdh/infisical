@@ -104,6 +104,7 @@ export const trustedIpServiceFactory = ({
     actorAuthMethod,
     ipAddress: ip,
     comment,
+    isActive,
     trustedIpId
   }) => {
     const { permission } = await permissionService.getProjectPermission({
@@ -139,7 +140,8 @@ export const trustedIpServiceFactory = ({
         ipAddress,
         type,
         prefix: prefix === undefined ? null : prefix,
-        comment
+        comment,
+        ...(isActive === undefined ? {} : { isActive })
       }
     );
 
