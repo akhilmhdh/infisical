@@ -1616,7 +1616,7 @@ export const secretV2BridgeServiceFactory = ({
       if (errors.length > 0) {
         throw new ForbiddenRequestError({
           message: "Failed to expand one or more secret references",
-          details: errors.map((err) => err.error)
+          details: errors.map((err) => `${err.path}: ${err.error}`)
         });
       }
     }
