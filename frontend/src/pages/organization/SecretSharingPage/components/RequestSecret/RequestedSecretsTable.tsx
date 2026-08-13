@@ -38,7 +38,8 @@ export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
 
   return (
     <div>
-      {(isPending || hasSecrets) && (
+      <p className="mb-3 text-sm text-mineshaft-400">{data?.totalCount ?? 0} requests</p>
+      {(isPending || data) && (
         <Table>
           <TableHeader>
             <TableRow>
@@ -46,7 +47,7 @@ export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
               <TableHead>Access Type</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Expires</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Status</TableHead>
               <TableHead aria-label="button" className="w-5" />
             </TableRow>
           </TableHeader>
@@ -55,7 +56,7 @@ export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
               Array.from({ length: 5 }).map((_, i) => (
                 // eslint-disable-next-line react/no-array-index-key
                 <TableRow key={`skeleton-${i}`}>
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 5 }).map((__, j) => (
                     // eslint-disable-next-line react/no-array-index-key
                     <TableCell key={`skeleton-cell-${j}`}>
                       <Skeleton className="h-4 w-full" />
