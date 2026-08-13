@@ -56,6 +56,8 @@ const databaseReadReplicaSchema = z
 const envSchema = z
   .object({
     INFISICAL_PLATFORM_VERSION: zpStr(z.string().optional()),
+    // Lets growth turn the in-app launch banner off without a deploy.
+    LAUNCH_BANNER_ENABLED: zodStrBool.default("false"),
     KUBERNETES_AUTO_FETCH_SERVICE_ACCOUNT_TOKEN: zodStrBool.default("false"),
     PORT: z.coerce.number().default(IS_PACKAGED ? 8080 : 4000),
     DISABLE_SECRET_SCANNING: z
