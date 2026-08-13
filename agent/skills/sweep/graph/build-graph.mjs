@@ -339,6 +339,66 @@ for (let d = 0; d < DEPTH + 1; d += 1) {
   upFrontier = next;
 }
 
+// 3b. follow a barrel to the file that actually defines the imported symbol
+//
+// A component importing `useUpdateProject` from `@app/hooks/api` is not calling the barrel. The barrel
+// re-exports it from `projects/queries.tsx`, and that file is where the API call lives. Ending the walk at
+// the barrel cuts the trace one hop short of the frontend/backend seam, which made every UI-only change
+// look disconnected from the API it drives.
+//
+// Only behaviour-carrying targets are followed. Resolving every symbol would drag in one node per
+// design-system primitive (`Card`, `Switch`, `Field`) and bury the flow that matters.
+const BRIDGE_KINDS = new Set(["hook", "query-hook", "mutation-hook", "service", "dal", "fns", "queue"]);
+// Which exported symbols pulled each bridged file in, so step 5 can keep that symbol's API calls and
+// leave the rest of the file alone. `projects/queries.tsx` declares 20 hooks against 20 endpoints; only
+// the imported one has anything to do with the change.
+const bridgedSymbols = new Map();
+const isBarrelPath = (id) => /(^|\/)index\.(ts|tsx|mts)$/.test(id);
+const declaresCache = new Map();
+
+function declaresSymbol(file, symbol) {
+  const key = `${file}#${symbol}`;
+  if (declaresCache.has(key)) return declaresCache.get(key);
+  if (!/^[A-Za-z_$][\w$]*$/.test(symbol)) return false;
+  const src = show(file) || "";
+  // Either a direct declaration, or a named re-export list that is not itself a `from` clause.
+  const hit =
+    new RegExp(`export\\s+(?:declare\\s+)?(?:async\\s+)?(?:const|let|var|function|class|type|interface|enum)\\s+${symbol}\\b`).test(src) ||
+    new RegExp(`export\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*(?:;|$)`, "m").test(src);
+  declaresCache.set(key, hit);
+  return hit;
+}
+
+function resolveThroughBarrel(barrel, symbol, depth = 0, seen = new Set()) {
+  if (depth > 3 || seen.has(barrel)) return null;
+  seen.add(barrel);
+  for (const re of importsOf(barrel, { includeReexports: true })) {
+    if (!re.reexport) continue;
+    if (declaresSymbol(re.target, symbol)) return re.target;
+    if (isBarrelPath(re.target)) {
+      const deeper = resolveThroughBarrel(re.target, symbol, depth + 1, seen);
+      if (deeper) return deeper;
+    }
+  }
+  return null;
+}
+
+for (const path of [...nodes.keys()]) {
+  if (!/\.(ts|tsx|mts)$/.test(path)) continue;
+  for (const imp of importsOf(path)) {
+    if (!isBarrelPath(imp.target) || !nodes.has(imp.target)) continue;
+    for (const sym of imp.symbols) {
+      const target = resolveThroughBarrel(imp.target, sym);
+      if (!target || target === path) continue;
+      if (!BRIDGE_KINDS.has(classify(target).kind)) continue;
+      addNode(target);
+      addEdge(path, target, "import", sym, { file: path, line: imp.line });
+      if (!bridgedSymbols.has(target)) bridgedSymbols.set(target, new Set());
+      bridgedSymbols.get(target).add(sym);
+    }
+  }
+}
+
 // 4. import edges, labelled with the symbols that cross the boundary
 for (const path of [...nodes.keys()]) {
   if (!/\.(ts|tsx|mts)$/.test(path)) continue;
@@ -352,6 +412,10 @@ for (const path of [...nodes.keys()]) {
   }
 }
 
+// Which route declarations the frontend actually hit, so step 6 can scope an untouched router
+// to the endpoint under review instead of its whole service surface.
+const matchedRouteLines = new Map();
+
 // 5. the frontend/backend seam: HTTP call -> route declaration
 const routerFiles = [];
 for (const p of nodes.keys()) if (classify(p).kind === "router") routerFiles.push(p);
@@ -363,9 +427,27 @@ if (changedFiles.some((f) => f.startsWith("frontend/"))) {
 }
 const routeIndex = routerFiles.flatMap((f) => routesOf(f).map((r) => ({ ...r, file: f })));
 
+/** Line ranges owned by each top-level `export const NAME =` / `export function NAME`, in file order. */
+function exportBlocks(file) {
+  const src = show(file) || "";
+  const hits = [...src.matchAll(/^export\s+(?:async\s+)?(?:const|function|let|var|class)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => ({
+    name: m[1],
+    line: src.slice(0, m.index).split("\n").length
+  }));
+  return hits.map((h, i) => ({
+    name: h.name,
+    from: h.line,
+    to: i + 1 < hits.length ? hits[i + 1].line : Infinity
+  }));
+}
+
 for (const path of [...nodes.keys()]) {
   if (!path.startsWith("frontend/")) continue;
+  const wanted = bridgedSymbols.get(path);
+  const scopedToSymbols = wanted && !changedFiles.includes(path);
+  const ownBlocks = scopedToSymbols ? exportBlocks(path).filter((b) => wanted.has(b.name)) : null;
   for (const call of apiCallsOf(path)) {
+    if (ownBlocks && !ownBlocks.some((b) => call.line >= b.from && call.line < b.to)) continue;
     const sameMethod = routeIndex.filter((r) => r.method === call.method);
     let hits = sameMethod
       .filter((r) => pathsMatch(call.url, r.path))
@@ -387,6 +469,8 @@ for (const path of [...nodes.keys()]) {
     for (const hit of hits) {
       addNode(hit.route.file);
       addEdge(path, hit.route.file, "http", hit.label, { file: path, line: call.line }, hit.confidence);
+      if (!matchedRouteLines.has(hit.route.file)) matchedRouteLines.set(hit.route.file, new Set());
+      matchedRouteLines.get(hit.route.file).add(hit.route.line);
     }
     if (hits.length === 0) {
       // Record the unmatched call so the extension can show a dangling seam rather than hiding it.
@@ -396,13 +480,53 @@ for (const path of [...nodes.keys()]) {
 }
 
 // 6. router -> service, labelled with the service method actually called
+//
+// A router file holds every endpoint for its domain, and `project-router.ts` alone calls a dozen services.
+// When the router is in the graph only because the frontend called ONE of its endpoints, emitting all of
+// them buries the flow under edges nothing in the diff touches. So a router pulled in by the seam is
+// scoped to the route blocks that were actually hit. A router that is itself changed keeps everything,
+// because then every endpoint in it is fair game for review.
+const changedSet = new Set(changedFiles);
+
+/** Line ranges owned by each route declaration, in file order. */
+function routeBlocks(file) {
+  const rs = routesOf(file)
+    .slice()
+    .sort((a, b) => a.line - b.line);
+  return rs.map((r, i) => ({ from: r.line, to: i + 1 < rs.length ? rs[i + 1].line : Infinity, line: r.line }));
+}
+
 for (const path of [...nodes.keys()]) {
   if (classify(path).kind !== "router") continue;
+  const hitLines = matchedRouteLines.get(path);
+  const scoped = hitLines && !changedSet.has(path);
+  const keep = scoped ? routeBlocks(path).filter((b) => hitLines.has(b.line)) : null;
   for (const sc of serviceCallsOf(path)) {
+    if (keep && !keep.some((b) => sc.line >= b.from && sc.line < b.to)) continue;
     const target = SERVICE_FILE.get(sc.service);
     if (!target) continue;
     addNode(target);
     addEdge(path, target, "service-call", `${sc.service}.${sc.method}`, { file: path, line: sc.line }, "high");
+  }
+}
+
+// 6b. the reverse: routers that CALL a changed service, even when the router itself is untouched.
+//
+// Step 6 only looks at routers already in the graph, and a router reaches a service through
+// `server.services.<name>` rather than an import, so the import walk never connects the two. A change
+// confined to a service therefore produced a graph with no seam at all, which hid the most useful edge:
+// the endpoint a reviewer would actually call to exercise the change.
+const changedServiceFiles = new Set(
+  changedFiles.filter((p) => ["service", "queue", "fns"].includes(classify(p).kind))
+);
+if (changedServiceFiles.size) {
+  for (const routerFile of listRouterFiles()) {
+    for (const sc of serviceCallsOf(routerFile)) {
+      const target = SERVICE_FILE.get(sc.service);
+      if (!target || !changedServiceFiles.has(target)) continue;
+      addNode(routerFile);
+      addEdge(routerFile, target, "service-call", `${sc.service}.${sc.method}`, { file: routerFile, line: sc.line }, "high");
+    }
   }
 }
 
@@ -535,6 +659,12 @@ writeFileSync(out, JSON.stringify(graph, null, 2));
  * it was hand-built, it silently stopped being produced at all.
  */
 const SUBSET_OUT = flag("subset", null);
+// `--subset` with no path used to skip generation without a word, so a run that looked fine produced no
+// subset and the review went out with the full graph.
+if (argv.includes("--subset") && (!SUBSET_OUT || SUBSET_OUT.startsWith("--"))) {
+  console.error("--subset needs an output path, e.g. --subset /tmp/graph-subset.json");
+  process.exit(2);
+}
 if (SUBSET_OUT) {
   const seedIds = new Set(graph.nodes.filter((n) => n.seed).map((n) => n.id));
 
@@ -569,12 +699,33 @@ if (SUBSET_OUT) {
     if (radiating.has(e.from)) keep.add(e.to);
     if (radiating.has(e.to)) keep.add(e.from);
   }
-  const subNodes = graph.nodes.filter((n) => keep.has(n.id));
+  // One hop stops at the hook, and a hook on its own tells a reviewer nothing. Keep following seam edges
+  // (an API call, a service call) so the subset crosses layers: component -> hook -> endpoint -> service.
+  // Only seam edges extend, so the trace goes DEEPER without spreading sideways into more of each layer.
+  const SEAM_KINDS = new Set(["http", "service-call"]);
+  for (let hop = 0; hop < 2; hop += 1) {
+    for (const e of graph.edges) {
+      if (SEAM_KINDS.has(e.kind) && keep.has(e.from)) keep.add(e.to);
+    }
+  }
+  // Barrels are plumbing, not places. A dozen `index.ts` re-export nodes is what made an earlier graph
+  // unreadable at a glance: they carry no behaviour and no bug ever lives in one. Keep a barrel only if it
+  // is itself part of the change.
+  const isBarrel = (id) => /(^|\/)index\.(ts|tsx|mts)$/.test(id);
+  // Shared infrastructure is not part of a flow. `auth-type.ts`, `env.ts`, `rateLimiter.ts` and friends are
+  // imported by hundreds of files, so an edge into one means "this code uses the framework" and tells a
+  // reviewer nothing about what the change drives. They stay in the full graph; the subset is the picture
+  // that goes in a comment, and there it is 15 nodes of noise around the 5 that matter.
+  const PLUMBING_KINDS = new Set(["lib", "backend-lib", "schema", "api-types", "frontend-lib", "db-schema", "other", "config"]);
+  const subNodes = graph.nodes.filter(
+    (n) => keep.has(n.id) && (n.seed || (!isBarrel(n.id) && !PLUMBING_KINDS.has(n.kind)))
+  );
+  const subIds = new Set(subNodes.map((n) => n.id));
   // Cap evidence: this block is pasted into a GitHub comment, which hard-limits at 65536 characters, and
   // a single `auditLog.createAuditLog` edge can carry 16 call sites. Three is enough to jump to.
   const EVIDENCE_CAP = 3;
   const subEdges = graph.edges
-    .filter((e) => keep.has(e.from) && keep.has(e.to))
+    .filter((e) => subIds.has(e.from) && subIds.has(e.to))
     .map((e) => {
       const ev = e.evidence || [];
       return ev.length > EVIDENCE_CAP

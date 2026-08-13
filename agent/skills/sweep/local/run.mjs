@@ -245,6 +245,11 @@ async function applyAction(page, step, baseUrl) {
   if (a.type === "clear") return page.fill(a.selector, "", { timeout: STEP_TIMEOUT_MS });
   if (a.type === "select") return page.selectOption(a.selector, a.value, { timeout: STEP_TIMEOUT_MS });
   if (a.type === "waitFor") return page.waitForSelector(a.selector, { timeout: STEP_TIMEOUT_MS });
+  // Brings the element on screen so the step screenshot actually shows what is being asserted.
+  if (a.type === "scrollTo") {
+    await page.locator(a.selector).scrollIntoViewIfNeeded({ timeout: STEP_TIMEOUT_MS });
+    return page.waitForTimeout(400);
+  }
   throw new Error(`unknown action ${a.type}`);
 }
 
@@ -255,8 +260,17 @@ async function assertExpectation(page, step) {
   if (e.type === "hidden") return page.waitForSelector(e.selector, { state: "hidden", timeout: STEP_TIMEOUT_MS });
   if (e.type === "text") {
     await page.waitForSelector(e.selector, { timeout: STEP_TIMEOUT_MS });
-    const text = (await page.textContent(e.selector)) ?? "";
-    if (!text.includes(e.contains)) throw new Error(`expected "${e.selector}" to contain "${e.contains}", got "${text.trim().slice(0, 200)}"`);
+    // Polls rather than reading once: toasts are the usual target here and they expire on their own.
+    try {
+      await page.waitForFunction(
+        ({ selector, needle }) => (document.querySelector(selector)?.textContent ?? "").includes(needle),
+        { selector: e.selector, needle: e.contains },
+        { timeout: STEP_TIMEOUT_MS, polling: 100 }
+      );
+    } catch {
+      const text = (await page.textContent(e.selector)) ?? "";
+      throw new Error(`expected "${e.selector}" to contain "${e.contains}", got "${text.trim().slice(0, 200)}"`);
+    }
     return;
   }
   if (e.type === "value") {
