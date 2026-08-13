@@ -205,7 +205,7 @@ export const FolderListView = ({
             pendingAction === PendingAction.Create && "border-l-2 border-l-green-600/75"
           )}
         >
-          <div className="flex w-11 items-center px-5 py-3 text-yellow-700">
+          <div className="flex w-11 items-baseline px-5 pt-6 pb-0 text-yellow-700">
             <FontAwesomeIcon icon={faFolder} />
           </div>
           <div
