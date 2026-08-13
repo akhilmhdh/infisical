@@ -1,0 +1,21 @@
+name = "sweep-browser-agent"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Run. Required for @cloudflare/playwright and for session recording.
+browser = { binding = "BROWSER" }
+
+# Artifact storage. Frames, the rrweb recording, and result.json all land here, and the replay
+# viewer reads from it. Public read is served through the Worker, not by exposing the bucket.
+[[r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "sweep-artifacts"
+
+[vars]
+# Public base URL the Worker serves artifacts from. Used to build the links that go into the review,
+# so it must be the Worker's own hostname (custom domain or workers.dev).
+ARTIFACTS_BASE_URL = "https://sweep-browser-agent.<your-subdomain>.workers.dev"
+
+# SWEEP_TOKEN is a secret, not a var:
+#   npx wrangler secret put SWEEP_TOKEN

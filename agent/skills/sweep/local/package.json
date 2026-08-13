@@ -1,0 +1,7 @@
+{
+  "name": "sweep-local-runner",
+  "private": true,
+  "type": "module",
+  "description": "Local fallback runner for the SWEEP live test. Self-contained so it does not touch the repo's dependencies.",
+  "dependencies": { "playwright": "^1.62.1" }
+}
