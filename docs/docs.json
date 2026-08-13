@@ -225,7 +225,8 @@
                 ]
               },
               "documentation/platform/admin-panel/server-admin",
-              "documentation/platform/secret-sharing"
+              "documentation/platform/secret-sharing",
+              "documentation/platform/secret-sharing-expiry"
             ]
           },
           {
