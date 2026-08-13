@@ -12,7 +12,7 @@ lines. Running five independent lenses and a browser over a typo fix is waste, a
 exists to remove. When a change is not obviously dull, SAP does not analyse it harder, it stops and hands
 it to SWEEP.
 
-## Two rules that never bend
+## Three rules that never bend
 
 **1. Deferring is cheap; a wrong pass is not.** A false *needs review* costs a reviewer a few minutes. A
 false *safe to merge* is how a migration or a permission change lands unread. When the two are in tension,
@@ -20,6 +20,11 @@ defer. You are never penalised for deferring.
 
 **2. Never post a merge decision without explicit permission in the current turn.** Same rule as SWEEP.
 Report the verdict in the terminal by default.
+
+**3. SAP approves, and only approves.** When the answer is ✅ and permission was given, submit a real GitHub
+approval, because a triage nobody can act on is not worth running. SAP never requests changes and never
+merges: a blocking review is heavier than one gate and one diff read can justify, and SAP's answer to
+"something looks wrong here" is to hand the PR to SWEEP, not to stand in front of it.
 
 ## Cost
 
@@ -83,11 +88,11 @@ open other files to resolve the doubt: needing a second file *is* the answer.
 
 Exactly one of three, and nothing else:
 
-| Verdict | Meaning |
-| --- | --- |
-| ✅ **Safe to merge** | Small, non-critical, nothing found. |
-| 🔶 **Needs a review** | A gate tripped, or the diff has something worth a second look. Recommend SWEEP. |
-| ⛔ **Do not merge** | An outright defect visible in the diff. Rare from SAP: say what breaks. |
+| Verdict | Meaning | What SAP does |
+| --- | --- | --- |
+| ✅ **Safe to merge** | Small, non-critical, nothing found. | Approves it, via `approve.mjs` (step 5). |
+| 🔶 **Needs a review** | A gate tripped, or the diff has something worth a second look. Recommend SWEEP. | Comments. Never requests changes. |
+| ⛔ **Do not merge** | An outright defect visible in the diff. Rare from SAP: say what breaks. | Comments, and says which finding blocks it. Never requests changes. |
 
 ### How to write it
 
@@ -130,7 +135,60 @@ fires on the 11th line and keeps 10.
 **When you defer because of what a change touches, say that it looks correct if it does.** Otherwise the
 author reads a deferral as an accusation and argues with you instead of finding a second reader.
 
-## 5. When SAP is the wrong tool
+---
+
+## 5. Approve, when the answer is ✅
+
+A green check is the only thing SAP does that changes what other people do next, so the decision does not
+rest on remembering the rules. `approve.mjs` re-reads the gate's own output and refuses unless every
+condition holds. Run it instead of `gh pr review` directly.
+
+```bash
+node agent/skills/sap/approve.mjs <pr> --repo owner/name \
+  --triage /tmp/sap-<pr>.json \       # the --json file from step 1, not a retyped summary
+  --sha <head-sha-you-triaged> \
+  --body-file /tmp/sap-<pr>.md \      # the same text you would have commented
+  --verdict safe
+```
+
+It refuses, listing every reason at once, when:
+
+| Refusal | Why it is there |
+| --- | --- |
+| the gate said anything but `review-diff` | a "safe" conclusion must never outvote a tripped gate |
+| `--verdict` is not `safe` | approving is a stated decision, not a side effect of running a script |
+| the body does not say "Safe to merge" | the comment and the green check have to agree |
+| head has moved since the triaged SHA | otherwise an unread commit inherits the approval |
+| draft, closed, or conflicting | what would land is not what was read |
+| a human already requested changes | never approve over a person |
+| the PR is yours | GitHub rejects self-approval, so this reports it as a reason rather than an API error |
+
+Add `--dry-run` to see the decision without submitting anything.
+
+**The gate cannot catch a bad one-line change, and this is where that matters.** Every probe PR on this
+fork is two lines, frontend only, and passes every mechanical check. One of them replaces a working banner
+with `<div className="w-full h-5 bg-red">WTH!!</div>`. Another appends `Hllo` to a tooltip that ships to
+customers. The gate says `review-diff` for all of them, correctly: its job is to decide whether a diff is
+*small and dull enough to read*, not whether it is *right*. Step 3 is what decides that. If step 3 is a
+formality, SAP is a rubber stamp with extra steps.
+
+**If the approval is refused, post the triage as an ordinary comment and say plainly that no approval was
+given.** Silence after a refusal reads like an approval that happened.
+
+### Who SAP has to be to approve
+
+GitHub rejects self-approval, so **SAP cannot approve a PR opened by the account it runs as.** Running it
+locally against your own PR will always refuse, correctly, and that is not a bug to work around.
+
+In CI it runs as a different identity and can approve. `.github/workflows/sweep-review.yml` already grants
+`pull-requests: write` and runs as `github-actions` via `secrets.GITHUB_TOKEN`, which is enough to submit
+review events. One prerequisite is a repository setting rather than a permission in the workflow file:
+**Settings > Actions > General > Allow GitHub Actions to create and approve pull requests**. With it off, a
+`GITHUB_TOKEN` run can comment but its approval is rejected. `approve.mjs` prints that as the reason when it
+happens; reading the setting up front needs a scope SAP does not have, so it is not checked in advance. If
+you would rather not enable it, run SAP with a PAT or GitHub App token for a bot account.
+
+## 6. When SAP is the wrong tool
 
 Say so and stop. SAP is wrong for a PR you were asked to review properly, anything already flagged by a
 human, a revert of a production incident, or a change whose author asked for scrutiny. Escalating early
