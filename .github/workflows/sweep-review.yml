@@ -53,15 +53,16 @@ jobs:
           mkdir -p .claude/skills
           cp -R agent/skills/. .claude/skills/
 
-      # Northflank posts "Infisical preview is up: https://p01--infisical--<id>.code.run"
-      # once the PR build deploys. Take the newest one: a redeploy posts a new comment
-      # and the old host stops resolving.
+      # Northflank posts "Infisical preview is up: https://p01--<service>--<id>.code.run"
+      # once the PR build deploys, where <service> is infisical or infisical-pr-<n>.
+      # Take the newest one: a redeploy posts a new comment and the old host stops
+      # resolving.
       - name: Resolve the preview URL
         id: preview
         run: |
           url=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" --paginate \
                   --jq '.[] | select((.user.login // "") | startswith("northflank-cloud-build-run")) | .body' \
-                | grep -oE 'https://p01--infisical--[a-z0-9]+\.code\.run' \
+                | grep -oE 'https://p01--infisical[a-z0-9-]*--[a-z0-9]+\.code\.run' \
                 | tail -1 || true)
           if [ -z "$url" ]; then
             echo "::warning::no Northflank preview comment on PR #${PR_NUMBER}; the live test will be skipped"
