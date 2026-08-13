@@ -31,7 +31,7 @@ type Props = {
 };
 
 const descriptionOverwriteWarningMessage =
-  "Warning: Any changes made here will overwrite any custom edits in individual environment folders.";
+  "Heads up: this description replaces any custom description set on the matching folder in each environment.";
 
 const formSchema = z.object({
   name: z
