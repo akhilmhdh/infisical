@@ -15,6 +15,7 @@ import { secretApprovalRequestKeys } from "../secretApprovalRequest/queries";
 import {
   TCreateFolderDTO,
   TDeleteFolderDTO,
+  TDuplicateFolderDTO,
   TGetFoldersByEnvDTO,
   TGetProjectFoldersDTO,
   TMoveFolderDTO,
@@ -216,6 +217,25 @@ export const useCreateFolder = () => {
       queryClient.invalidateQueries({
         queryKey: commitKeys.history({ projectId, environment, directory: path })
       });
+    }
+  });
+};
+
+export const useDuplicateFolder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<object, object, TDuplicateFolderDTO>({
+    mutationFn: async ({ path = "/", folderId, name, environment, projectId }) => {
+      const { data } = await apiRequest.post(`/api/v2/folders/${folderId}/duplicate`, {
+        name,
+        environment,
+        projectId,
+        path
+      });
+      return data;
+    },
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ["secret-folders", projectId] });
     }
   });
 };

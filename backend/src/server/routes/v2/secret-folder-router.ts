@@ -444,6 +444,79 @@ export const registerSecretFolderRouter = async (server: FastifyZodProvider) => 
 
   server.route({
     method: "POST",
+    url: "/:folderId/duplicate",
+    config: {
+      rateLimit: secretsLimit
+    },
+    schema: {
+      hide: false,
+      operationId: "duplicateSecretFolder",
+      tags: [ApiDocsTags.Folders],
+      description: "Duplicate a folder",
+      security: [
+        {
+          bearerAuth: []
+        }
+      ],
+      params: z.object({
+        folderId: z.string().uuid().describe(FOLDERS.UPDATE.folderId)
+      }),
+      body: z.object({
+        projectId: z.string().trim().describe(FOLDERS.UPDATE.projectId),
+        environment: z.string().trim().describe(FOLDERS.UPDATE.environment),
+        path: z
+          .string()
+          .trim()
+          .default("/")
+          .transform(prefixWithSlash)
+          .transform(removeTrailingSlash)
+          .describe(FOLDERS.UPDATE.path),
+        name: z
+          .string()
+          .trim()
+          .describe(FOLDERS.CREATE.name)
+          .refine((name) => isValidFolderName(name), {
+            message: "Invalid folder name. Only alphanumeric characters, dashes, and underscores are allowed."
+          })
+      }),
+      response: {
+        200: z.object({
+          folder: SecretFoldersSchema
+        })
+      }
+    },
+    onRequest: verifyAuth([AuthMode.JWT, AuthMode.IDENTITY_ACCESS_TOKEN]),
+    handler: async (req) => {
+      const { folder, source } = await server.services.folder.duplicateFolder({
+        actorId: req.permission.id,
+        actor: req.permission.type,
+        actorAuthMethod: req.permission.authMethod,
+        actorOrgId: req.permission.orgId,
+        ...req.body,
+        id: req.params.folderId
+      });
+
+      await server.services.auditLog.createAuditLog({
+        ...req.auditLogInfo,
+        projectId: req.body.projectId,
+        event: {
+          type: EventType.CREATE_FOLDER,
+          metadata: {
+            environment: req.body.environment,
+            folderId: folder.id,
+            folderName: folder.name,
+            folderPath: req.body.path,
+            ...(source.description ? { folderDescription: source.description } : {})
+          }
+        }
+      });
+
+      return { folder };
+    }
+  });
+
+  server.route({
+    method: "POST",
     url: "/move",
     config: {
       rateLimit: secretsLimit

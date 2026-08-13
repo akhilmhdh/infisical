@@ -52,6 +52,13 @@ export type TGetFolderDTO = {
   lastSecretModified?: string;
 } & TProjectPermission;
 
+export type TDuplicateFolderDTO = {
+  environment: string;
+  path: string;
+  id: string;
+  name: string;
+} & TProjectPermission;
+
 export type TGetFolderByIdDTO = {
   id: string;
 } & Omit<TProjectPermission, "projectId">;

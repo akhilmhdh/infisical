@@ -1,6 +1,7 @@
 import { subject } from "@casl/ability";
 import {
   faClose,
+  faCopy,
   faEdit,
   faFolder,
   faInfoCircle,
@@ -25,7 +26,7 @@ import {
 import { ROUTE_PATHS } from "@app/const/routes";
 import { ProjectPermissionActions, ProjectPermissionSub, useSubscription } from "@app/context";
 import { usePopUp } from "@app/hooks";
-import { useDeleteFolder, useUpdateFolder } from "@app/hooks/api";
+import { useDeleteFolder, useDuplicateFolder, useUpdateFolder } from "@app/hooks/api";
 import { PendingAction, TSecretFolder } from "@app/hooks/api/secretFolders/types";
 
 import {
@@ -69,6 +70,19 @@ export const FolderListView = ({
   const { mutateAsync: deleteFolder } = useDeleteFolder();
   const { isBatchMode } = useBatchMode();
   const { addPendingChange, removePendingChange } = useBatchModeActions();
+
+  const { mutateAsync: duplicateFolder } = useDuplicateFolder();
+
+  const handleFolderDuplicate = async (folderId: string, name: string) => {
+    await duplicateFolder({
+      folderId,
+      name: `${name}-copy`,
+      path: secretPath,
+      environment,
+      projectId
+    });
+    createNotification({ type: "success", text: "Folder duplicated" });
+  };
 
   const handleFolderUpdate = async (
     newFolderName: string,
@@ -269,6 +283,25 @@ export const FolderListView = ({
                     isDisabled={!isAllowed}
                   >
                     <FontAwesomeIcon icon={faEdit} />
+                  </IconButton>
+                )}
+              </ProjectPermissionCan>
+              <ProjectPermissionCan
+                I={ProjectPermissionActions.Create}
+                a={subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })}
+                renderTooltip
+                allowedLabel="Duplicate"
+              >
+                {(isAllowed) => (
+                  <IconButton
+                    ariaLabel="duplicate-folder"
+                    variant="plain"
+                    size="sm"
+                    className="p-0 opacity-0 group-hover:opacity-100"
+                    onClick={() => handleFolderDuplicate(id, name)}
+                    isDisabled={!isAllowed}
+                  >
+                    <FontAwesomeIcon icon={faCopy} />
                   </IconButton>
                 )}
               </ProjectPermissionCan>

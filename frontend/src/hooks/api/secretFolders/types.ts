@@ -54,6 +54,14 @@ export type TUpdateFolderDTO = {
   description?: string | null;
 };
 
+export type TDuplicateFolderDTO = {
+  projectId: string;
+  environment: string;
+  folderId: string;
+  name: string;
+  path?: string;
+};
+
 export type TDeleteFolderDTO = {
   projectId: string;
   environment: string;

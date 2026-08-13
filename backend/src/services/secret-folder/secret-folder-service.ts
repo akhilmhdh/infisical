@@ -56,6 +56,7 @@ import {
   TDeleteFolderDTO,
   TDeleteManyFoldersDTO,
   TFolderMoveEligibility,
+  TDuplicateFolderDTO,
   TGetFolderByIdDTO,
   TGetFolderByPathDTO,
   TGetFolderDTO,
@@ -981,6 +982,56 @@ export const secretFolderServiceFactory = ({
     );
 
     return Number(folders[0]?.count ?? 0);
+  };
+
+  const duplicateFolder = async ({
+    projectId,
+    actor,
+    actorId,
+    actorAuthMethod,
+    actorOrgId,
+    environment,
+    path: secretPath,
+    id,
+    name
+  }: TDuplicateFolderDTO) => {
+    const { permission } = await permissionService.getProjectPermission({
+      actor,
+      actorId,
+      projectId,
+      actorAuthMethod,
+      actorOrgId,
+      actionProjectType: ActionProjectType.SecretManager
+    });
+
+    ForbiddenError.from(permission).throwUnlessCan(
+      ProjectPermissionActions.Create,
+      subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
+    );
+
+    const source = await folderDAL.findById(id);
+    if (!source) throw new NotFoundError({ message: `Folder with ID '${id}' not found` });
+
+    const parentFolder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
+    if (!parentFolder) {
+      throw new NotFoundError({
+        message: `Folder with path '${secretPath}' in environment '${environment}' not found`
+      });
+    }
+
+    const existing = await folderDAL.findOne({ parentId: parentFolder.id, name, isReserved: false });
+    if (existing) {
+      throw new BadRequestError({ message: `A folder named '${name}' already exists in '${secretPath}'` });
+    }
+
+    const copy = await folderDAL.create({
+      name,
+      envId: parentFolder.envId,
+      parentId: parentFolder.id,
+      description: source.description
+    });
+
+    return { folder: copy, source };
   };
 
   const getFolderById = async ({ actor, actorId, actorOrgId, actorAuthMethod, id }: TGetFolderByIdDTO) => {
@@ -2019,6 +2070,7 @@ export const secretFolderServiceFactory = ({
     updateManyFolders,
     deleteFolder,
     getFolders,
+    duplicateFolder,
     getFolderById,
     getFolderMoveEligibility,
     moveFolder,

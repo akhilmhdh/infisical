@@ -1,6 +1,7 @@
 export {
   useCreateFolder,
   useDeleteFolder,
+  useDuplicateFolder,
   useGetFoldersByEnv,
   useGetOrCreateFolder,
   useGetProjectFolders,
