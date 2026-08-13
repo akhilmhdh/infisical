@@ -14,8 +14,17 @@ export const secretSharingKeys = {
   specificSharedSecrets: ({ offset, limit }: { offset: number; limit: number }) =>
     [...secretSharingKeys.allSharedSecrets(), { offset, limit }] as const,
   allSecretRequests: () => ["secretRequests"] as const,
-  specificSecretRequests: ({ offset, limit }: { offset: number; limit: number }) =>
-    [...secretSharingKeys.allSecretRequests(), { offset, limit }] as const,
+  specificSecretRequests: ({
+    offset,
+    limit,
+    sortBy,
+    sortDir
+  }: {
+    offset: number;
+    limit: number;
+    sortBy?: string;
+    sortDir?: string;
+  }) => [...secretSharingKeys.allSecretRequests(), { offset, limit, sortBy, sortDir }] as const,
   getSharedSecretDetails: (id: string) => ["shared-secret", id] as const,
   getSecretRequestById: (arg: { id: string }) => ["secret-request", arg] as const,
   brandingAssets: () => ["brandingAssets"] as const,
@@ -50,20 +59,25 @@ export const useGetSharedSecrets = ({
 
 export const useGetSecretRequests = ({
   offset = 0,
-  limit = 25
+  limit = 25,
+  sortBy,
+  sortDir
 }: {
   offset: number;
   limit: number;
+  sortBy?: string;
+  sortDir?: string;
 }) => {
   return useQuery({
-    queryKey: secretSharingKeys.specificSecretRequests({ offset, limit }),
+    queryKey: secretSharingKeys.specificSecretRequests({ offset, limit, sortBy, sortDir }),
     queryFn: async () => {
       const { data } = await apiRequest.get<{ secrets: TSharedSecret[]; totalCount: number }>(
         "/api/v1/shared-secrets/requests",
         {
           params: {
             offset: String(offset),
-            limit: String(limit)
+            limit: String(limit),
+            ...(sortBy ? { sortBy, sortDir: sortDir ?? "desc" } : {})
           }
         }
       );

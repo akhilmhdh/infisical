@@ -557,7 +557,9 @@ export const secretSharingServiceFactory = ({
     actorOrgId,
     offset,
     limit,
-    type
+    type,
+    sortBy,
+    sortDir
   }: TGetSharedSecretsDTO) => {
     if (!actorOrgId) throw new ForbiddenRequestError();
 
@@ -571,15 +573,26 @@ export const secretSharingServiceFactory = ({
     });
     if (!permission) throw new ForbiddenRequestError({ name: "User does not belong to the specified organization" });
 
-    const secrets = await secretSharingDAL.find(
-      {
-        ...(actor === ActorType.USER && { userId: actorId }),
-        ...(actor === ActorType.IDENTITY && { identityId: actorId }),
-        orgId: actorOrgId,
-        type
-      },
-      { offset, limit, sort: [["createdAt", "desc"]] }
-    );
+    const secrets = sortBy
+      ? await secretSharingDAL.findSortedUserOrgSharedSecrets({
+          ...(actor === ActorType.USER && { userId: actorId }),
+          ...(actor === ActorType.IDENTITY && { identityId: actorId }),
+          orgId: actorOrgId,
+          type,
+          offset,
+          limit,
+          sortBy,
+          sortDir: sortDir || "desc"
+        })
+      : await secretSharingDAL.find(
+          {
+            ...(actor === ActorType.USER && { userId: actorId }),
+            ...(actor === ActorType.IDENTITY && { identityId: actorId }),
+            orgId: actorOrgId,
+            type
+          },
+          { offset, limit, sort: [["createdAt", "desc"]] }
+        );
 
     const count = await secretSharingDAL.countAllUserOrgSharedSecrets({
       orgId: actorOrgId,

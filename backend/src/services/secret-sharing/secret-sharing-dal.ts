@@ -13,6 +13,46 @@ export type TSecretSharingDALFactory = ReturnType<typeof secretSharingDALFactory
 export const secretSharingDALFactory = (db: TDbClient) => {
   const sharedSecretOrm = ormify(db, TableName.SecretSharing);
 
+  const findSortedUserOrgSharedSecrets = async ({
+    orgId,
+    type,
+    userId,
+    identityId,
+    offset,
+    limit,
+    sortBy,
+    sortDir
+  }: {
+    orgId: string;
+    type: SecretSharingType;
+    userId?: string;
+    identityId?: string;
+    offset: number;
+    limit: number;
+    sortBy: string;
+    sortDir: string;
+  }) => {
+    try {
+      const query = db
+        .replicaNode()(TableName.SecretSharing)
+        .where(`${TableName.SecretSharing}.orgId`, orgId)
+        .where(`${TableName.SecretSharing}.type`, type)
+        .select(selectAllTableCols(TableName.SecretSharing))
+        .offset(offset)
+        .limit(limit);
+
+      if (userId) void query.where(`${TableName.SecretSharing}.userId`, userId);
+      if (identityId) void query.where(`${TableName.SecretSharing}.identityId`, identityId);
+
+      // orderBy() quotes the column, which breaks the nulls-last ordering the table needs on expiresAt.
+      void query.orderByRaw(`"${TableName.SecretSharing}"."${sortBy}" ${sortDir} NULLS LAST`);
+
+      return await query;
+    } catch (error) {
+      throw new DatabaseError({ error, name: "FindSortedUserOrgSharedSecrets" });
+    }
+  };
+
   const getSecretRequestById = async (id: string) => {
     const repDb = db.replicaNode();
 
@@ -146,6 +186,7 @@ export const secretSharingDALFactory = (db: TDbClient) => {
   return {
     ...sharedSecretOrm,
     countAllUserOrgSharedSecrets,
+    findSortedUserOrgSharedSecrets,
     pruneExpiredSharedSecrets,
     pruneExpiredSecretRequests,
     softDeleteById,

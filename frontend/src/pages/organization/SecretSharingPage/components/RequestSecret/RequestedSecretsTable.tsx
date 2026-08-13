@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 import {
   Empty,
@@ -29,10 +30,28 @@ type Props = {
 export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortDir, setSortDir] = useState("desc");
   const { isPending, data } = useGetSecretRequests({
     offset: (page - 1) * perPage,
-    limit: perPage
+    limit: perPage,
+    sortBy,
+    sortDir
   });
+
+  const toggleSort = (column: string) => {
+    if (column === sortBy) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+      return;
+    }
+    setSortBy(column);
+    setSortDir("desc");
+  };
+
+  const sortArrow = (column: string) => {
+    if (column !== sortBy) return null;
+    return sortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />;
+  };
 
   const hasSecrets = !isPending && data?.secrets && data.secrets.length > 0;
 
@@ -43,10 +62,33 @@ export const RequestedSecretsTable = ({ handlePopUpOpen }: Props) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/4">Name</TableHead>
+              <TableHead className="w-1/4">
+                <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("name")}>
+                  Name
+                  {sortArrow("name")}
+                </button>
+              </TableHead>
               <TableHead>Access Type</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Expires</TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  className="flex items-center gap-1"
+                  onClick={() => toggleSort("createdAt")}
+                >
+                  Created
+                  {sortArrow("createdAt")}
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  className="flex items-center gap-1"
+                  onClick={() => toggleSort("expiresAt")}
+                >
+                  Expires
+                  {sortArrow("expiresAt")}
+                </button>
+              </TableHead>
               <TableHead className="text-right">Status</TableHead>
               <TableHead aria-label="button" className="w-5" />
             </TableRow>

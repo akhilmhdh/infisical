@@ -251,6 +251,8 @@ export const registerSecretRequestsRouter = async (server: FastifyZodProvider) =
       operationId: "listSecretRequests",
       querystring: z.object({
         offset: z.coerce.number().min(0).max(100).default(0),
+        sortBy: z.string().optional(),
+        sortDir: z.string().optional(),
         limit: z.coerce.number().min(1).max(100).default(25)
       }),
       response: {
