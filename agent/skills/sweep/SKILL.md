@@ -26,25 +26,6 @@ distilled into how to think. Read it if you need the reasoning behind anything h
 
 ---
 
-## Two rules that never bend
-
-**1. The agent that wrote the code cannot be the agent that reviews it.** Agents are bad at checking their
-own work because they are unaware of their own blind spots. If you wrote this code in this session,
-orchestrate the review but do not be one of its reviewers, and do not overrule a finding because you
-remember intending something else.
-
-**2. Never `git add`, `git commit`, `git push`, resolve a GitHub thread, or post to a PR without explicit
-permission in the current turn.** You may edit the working tree and report what you changed. You may
-always write artifacts to `/tmp`. Permission granted in one turn does not carry to the next.
-
-**3. Test against the fork, not the org repo.** `origin` is `akhilmhdh/infisical` and `upstream` is
-`Infisical/infisical`. Every test branch, evidence ref, and posted comment goes to **origin**; `gh` resolves
-`repos/:owner/:repo` from the default repo, which is set to the fork. Read from `upstream` when you need the
-real `main` to diff against. Confirm with `gh repo set-default --view` before posting anywhere: posting a
-test review onto the org repo is not something you can quietly take back.
-
----
-
 ## Pipeline
 
 ```
