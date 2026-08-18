@@ -20,7 +20,7 @@ export const OverviewPage = () => {
         <div className="mx-auto mb-6 w-full max-w-8xl">
           <PageHeader
             scope={ProjectType.KMS}
-            title="Project Overview"
+            title="Project"
             description="Manage keys and perform cryptographic operations."
           />
           <ProjectPermissionCan
