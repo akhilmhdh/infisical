@@ -198,6 +198,7 @@ type TValidationViolation = {
   ruleName: string;
   constraintType: ConstraintType;
   message: string;
+  received: string;
 };
 
 export const CONSTRAINT_LABELS: Record<ConstraintType, string> = {
@@ -318,6 +319,19 @@ export const evaluateStaticSecretConstraints = (
   return violations;
 };
 
+const MIN_LENGTH_TO_SHOW_VALUE_EDGES = 16;
+const VISIBLE_VALUE_EDGE = 3;
+
+export const maskSecretValueForDisplay = (value: string): string => {
+  if (value.length < MIN_LENGTH_TO_SHOW_VALUE_EDGES) return "********";
+  return `${value.slice(0, VISIBLE_VALUE_EDGE)}****${value.slice(-VISIBLE_VALUE_EDGE)}`;
+};
+
+const formatReceived = (constraint: TConstraint, secret: TSecretToValidate) =>
+  constraint.appliesTo === ConstraintTarget.SecretKey
+    ? `"${secret.key}"`
+    : `"${maskSecretValueForDisplay(secret.value ?? "")}"`;
+
 /**
  * Evaluate static secret constraints against a set of secrets.
  */
@@ -339,7 +353,8 @@ const enforceStaticSecretsRules = (rules: TValidationRule[], secrets: TSecretToV
             secretKey: secret.key,
             ruleName: rule.name,
             constraintType: constraint.type,
-            message: error
+            message: error,
+            received: formatReceived(constraint, secret)
           });
         }
       }
@@ -419,7 +434,7 @@ export const enforceSecretValidationRules = ({
   if (allViolations.length > 0) {
     const details = allViolations.map(
       (v) =>
-        `Secret "${v.secretKey}": ${v.message} (rule: "${v.ruleName}", constraint: ${CONSTRAINT_LABELS[v.constraintType]})`
+        `Secret "${v.secretKey}": ${v.message}, got ${v.received} (rule: "${v.ruleName}", constraint: ${CONSTRAINT_LABELS[v.constraintType]})`
     );
 
     throw new BadRequestError({
