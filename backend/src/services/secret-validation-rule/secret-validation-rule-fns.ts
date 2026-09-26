@@ -215,6 +215,18 @@ const TARGET_LABELS: Record<ConstraintTarget, string> = {
   [ConstraintTarget.GeneratedPassword]: "password"
 };
 
+const MASKED_VALUE_VISIBLE_EDGE = 4;
+
+export const maskSecretValueForDisplay = (value: string): string => {
+  if (value.length <= MASKED_VALUE_VISIBLE_EDGE * 2) return "*".repeat(value.length);
+
+  const hiddenLength = value.length - MASKED_VALUE_VISIBLE_EDGE * 2;
+  return `${value.slice(0, MASKED_VALUE_VISIBLE_EDGE)}${"*".repeat(hiddenLength)}${value.slice(-MASKED_VALUE_VISIBLE_EDGE)}`;
+};
+
+const formatReceivedTarget = (target: ConstraintTarget, targetValue: string) =>
+  target === ConstraintTarget.SecretKey ? `"${targetValue}"` : `"${maskSecretValueForDisplay(targetValue)}"`;
+
 export const evaluateConstraint = (constraint: TConstraint, secret: TSecretToValidate): string | null => {
   // Skip value constraints when no value mutation is occurring (e.g. key-only rename)
   if (constraint.appliesTo === ConstraintTarget.SecretValue && secret.value === undefined) {
@@ -223,17 +235,18 @@ export const evaluateConstraint = (constraint: TConstraint, secret: TSecretToVal
 
   const targetValue = constraint.appliesTo === ConstraintTarget.SecretKey ? secret.key : (secret.value ?? "");
   const targetLabel = TARGET_LABELS[constraint.appliesTo];
+  const received = formatReceivedTarget(constraint.appliesTo, targetValue);
 
   switch (constraint.type) {
     case ConstraintType.MinLength: {
       const min = Number(constraint.value);
 
       if (Number.isNaN(min)) {
-        return `${targetLabel} must be at least ${min} characters (got ${targetValue.length})`;
+        return `${targetLabel} must be at least ${min} characters (got ${targetValue.length}: ${received})`;
       }
 
       if (targetValue.length < min) {
-        return `${targetLabel} must be at least ${min} characters (got ${targetValue.length})`;
+        return `${targetLabel} must be at least ${min} characters (got ${targetValue.length}: ${received})`;
       }
       return null;
     }
@@ -241,11 +254,11 @@ export const evaluateConstraint = (constraint: TConstraint, secret: TSecretToVal
       const max = Number(constraint.value);
 
       if (Number.isNaN(max)) {
-        return `${targetLabel} must be at most ${max} characters (got ${targetValue.length})`;
+        return `${targetLabel} must be at most ${max} characters (got ${targetValue.length}: ${received})`;
       }
 
       if (targetValue.length > max) {
-        return `${targetLabel} must be at most ${max} characters (got ${targetValue.length})`;
+        return `${targetLabel} must be at most ${max} characters (got ${targetValue.length}: ${received})`;
       }
       return null;
     }
@@ -253,7 +266,7 @@ export const evaluateConstraint = (constraint: TConstraint, secret: TSecretToVal
       try {
         const regex = new RE2(constraint.value);
         if (!regex.test(targetValue)) {
-          return `${targetLabel} must match pattern ${constraint.value}`;
+          return `${targetLabel} must match pattern ${constraint.value} (got ${received})`;
         }
         return null;
       } catch {
@@ -263,13 +276,13 @@ export const evaluateConstraint = (constraint: TConstraint, secret: TSecretToVal
     }
     case ConstraintType.RequiredPrefix: {
       if (!targetValue.startsWith(constraint.value)) {
-        return `${targetLabel} must start with "${constraint.value}"`;
+        return `${targetLabel} must start with "${constraint.value}" (got ${received})`;
       }
       return null;
     }
     case ConstraintType.RequiredSuffix: {
       if (!targetValue.endsWith(constraint.value)) {
-        return `${targetLabel} must end with "${constraint.value}"`;
+        return `${targetLabel} must end with "${constraint.value}" (got ${received})`;
       }
       return null;
     }
