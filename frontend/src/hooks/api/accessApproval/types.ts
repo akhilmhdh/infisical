@@ -212,6 +212,8 @@ export type TGetAccessApprovalRequestsDTO = {
   policyId?: string;
   envSlug?: string;
   authorUserId?: string;
+  limit?: number;
+  offset?: number;
 };
 
 export type TGetAccessPolicyApprovalCountDTO = {

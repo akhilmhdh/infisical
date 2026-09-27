@@ -146,7 +146,9 @@ export const registerAccessApprovalRequestRouter = async (server: FastifyZodProv
       querystring: z.object({
         projectSlug: z.string().trim(),
         authorUserId: z.string().trim().optional(),
-        envSlug: z.string().trim().optional()
+        envSlug: z.string().trim().optional(),
+        limit: z.coerce.number().min(1).max(100).optional(),
+        offset: z.coerce.number().min(0).optional()
       }),
       response: {
         200: z.object({
@@ -197,23 +199,26 @@ export const registerAccessApprovalRequestRouter = async (server: FastifyZodProv
             requestedByUser: approvalRequestUser,
             approvedByUser: approvalRequestUser.nullable(),
             revokedByUser: approvalRequestUser.nullable()
-          }).array()
+          }).array(),
+          totalCount: z.number()
         })
       }
     },
     onRequest: verifyAuth([AuthMode.JWT, AuthMode.OAUTH]),
     handler: async (req) => {
-      const { requests } = await server.services.accessApprovalRequest.listApprovalRequests({
+      const { requests, totalCount } = await server.services.accessApprovalRequest.listApprovalRequests({
         projectSlug: req.query.projectSlug,
         authorUserId: req.query.authorUserId,
         envSlug: req.query.envSlug,
+        limit: req.query.limit,
+        offset: req.query.offset,
         actor: req.permission.type,
         actorId: req.permission.id,
         actorOrgId: req.permission.orgId,
         actorAuthMethod: req.permission.authMethod
       });
 
-      return { requests };
+      return { requests, totalCount };
     }
   });
 

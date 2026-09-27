@@ -45,6 +45,8 @@ export type TListApprovalRequestsDTO = {
   projectSlug: string;
   authorUserId?: string;
   envSlug?: string;
+  limit?: number;
+  offset?: number;
 } & Omit<TProjectPermission, "projectId">;
 
 export interface TAccessApprovalRequestServiceFactory {
@@ -194,6 +196,7 @@ export interface TAccessApprovalRequestServiceFactory {
       )[];
       bypassers: string[];
     }[];
+    totalCount: number;
   }>;
   reviewAccessRequest: (arg: TReviewAccessRequestDTO) => Promise<{
     id: string;

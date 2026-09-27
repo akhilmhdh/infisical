@@ -205,7 +205,7 @@ export const AccessApprovalRequest = ({
   });
 
   const {
-    data: requests,
+    data: requestsData,
     refetch: refetchRequests,
     isPending: areRequestsPending
   } = useGetAccessApprovalRequests({
@@ -213,6 +213,8 @@ export const AccessApprovalRequest = ({
     authorUserId: validRequestedByFilter,
     envSlug: validEnvFilter
   });
+
+  const requests = requestsData?.requests;
 
   const { search, setSearch, setPage, page, perPage, setPerPage, offset } = usePagination("", {
     initPerPage: getUserTablePreference("accessRequestsTable", PreferenceKey.PerPage, 20)

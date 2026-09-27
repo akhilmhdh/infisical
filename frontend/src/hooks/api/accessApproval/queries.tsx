@@ -23,8 +23,9 @@ export const accessApprovalKeys = {
     projectSlug: string,
     envSlug?: string,
     requestedBy?: string,
-    bypassReason?: string
-  ) => ["access-approvals-requests", projectSlug, envSlug, requestedBy, bypassReason] as const,
+    limit?: number,
+    offset?: number
+  ) => ["access-approvals-requests", projectSlug, envSlug, requestedBy, limit, offset] as const,
   getAccessApprovalRequestsAllForProject: (projectSlug: string) =>
     ["access-approvals-requests", projectSlug] as const,
   getAccessApprovalRequestCount: (projectSlug: string, policyId?: string) =>
@@ -67,14 +68,16 @@ const fetchApprovalPolicies = async ({ projectSlug }: TGetAccessApprovalRequests
 const fetchApprovalRequests = async ({
   projectSlug,
   envSlug,
-  authorUserId
+  authorUserId,
+  limit,
+  offset
 }: TGetAccessApprovalRequestsDTO) => {
-  const { data } = await apiRequest.get<{ requests: TAccessApprovalRequest[] }>(
+  const { data } = await apiRequest.get<{ requests: TAccessApprovalRequest[]; totalCount: number }>(
     "/api/v1/access-approvals/requests",
-    { params: { projectSlug, envSlug, authorUserId } }
+    { params: { projectSlug, envSlug, authorUserId, limit, offset } }
   );
 
-  return data.requests.map((request) => ({
+  const requests = data.requests.map((request) => ({
     ...request,
 
     privilege: request.privilege
@@ -87,6 +90,8 @@ const fetchApprovalRequests = async ({
       : null,
     permissions: unpackRules(request.permissions as unknown as PackRule<TProjectPermission>[])
   }));
+
+  return { requests, totalCount: data.totalCount };
 };
 
 const fetchAccessRequestsCount = async (projectSlug: string, policyId?: string) => {
@@ -127,11 +132,19 @@ export const useGetAccessApprovalRequests = ({
   projectSlug,
   envSlug,
   authorUserId,
+  limit,
+  offset,
   options = {}
 }: TGetAccessApprovalRequestsDTO & TReactQueryOptions) =>
   useQuery({
-    queryKey: accessApprovalKeys.getAccessApprovalRequests(projectSlug, envSlug, authorUserId),
-    queryFn: () => fetchApprovalRequests({ projectSlug, envSlug, authorUserId }),
+    queryKey: accessApprovalKeys.getAccessApprovalRequests(
+      projectSlug,
+      envSlug,
+      authorUserId,
+      limit,
+      offset
+    ),
+    queryFn: () => fetchApprovalRequests({ projectSlug, envSlug, authorUserId, limit, offset }),
     ...options,
     enabled: Boolean(projectSlug) && (options?.enabled ?? true),
     placeholderData: (previousData) => previousData,

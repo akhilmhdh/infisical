@@ -670,6 +670,8 @@ export const accessApprovalRequestServiceFactory = ({
     projectSlug,
     authorUserId,
     envSlug,
+    limit,
+    offset,
     actor,
     actorOrgId,
     actorId,
@@ -678,7 +680,7 @@ export const accessApprovalRequestServiceFactory = ({
     const project = await projectDAL.findProjectBySlug(projectSlug, actorOrgId);
     if (!project) throw new NotFoundError({ message: `Project with slug '${projectSlug}' not found` });
 
-    const { permission } = await permissionService.getProjectPermission({
+    await permissionService.getProjectPermission({
       actor,
       actorId,
       projectId: project.id,
@@ -687,17 +689,8 @@ export const accessApprovalRequestServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    const canReadAllApprovalRequests = permission.can(
-      ProjectPermissionApprovalRequestActions.Read,
-      ProjectPermissionSub.ApprovalRequests
-    );
-
     const policies = await accessApprovalPolicyDAL.find({ projectId: project.id });
     let requests = await accessApprovalRequestDAL.findRequestsWithPrivilegeByPolicyIds(policies.map((p) => p.id));
-
-    if (!canReadAllApprovalRequests) {
-      requests = requests.filter((request) => request.requestedByUserId === actorId);
-    }
 
     if (authorUserId) {
       requests = requests.filter((request) => request.requestedByUserId === authorUserId);
@@ -705,6 +698,12 @@ export const accessApprovalRequestServiceFactory = ({
 
     if (envSlug) {
       requests = requests.filter((request) => request.environment === envSlug);
+    }
+
+    const totalCount = requests.length;
+    if (typeof limit === "number") {
+      const startIndex = offset ?? 0;
+      requests = requests.slice(startIndex, startIndex + limit);
     }
 
     requests = requests.map((request) => {
@@ -717,7 +716,7 @@ export const accessApprovalRequestServiceFactory = ({
       return request;
     });
 
-    return { requests };
+    return { requests, totalCount };
   };
 
   const reviewAccessRequest: TAccessApprovalRequestServiceFactory["reviewAccessRequest"] = async ({
