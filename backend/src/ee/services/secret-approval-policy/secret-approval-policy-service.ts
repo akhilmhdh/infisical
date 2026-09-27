@@ -1,10 +1,10 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 import picomatch from "picomatch";
 
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { removeTrailingSlash } from "@app/lib/fn";
 import { containsGlobPatterns } from "@app/lib/picomatch";
@@ -140,10 +140,7 @@ export const secretApprovalPolicyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      ProjectPermissionSub.SecretApproval
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretApproval);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.secretApproval) {
@@ -384,7 +381,7 @@ export const secretApprovalPolicyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.SecretApproval);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretApproval);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.secretApproval) {
@@ -574,10 +571,7 @@ export const secretApprovalPolicyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      ProjectPermissionSub.SecretApproval
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretApproval);
 
     const deletedPolicy = await secretApprovalPolicyDAL.transaction(async (tx) => {
       await secretApprovalRequestDAL.update(
@@ -611,7 +605,7 @@ export const secretApprovalPolicyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
 
     const sapPolicies = await secretApprovalPolicyDAL.find({ projectId, deletedAt: null });
     return sapPolicies;
@@ -697,7 +691,7 @@ export const secretApprovalPolicyServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
 
     return sapPolicy;
   };

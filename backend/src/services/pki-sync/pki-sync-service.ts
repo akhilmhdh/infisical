@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import { ActionProjectType, ResourceType, TCertificateSyncs } from "@app/db/schemas";
 import { AuditLogInfo, EventType, TAuditLogServiceFactory } from "@app/ee/services/audit-log/audit-log-types";
@@ -9,6 +9,7 @@ import {
   ResourcePermissionPkiSyncActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getProcessedPermissionRules } from "@app/lib/casl/permission-filter-utils";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { deepEqual } from "@app/lib/fn/object";
@@ -213,7 +214,7 @@ export const pkiSyncServiceFactory = ({
       subscriberName,
       name: pkiSync.name
     });
-    ForbiddenError.from(permission).throwUnlessCan(projectAction, projectSubject);
+    assertPermission(permission, projectAction, projectSubject);
     return permission;
   };
 
@@ -605,13 +606,10 @@ export const pkiSyncServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager,
         projectId: pkiSync.projectId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionPkiSyncActions.Edit,
-        subject(ProjectPermissionSub.PkiSyncs, {
-          subscriberName: currentSubscriber?.name,
-          name: pkiSync.name
-        })
-      );
+      assertPermission(permission, ProjectPermissionPkiSyncActions.Edit, ProjectPermissionSub.PkiSyncs, {
+        subscriberName: currentSubscriber?.name,
+        name: pkiSync.name
+      });
     }
 
     if (name && name !== pkiSync.name) {
@@ -814,13 +812,10 @@ export const pkiSyncServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager,
         projectId: pkiSync.projectId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionPkiSyncActions.Delete,
-        subject(ProjectPermissionSub.PkiSyncs, {
-          subscriberName: pkiSyncSubscriber?.name,
-          name: pkiSync.name
-        })
-      );
+      assertPermission(permission, ProjectPermissionPkiSyncActions.Delete, ProjectPermissionSub.PkiSyncs, {
+        subscriberName: pkiSyncSubscriber?.name,
+        name: pkiSync.name
+      });
     }
 
     return pkiSyncDAL.deleteById(id);
@@ -851,10 +846,7 @@ export const pkiSyncServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager,
         projectId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionPkiSyncActions.Read,
-        ProjectPermissionSub.PkiSyncs
-      );
+      assertPermission(permission, ProjectPermissionPkiSyncActions.Read, ProjectPermissionSub.PkiSyncs);
       processedRules = getProcessedPermissionRules(
         permission,
         ProjectPermissionPkiSyncActions.Read,
@@ -934,13 +926,10 @@ export const pkiSyncServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager,
         projectId: pkiSync.projectId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionPkiSyncActions.Read,
-        subject(ProjectPermissionSub.PkiSyncs, {
-          subscriberName: findSubscriber?.name,
-          name: pkiSync.name
-        })
-      );
+      assertPermission(permission, ProjectPermissionPkiSyncActions.Read, ProjectPermissionSub.PkiSyncs, {
+        subscriberName: findSubscriber?.name,
+        name: pkiSync.name
+      });
     }
 
     const result = {

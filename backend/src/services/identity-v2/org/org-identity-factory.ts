@@ -1,9 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionIdentityActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { assertRoleSetBoundary } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { InternalServerError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -40,7 +39,7 @@ export const newOrgIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
   };
 
   const onUpdateIdentityGuard: TIdentityV2Factory["onUpdateIdentityGuard"] = async (dto) => {
@@ -52,7 +51,7 @@ export const newOrgIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
   };
 
   const onDeleteIdentityGuard: TIdentityV2Factory["onDeleteIdentityGuard"] = async (dto) => {
@@ -64,7 +63,7 @@ export const newOrgIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
 
     const targetMembership = await membershipIdentityDAL.getIdentityById({
       scopeData: dto.scopeData,
@@ -98,7 +97,7 @@ export const newOrgIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     return () => true;
   };
@@ -112,7 +111,7 @@ export const newOrgIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
   };
 
   return {

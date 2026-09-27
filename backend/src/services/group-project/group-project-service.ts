@@ -1,9 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TListProjectGroupUsersDTO } from "@app/ee/services/group/group-types";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionGroupActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 
 import { TGroupDALFactory } from "../../ee/services/group/group-dal";
 
@@ -36,7 +35,7 @@ export const groupProjectServiceFactory = ({ groupDAL, permissionService }: TGro
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
 
     // getProjectPermission above throws NotFoundError if the project doesn't exist and
     // guarantees actorOrgId === project.orgId — no separate project lookup needed.

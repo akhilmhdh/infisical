@@ -1,11 +1,10 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import {
   ProjectPermissionPkiCertificateInstallationActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { NotFoundError } from "@app/lib/errors";
 
 import { TPkiCertificateInstallationDALFactory } from "./pki-certificate-installation-dal";
@@ -51,7 +50,8 @@ export const pkiInstallationServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiCertificateInstallationActions.Read,
       ProjectPermissionSub.PkiCertificateInstallations
     );
@@ -93,7 +93,8 @@ export const pkiInstallationServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiCertificateInstallationActions.Read,
       ProjectPermissionSub.PkiCertificateInstallations
     );
@@ -123,7 +124,8 @@ export const pkiInstallationServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiCertificateInstallationActions.Edit,
       ProjectPermissionSub.PkiCertificateInstallations
     );
@@ -157,7 +159,8 @@ export const pkiInstallationServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiCertificateInstallationActions.Delete,
       ProjectPermissionSub.PkiCertificateInstallations
     );

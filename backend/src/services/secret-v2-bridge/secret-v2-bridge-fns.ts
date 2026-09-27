@@ -1,6 +1,5 @@
 import path from "node:path";
 
-import { ForbiddenError, subject } from "@casl/ability";
 import { Knex } from "knex";
 import RE2 from "re2";
 
@@ -20,6 +19,7 @@ import {
   InternalMetadataType,
   TInternalMetadata
 } from "@app/ee/services/secret-approval-request/secret-approval-request-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { groupBy } from "@app/lib/fn";
 import { logger } from "@app/lib/logger";
@@ -1575,15 +1575,12 @@ export const fnSecretMove = async (dto: TFnSecretMove): Promise<TFnSecretMoveRes
           secretTags: secret.tags.map((el) => el.slug)
         });
       } else {
-        ForbiddenError.from(permission).throwUnlessCan(
-          sourceAction,
-          subject(ProjectPermissionSub.Secrets, {
-            environment: sourceEnvironment,
-            secretPath: sourceSecretPath,
-            secretName: secret.key,
-            secretTags: secret.tags.map((el) => el.slug)
-          })
-        );
+        assertPermission(permission, sourceAction, ProjectPermissionSub.Secrets, {
+          environment: sourceEnvironment,
+          secretPath: sourceSecretPath,
+          secretName: secret.key,
+          secretTags: secret.tags.map((el) => el.slug)
+        });
       }
     }
   });
@@ -1682,15 +1679,12 @@ export const fnSecretMove = async (dto: TFnSecretMove): Promise<TFnSecretMoveRes
 
   for (const secret of secretsToApplyAtDestination) {
     for (const destinationAction of destinationActions) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        destinationAction,
-        subject(ProjectPermissionSub.Secrets, {
-          environment: destinationEnvironment,
-          secretPath: destinationFolder.path,
-          secretName: secret.key,
-          secretTags: secret.tags.map((el) => el.slug)
-        })
-      );
+      assertPermission(permission, destinationAction, ProjectPermissionSub.Secrets, {
+        environment: destinationEnvironment,
+        secretPath: destinationFolder.path,
+        secretName: secret.key,
+        secretTags: secret.tags.map((el) => el.slug)
+      });
     }
   }
 

@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import { randomUUID } from "crypto";
 
 import { ActionProjectType } from "@app/db/schemas";
@@ -8,6 +7,7 @@ import {
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
 import { TPkiAcmeAccountDALFactory } from "@app/ee/services/pki-acme/pki-acme-account-dal";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { ActorAuthMethod, ActorType } from "@app/services/auth/auth-type";
 import { TCertificateBodyDALFactory } from "@app/services/certificate/certificate-body-dal";
@@ -249,11 +249,13 @@ export const certificateApprovalServiceFactory = (
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.IssueCert,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: profile.slug
-      })
+      }
     );
 
     return profile;

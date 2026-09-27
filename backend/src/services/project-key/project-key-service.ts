@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionMemberActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError } from "@app/lib/errors";
 
 import { TMembershipUserDALFactory } from "../membership-user/membership-user-dal";
@@ -40,7 +39,7 @@ export const projectKeyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Edit, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Edit, ProjectPermissionSub.Member);
 
     const receiverMembership = await membershipUserDAL.findOne({
       actorUserId: receiverId,
@@ -90,7 +89,7 @@ export const projectKeyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
     return projectKeyDAL.findAllProjectUserPubKeys(projectId);
   };
 

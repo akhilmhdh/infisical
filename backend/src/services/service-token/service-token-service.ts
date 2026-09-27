@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
@@ -8,6 +8,7 @@ import {
   ProjectPermissionSecretActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { validatePermissionBoundary } from "@app/lib/casl/boundary";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
@@ -76,7 +77,7 @@ export const serviceTokenServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.ServiceTokens);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.ServiceTokens);
 
     const canRead = permissions.includes("read");
     const canWrite = permissions.includes("write");
@@ -84,7 +85,7 @@ export const serviceTokenServiceFactory = ({
     scopes.forEach(({ environment, secretPath }) => {
       const secretSubject = subject(ProjectPermissionSub.Secrets, { environment, secretPath });
 
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionSecretActions.Create, secretSubject);
+      assertPermission(permission, ProjectPermissionSecretActions.Create, secretSubject);
 
       if (canRead) {
         const hasLegacyReadUmbrella = permission.can(
@@ -92,14 +93,14 @@ export const serviceTokenServiceFactory = ({
           secretSubject
         );
         if (!hasLegacyReadUmbrella) {
-          ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionSecretActions.ReadValue, secretSubject);
-          ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionSecretActions.DescribeSecret, secretSubject);
+          assertPermission(permission, ProjectPermissionSecretActions.ReadValue, secretSubject);
+          assertPermission(permission, ProjectPermissionSecretActions.DescribeSecret, secretSubject);
         }
       }
 
       if (canWrite) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionSecretActions.Edit, secretSubject);
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionSecretActions.Delete, secretSubject);
+        assertPermission(permission, ProjectPermissionSecretActions.Edit, secretSubject);
+        assertPermission(permission, ProjectPermissionSecretActions.Delete, secretSubject);
       }
     });
 
@@ -178,7 +179,7 @@ export const serviceTokenServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.ServiceTokens);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.ServiceTokens);
 
     const deletedServiceToken = await serviceTokenDAL.deleteById(id);
     return deletedServiceToken;
@@ -213,7 +214,7 @@ export const serviceTokenServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.ServiceTokens);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.ServiceTokens);
 
     const tokens = await serviceTokenDAL.find({ projectId }, { sort: [["createdAt", "desc"]] });
     return tokens;

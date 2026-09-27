@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { join } from "path";
 
 import { ActionProjectType } from "@app/db/schemas";
@@ -43,6 +42,7 @@ import {
   TUpdateSecretScanningFindingDTO,
   TUpsertSecretScanningConfigDTO
 } from "@app/ee/services/secret-scanning-v2/secret-scanning-v2-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -104,7 +104,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Read,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -166,7 +167,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Read,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -211,7 +213,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Read,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -245,7 +248,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: payload.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Create,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -365,7 +369,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Edit,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -443,7 +448,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.Delete,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -520,7 +526,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.TriggerScans,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -584,7 +591,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.ReadResources,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -629,7 +637,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.ReadScans,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -672,7 +681,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.ReadResources,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -715,7 +725,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: dataSource.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningDataSourceActions.ReadScans,
       ProjectPermissionSub.SecretScanningDataSources
     );
@@ -748,7 +759,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningFindingActions.Read,
       ProjectPermissionSub.SecretScanningFindings
     );
@@ -782,7 +794,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningFindingActions.Read,
       ProjectPermissionSub.SecretScanningFindings
     );
@@ -822,7 +835,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId: finding.projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningFindingActions.Update,
       ProjectPermissionSub.SecretScanningFindings
     );
@@ -853,7 +867,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningConfigActions.Read,
       ProjectPermissionSub.SecretScanningConfigs
     );
@@ -888,7 +903,8 @@ export const secretScanningV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretScanningConfigActions.Update,
       ProjectPermissionSub.SecretScanningConfigs
     );

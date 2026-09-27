@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-bitwise */
-import { ForbiddenError, subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { ActionProjectType } from "@app/db/schemas";
@@ -11,6 +10,7 @@ import {
   ProjectPermissionPkiSubscriberActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { ms } from "@app/lib/ms";
@@ -135,12 +135,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.Create,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.Create, ProjectPermissionSub.PkiSubscribers, {
+      name
+    });
 
     if (enableAutoRenewal) {
       if (!autoRenewalPeriodInDays) {
@@ -199,12 +196,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.Read,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.Read, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     let supportsImmediateCertIssuance = false;
     if (subscriber.caId) {
@@ -254,12 +248,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.Edit,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.Edit, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     if (enableAutoRenewal) {
       if (!autoRenewalPeriodInDays && !subscriber.autoRenewalPeriodInDays) {
@@ -318,12 +309,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.Delete,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.Delete, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     await pkiSubscriberDAL.deleteById(subscriber.id);
 
@@ -355,12 +343,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.IssueCert,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.IssueCert, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     if (subscriber.status !== PkiSubscriberStatus.ACTIVE)
       throw new BadRequestError({ message: "Subscriber is not active" });
@@ -411,12 +396,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.IssueCert,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.IssueCert, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     if (subscriber.status !== PkiSubscriberStatus.ACTIVE)
       throw new BadRequestError({ message: "Subscriber is not active" });
@@ -463,12 +445,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.IssueCert,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.IssueCert, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     if (subscriber.status !== PkiSubscriberStatus.ACTIVE)
       throw new BadRequestError({ message: "Subscriber is not active" });
@@ -730,12 +709,9 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.ListCerts,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.ListCerts, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
     const certificates = await certificateDAL.find(
       {
@@ -778,22 +754,13 @@ export const pkiSubscriberServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiSubscriberActions.ListCerts,
-      subject(ProjectPermissionSub.PkiSubscribers, {
-        name: subscriber.name
-      })
-    );
+    assertPermission(permission, ProjectPermissionPkiSubscriberActions.ListCerts, ProjectPermissionSub.PkiSubscribers, {
+      name: subscriber.name
+    });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.Read,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.ReadPrivateKey,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.ReadPrivateKey, ProjectPermissionSub.Certificates);
 
     const cert = await certificateDAL.findLatestActiveCertForSubscriber({
       subscriberId: subscriber.id

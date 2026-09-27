@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { TEnvConfig } from "@app/lib/config/env";
 import { BadRequestError, InternalServerError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -403,7 +402,7 @@ export const licenseV2ServiceFactory = ({
       actorAuthMethod: actor.authMethod,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionBillingActions.Read, OrgPermissionSubjects.Billing);
+    assertPermission(permission, OrgPermissionBillingActions.Read, OrgPermissionSubjects.Billing);
   };
 
   const ensureManageBilling = async (orgId: string, actor: TGetBillingV2OverviewDTO["actor"]) => {
@@ -415,10 +414,7 @@ export const licenseV2ServiceFactory = ({
       actorAuthMethod: actor.authMethod,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionBillingActions.ManageBilling,
-      OrgPermissionSubjects.Billing
-    );
+    assertPermission(permission, OrgPermissionBillingActions.ManageBilling, OrgPermissionSubjects.Billing);
   };
 
   // Fold the subscription items and the entitlement features sourced from a product into a single

@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { RESOURCE_SCOPE, ResourceMembershipRole, ResourceType } from "@app/db/schemas";
 import { TIdentityGroupMembershipDALFactory } from "@app/ee/services/group/identity-group-membership-dal";
 import { TUserGroupMembershipDALFactory } from "@app/ee/services/group/user-group-membership-dal";
@@ -8,6 +6,7 @@ import {
   ResourcePermissionSignerActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { ms } from "@app/lib/ms";
 
@@ -164,7 +163,7 @@ export const signerPolicyServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, ResourcePermissionSub.Signer);
+    assertPermission(permission, action, ResourcePermissionSub.Signer);
   };
 
   const $resolveActorDisplay = async ({

@@ -1,11 +1,10 @@
-import { ForbiddenError, subject } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import {
   ProjectPermissionCertificateAuthorityActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { OrgServiceActor } from "@app/lib/types";
 import { TAppConnectionDALFactory } from "@app/services/app-connection/app-connection-dal";
@@ -107,9 +106,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Edit,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -209,9 +210,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -256,9 +259,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Edit,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -345,9 +350,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -392,9 +399,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Edit,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -506,9 +515,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -561,9 +572,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });
@@ -618,9 +631,11 @@ export const caSigningConfigServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const internalCa = await internalCertificateAuthorityDAL.findOne({ caId });

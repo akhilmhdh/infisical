@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import { randomUUID } from "crypto";
 
 import { ActionProjectType, ResourceType } from "@app/db/schemas";
@@ -14,6 +14,7 @@ import {
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
 import { TPkiAcmeAccountDALFactory } from "@app/ee/services/pki-acme/pki-acme-account-dal";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
 import { ms } from "@app/lib/ms";
@@ -257,7 +258,8 @@ const validateProfileAndPermissions = async ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.IssueCert,
       ProjectPermissionSub.CertificateProfiles
     );
@@ -273,11 +275,13 @@ const validateProfileAndPermissions = async ({
     actionProjectType: ActionProjectType.CertificateManager
   });
 
-  ForbiddenError.from(permission).throwUnlessCan(
+  assertPermission(
+    permission,
     ProjectPermissionCertificateProfileActions.IssueCert,
-    subject(ProjectPermissionSub.CertificateProfiles, {
+    ProjectPermissionSub.CertificateProfiles,
+    {
       slug: profile.slug
-    })
+    }
   );
 
   return profile;
@@ -449,10 +453,7 @@ export const certificateV3ServiceFactory = ({
           actorAuthMethod: actorContext.actorAuthMethod ?? null,
           actorOrgId: actorContext.actorOrgId
         });
-        ForbiddenError.from(permission).throwUnlessCan(
-          ResourcePermissionCertificateActions.Create,
-          ResourcePermissionSub.Certificates
-        );
+        assertPermission(permission, ResourcePermissionCertificateActions.Create, ResourcePermissionSub.Certificates);
       }
 
       return explicit;

@@ -1,9 +1,9 @@
-import { ForbiddenError } from "@casl/ability";
 import { InstallProvider } from "@slack/oauth";
 
 import { OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 
@@ -240,7 +240,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const installer = await getSlackInstaller();
     const url = await installer.generateInstallUrl({
@@ -275,7 +275,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const installer = await getSlackInstaller();
     const url = await installer.generateInstallUrl({
@@ -305,7 +305,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const slackIntegrations = await slackIntegrationDAL.findWithWorkflowIntegrationDetails({
       orgId: actorOrgId
@@ -337,7 +337,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     return slackIntegration;
   };
@@ -365,7 +365,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     const { decryptor: orgDataKeyDecryptor } = await kmsService.createCipherPairWithDataKey({
       orgId: slackIntegration.orgId,
@@ -404,7 +404,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
 
     return workflowIntegrationDAL.transaction(async (tx) => {
       await workflowIntegrationDAL.updateById(
@@ -448,7 +448,7 @@ export const slackServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
 
     await workflowIntegrationDAL.deleteById(id);
 

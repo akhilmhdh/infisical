@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope, OrgMembershipStatus, TOauthClients, TOrganizations } from "@app/db/schemas";
 import { EventType, TAuditLogServiceFactory } from "@app/ee/services/audit-log/audit-log-types";
 import { TOidcConfigDALFactory } from "@app/ee/services/oidc/oidc-config-dal";
@@ -10,6 +8,7 @@ import {
 } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { KeyStorePrefixes, KeyStoreTtls, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, ForbiddenRequestError, NotFoundError, UnauthorizedError } from "@app/lib/errors";
@@ -167,7 +166,7 @@ export const oauthClientServiceFactory = ({
       scope: OrganizationActionScope.ParentOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(action, OrgPermissionSubjects.OauthClients);
+    assertPermission(permission, action, OrgPermissionSubjects.OauthClients);
   };
 
   // Token exchange turns externally-issued tokens into Infisical user tokens, so establishing that trust

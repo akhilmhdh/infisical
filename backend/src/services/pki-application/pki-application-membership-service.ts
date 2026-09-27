@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { AccessScope, RESOURCE_SCOPE, ResourceMembershipRole, ResourceType } from "@app/db/schemas";
@@ -11,6 +10,7 @@ import {
   ResourcePermissionApplicationActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 
 import { TApprovalPolicyDALFactory } from "../approval-policy/approval-policy-dal";
@@ -214,7 +214,7 @@ export const pkiApplicationMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Create, ResourcePermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Create, ResourcePermissionSub.Member);
 
     if (!isBuiltInApplicationRole(role)) {
       throw new BadRequestError({
@@ -328,10 +328,7 @@ export const pkiApplicationMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
 
     const memberships = await membershipDAL.find({
       scope: RESOURCE_SCOPE,
@@ -457,7 +454,7 @@ export const pkiApplicationMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Edit, ResourcePermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Edit, ResourcePermissionSub.Member);
 
     if (!isBuiltInApplicationRole(role)) {
       throw new BadRequestError({
@@ -532,7 +529,7 @@ export const pkiApplicationMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Delete, ResourcePermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Delete, ResourcePermissionSub.Member);
 
     const membership = await $findMembershipByMember(applicationId, projectId, kind, memberId);
     const details = await $buildMemberDetails(membership);
@@ -595,7 +592,7 @@ export const pkiApplicationMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Create, ResourcePermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Create, ResourcePermissionSub.Member);
 
     const usersByEmail = emails.length ? await userDAL.find({ $in: { username: emails } }) : [];
     const userByEmail = new Map<string, (typeof usersByEmail)[number]>();

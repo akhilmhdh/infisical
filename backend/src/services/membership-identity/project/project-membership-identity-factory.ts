@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import { AccessScope, ActionProjectType, ProjectMembershipRole, ProjectType } from "@app/db/schemas";
 import {
@@ -12,6 +12,7 @@ import {
   ProjectPermissionIdentityActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, InternalServerError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -71,10 +72,7 @@ export const newProjectMembershipIdentityFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Create,
-      ProjectPermissionSub.Identity
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Create, ProjectPermissionSub.Identity);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(scope.value), () =>
       projectDAL.findById(scope.value)
@@ -152,10 +150,9 @@ export const newProjectMembershipIdentityFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Edit,
-      subject(ProjectPermissionSub.Identity, { identityId: dto.selector.identityId })
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Edit, ProjectPermissionSub.Identity, {
+      identityId: dto.selector.identityId
+    });
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(scope.value), () =>
       projectDAL.findById(scope.value)
@@ -244,10 +241,9 @@ export const newProjectMembershipIdentityFactory = ({
       actorOrgId: dto.permission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Delete,
-      subject(ProjectPermissionSub.Identity, { identityId: dto.selector.identityId })
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Delete, ProjectPermissionSub.Identity, {
+      identityId: dto.selector.identityId
+    });
 
     const identityDetails = await requestMemoize(requestMemoKeys.identityFindById(dto.selector.identityId), () =>
       identityDAL.findById(dto.selector.identityId)
@@ -293,10 +289,7 @@ export const newProjectMembershipIdentityFactory = ({
       actorOrgId: dto.permission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Read,
-      ProjectPermissionSub.Identity
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity);
 
     return (arg) =>
       permission.can(
@@ -317,10 +310,9 @@ export const newProjectMembershipIdentityFactory = ({
         actorOrgId: dto.permission.orgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.Read,
-        subject(ProjectPermissionSub.Identity, { identityId: dto.selector.identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, {
+        identityId: dto.selector.identityId
+      });
     };
 
   return {

@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import {
   CloudAdapter,
   ConfigurationBotFrameworkAuthentication,
@@ -12,6 +11,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
 
@@ -218,7 +218,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
 
     const serverCfg = await serverCfgDAL.findById(ADMIN_CONFIG_DB_UUID);
     if (!serverCfg) {
@@ -293,7 +293,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const serverCfg = await serverCfgDAL.findById(ADMIN_CONFIG_DB_UUID);
     if (!serverCfg) {
@@ -405,7 +405,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     const serverCfg = await serverCfgDAL.findById(ADMIN_CONFIG_DB_UUID);
     if (!serverCfg) {
@@ -440,7 +440,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const microsoftTeamsIntegrations = await microsoftTeamsIntegrationDAL.findWithWorkflowIntegrationDetails({
       orgId: actorOrgId,
@@ -477,7 +477,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     return {
       ...microsoftTeamsIntegration,
@@ -510,7 +510,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
 
     const updatedIntegration = await workflowIntegrationDAL.transaction(async (tx) => {
       await workflowIntegrationDAL.updateById(
@@ -565,7 +565,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
 
     await workflowIntegrationDAL.deleteById(id);
 
@@ -594,7 +594,7 @@ export const microsoftTeamsServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     if (!teamsBot || !adapter) {
       throw new BadRequestError({

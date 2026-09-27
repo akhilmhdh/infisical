@@ -1,11 +1,12 @@
 /* eslint-disable no-nested-ternary */
-import { createMongoAbility, ForbiddenError, MongoAbility, PureAbility, RawRuleOf, subject } from "@casl/ability";
+import { createMongoAbility, MongoAbility, PureAbility, RawRuleOf, subject } from "@casl/ability";
 import handlebars from "handlebars";
 import picomatch from "picomatch";
 import { z } from "zod";
 
 import { SecretFolderRole, TOrganizations } from "@app/db/schemas";
 import { KeyStorePrefixes, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { validatePermissionBoundary } from "@app/lib/casl/boundary";
 import {
   BadRequestError,
@@ -44,21 +45,20 @@ export function throwIfMissingSecretReadValueOrDescribePermission(
 ) {
   try {
     if (subjectFields) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionSecretActions.DescribeAndReadValue,
-        subject(ProjectPermissionSub.Secrets, subjectFields)
+        ProjectPermissionSub.Secrets,
+        subjectFields
       );
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.DescribeAndReadValue,
-        ProjectPermissionSub.Secrets
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.DescribeAndReadValue, ProjectPermissionSub.Secrets);
     }
   } catch {
     if (subjectFields) {
-      ForbiddenError.from(permission).throwUnlessCan(action, subject(ProjectPermissionSub.Secrets, subjectFields));
+      assertPermission(permission, action, ProjectPermissionSub.Secrets, subjectFields);
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(action, ProjectPermissionSub.Secrets);
+      assertPermission(permission, action, ProjectPermissionSub.Secrets);
     }
   }
 }
@@ -117,13 +117,10 @@ export function validateSecretMovePermissions(
   const destinationActions = [ProjectPermissionSecretActions.Create, ProjectPermissionSecretActions.Edit] as const;
 
   for (const destinationAction of destinationActions) {
-    ForbiddenError.from(permission).throwUnlessCan(
-      destinationAction,
-      subject(ProjectPermissionSub.Secrets, {
-        environment: destinationEnvironment,
-        secretPath: destinationSecretPath
-      })
-    );
+    assertPermission(permission, destinationAction, ProjectPermissionSub.Secrets, {
+      environment: destinationEnvironment,
+      secretPath: destinationSecretPath
+    });
   }
 
   for (const sourceAction of sourceActions) {
@@ -136,13 +133,10 @@ export function validateSecretMovePermissions(
         secretPath: sourceSecretPath
       });
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
-        sourceAction,
-        subject(ProjectPermissionSub.Secrets, {
-          environment: sourceEnvironment,
-          secretPath: sourceSecretPath
-        })
-      );
+      assertPermission(permission, sourceAction, ProjectPermissionSub.Secrets, {
+        environment: sourceEnvironment,
+        secretPath: sourceSecretPath
+      });
     }
   }
 }

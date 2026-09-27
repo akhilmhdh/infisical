@@ -3,6 +3,7 @@ import { ForbiddenError } from "@casl/ability";
 import { ActionProjectType, TWebhooksInsert } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
@@ -77,7 +78,7 @@ export const webhookServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.Webhooks);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.Webhooks);
     const env = await projectEnvDAL.findOne({ projectId, slug: environment });
     if (!env)
       throw new NotFoundError({
@@ -129,7 +130,7 @@ export const webhookServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Webhooks);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Webhooks);
 
     const filteredEvents = eventsFilter?.map((e) => e.eventName);
 
@@ -154,7 +155,7 @@ export const webhookServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Webhooks);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Webhooks);
 
     const deletedWebhook = await webhookDAL.deleteById(id);
     return withEventsFilter({ ...webhook, ...deletedWebhook });
@@ -181,7 +182,7 @@ export const webhookServiceFactory = ({
       projectId: project.id
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
     let webhookError: string | undefined;
     try {
       const payload = getWebhookPayload({
@@ -235,7 +236,7 @@ export const webhookServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
 
     const webhooks = await webhookDAL.findAllWebhooks(projectId, environment, secretPath);
     const { decryptor: secretManagerDecryptor } = await kmsService.createCipherPairWithDataKey({
@@ -270,7 +271,7 @@ export const webhookServiceFactory = ({
         actorOrgId,
         actionProjectType: ActionProjectType.Any
       });
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
+      assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Webhooks);
     } catch (error) {
       if (error instanceof ForbiddenError || error instanceof ForbiddenRequestError) {
         throw notFound;

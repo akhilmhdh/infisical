@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TGatewayPoolDALFactory } from "@app/ee/services/gateway-pool/gateway-pool-dal";
 import { TGatewayPoolServiceFactory } from "@app/ee/services/gateway-pool/gateway-pool-service";
@@ -13,6 +11,7 @@ import {
   ProjectPermissionHsmConnectorActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { TKmsServiceFactory } from "@app/services/kms/kms-service";
 import { HsmKeyAlgorithm } from "@app/services/signer/signer-enums";
@@ -104,7 +103,7 @@ export const hsmConnectorServiceFactory = ({
       actorOrgId: actor.orgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, ProjectPermissionSub.HsmConnectors);
+    assertPermission(permission, action, ProjectPermissionSub.HsmConnectors);
   };
 
   const createHsmConnector = async (
@@ -368,10 +367,7 @@ export const hsmConnectorServiceFactory = ({
       actorOrgId: actor.orgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.Read,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
 
     const includeCertificateAuthorities = permission.can(
       ProjectPermissionCertificateAuthorityActions.Read,

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/return-await */
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError } from "@casl/ability";
 import { Octokit } from "@octokit/core";
 import { paginateGraphql } from "@octokit/plugin-paginate-graphql";
 import { Octokit as OctokitRest } from "@octokit/rest";
 import RE2 from "re2";
 
 import { AccessScope, OrganizationActionScope, OrgMembershipRole } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { groupBy } from "@app/lib/fn";
 import { logger } from "@app/lib/logger";
@@ -120,7 +120,7 @@ export const githubOrgSyncServiceFactory = ({
       actorOrgId: orgPermission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.GithubOrgSync);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.GithubOrgSync);
     const plan = await licenseService.getPlan(orgPermission.orgId);
     if (!plan.githubOrgSync) {
       throw new BadRequestError({
@@ -179,7 +179,7 @@ export const githubOrgSyncServiceFactory = ({
       actorOrgId: orgPermission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.GithubOrgSync);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.GithubOrgSync);
     const plan = await licenseService.getPlan(orgPermission.orgId);
     if (!plan.githubOrgSync) {
       throw new BadRequestError({
@@ -244,7 +244,7 @@ export const githubOrgSyncServiceFactory = ({
       scope: OrganizationActionScope.ParentOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.GithubOrgSync);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.GithubOrgSync);
 
     const plan = await licenseService.getPlan(orgPermission.orgId);
     if (!plan.githubOrgSync) {
@@ -275,7 +275,7 @@ export const githubOrgSyncServiceFactory = ({
       scope: OrganizationActionScope.ParentOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.GithubOrgSync);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.GithubOrgSync);
 
     const existingConfig = await githubOrgSyncDAL.findOne({ orgId: orgPermission.orgId });
     if (!existingConfig)
@@ -448,7 +448,7 @@ export const githubOrgSyncServiceFactory = ({
       scope: OrganizationActionScope.ParentOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.GithubOrgSync);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.GithubOrgSync);
 
     const plan = await licenseService.getPlan(orgPermission.orgId);
     if (!plan.githubOrgSync) {
@@ -536,10 +536,7 @@ export const githubOrgSyncServiceFactory = ({
       actorOrgId: orgPermission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionActions.Edit,
-      OrgPermissionSubjects.GithubOrgSyncManual
-    );
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.GithubOrgSyncManual);
 
     const plan = await licenseService.getPlan(orgPermission.orgId);
     if (!plan.githubOrgSync) {

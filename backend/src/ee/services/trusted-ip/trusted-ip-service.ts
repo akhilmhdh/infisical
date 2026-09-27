@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError } from "@app/lib/errors";
 import { extractIPDetails, isValidIpOrCidr } from "@app/lib/ip";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
@@ -41,7 +40,7 @@ export const trustedIpServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.IpAllowList);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.IpAllowList);
     const trustedIps = await trustedIpDAL.find({
       projectId
     });
@@ -66,7 +65,7 @@ export const trustedIpServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(projectId), () =>
       projectDAL.findById(projectId)
@@ -114,7 +113,7 @@ export const trustedIpServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(projectId), () =>
       projectDAL.findById(projectId)
@@ -162,7 +161,7 @@ export const trustedIpServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.IpAllowList);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(projectId), () =>
       projectDAL.findById(projectId)

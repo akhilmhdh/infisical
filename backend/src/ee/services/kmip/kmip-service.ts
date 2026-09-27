@@ -1,9 +1,9 @@
-import { ForbiddenError } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 import RE2 from "re2";
 
 import { ActionProjectType, OrganizationActionScope } from "@app/db/schemas";
 import { PgSqlLock } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { isValidIp } from "@app/lib/ip";
@@ -328,10 +328,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionKmipActions.CreateClients,
-      ProjectPermissionSub.Kmip
-    );
+    assertPermission(permission, ProjectPermissionKmipActions.CreateClients, ProjectPermissionSub.Kmip);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.kmip)
@@ -382,10 +379,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionKmipActions.UpdateClients,
-      ProjectPermissionSub.Kmip
-    );
+    assertPermission(permission, ProjectPermissionKmipActions.UpdateClients, ProjectPermissionSub.Kmip);
 
     const updatedKmipClient = await kmipClientDAL.updateById(id, {
       name,
@@ -414,10 +408,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionKmipActions.DeleteClients,
-      ProjectPermissionSub.Kmip
-    );
+    assertPermission(permission, ProjectPermissionKmipActions.DeleteClients, ProjectPermissionSub.Kmip);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.kmip)
@@ -448,7 +439,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionKmipActions.ReadClients, ProjectPermissionSub.Kmip);
+    assertPermission(permission, ProjectPermissionKmipActions.ReadClients, ProjectPermissionSub.Kmip);
 
     return kmipClient;
   };
@@ -470,7 +461,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionKmipActions.ReadClients, ProjectPermissionSub.Kmip);
+    assertPermission(permission, ProjectPermissionKmipActions.ReadClients, ProjectPermissionSub.Kmip);
 
     return kmipClientDAL.findByProjectId({ projectId, ...rest });
   };
@@ -508,10 +499,7 @@ export const kmipServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionKmipActions.GenerateClientCertificates,
-      ProjectPermissionSub.Kmip
-    );
+    assertPermission(permission, ProjectPermissionKmipActions.GenerateClientCertificates, ProjectPermissionSub.Kmip);
 
     // Lazily initialize KMIP org config if not already set up
     const orgKmipCAs = await $getOrgKmipCAs(actorOrgId);
@@ -864,7 +852,7 @@ export const kmipServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionKmipActions.Proxy, OrgPermissionSubjects.Kmip);
+      assertPermission(permission, OrgPermissionKmipActions.Proxy, OrgPermissionSubjects.Kmip);
     }
 
     const plan = await licenseService.getPlan(actorOrgId);

@@ -18,6 +18,7 @@ import {
   ResourcePermissionApplicationActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 
 import { TApprovalPolicyDALFactory } from "../approval-policy/approval-policy-dal";
@@ -124,10 +125,7 @@ export const pkiApplicationServiceFactory = ({
   }: TCreatePkiApplicationDTO) => {
     const { permission } = await $loadProjectPermission(projectId, { actor, actorId, actorAuthMethod, actorOrgId });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionApplicationActions.Create,
-      ProjectPermissionSub.Application
-    );
+    assertPermission(permission, ProjectPermissionApplicationActions.Create, ProjectPermissionSub.Application);
 
     const existing = await pkiApplicationDAL.findByNameAndProjectId(name, projectId);
     if (existing) {
@@ -143,9 +141,11 @@ export const pkiApplicationServiceFactory = ({
       }
 
       for (const profile of profilesInProject) {
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionCertificateProfileActions.ManageApplicationAttachments,
-          subject(ProjectPermissionSub.CertificateProfiles, { slug: profile.slug })
+          ProjectPermissionSub.CertificateProfiles,
+          { slug: profile.slug }
         );
       }
     }
@@ -209,10 +209,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
 
     return application;
   };
@@ -237,10 +234,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
 
     return application;
   };
@@ -263,10 +257,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionApplicationActions.List,
-      ProjectPermissionSub.Application
-    );
+    assertPermission(permission, ProjectPermissionApplicationActions.List, ProjectPermissionSub.Application);
 
     if (hasRole(ProjectMembershipRole.Admin)) {
       const [applications, total] = await Promise.all([
@@ -327,10 +318,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Edit,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Edit, ResourcePermissionSub.Application);
 
     if (name && name !== application.name) {
       const collision = await pkiApplicationDAL.findByNameAndProjectId(name, projectId);
@@ -372,10 +360,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Delete,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Delete, ResourcePermissionSub.Application);
 
     await pkiApplicationDAL.transaction(async (tx) => {
       const orphans = await membershipDAL.find(
@@ -419,10 +404,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
 
     const profiles = await pkiApplicationProfileDAL.findByApplicationId(applicationId);
     return profiles;
@@ -449,7 +431,8 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ResourcePermissionApplicationActions.ManageProfiles,
       ResourcePermissionSub.Application
     );
@@ -509,7 +492,8 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ResourcePermissionApplicationActions.ManageProfiles,
       ResourcePermissionSub.Application
     );
@@ -561,10 +545,7 @@ export const pkiApplicationServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
 
     return {
       permissions: packRules(permission.rules),

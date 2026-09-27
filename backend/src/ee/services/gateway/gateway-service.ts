@@ -1,9 +1,9 @@
-import { ForbiddenError } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 import { z } from "zod";
 
 import { OrganizationActionScope } from "@app/db/schemas";
 import { KeyStorePrefixes, KeyStoreTtls, PgSqlLock, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
@@ -78,10 +78,7 @@ export const gatewayServiceFactory = ({
       actorOrgId: orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.CreateGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.CreateGateways, OrgPermissionSubjects.Gateway);
   };
 
   const getGatewayRelayDetails = async (actorId: string, actorOrgId: string, actorAuthMethod: ActorAuthMethod) => {
@@ -489,10 +486,7 @@ export const gatewayServiceFactory = ({
       actorOrgId: orgPermission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.ListGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.ListGateways, OrgPermissionSubjects.Gateway);
     const orgGatewayConfig = await orgGatewayConfigDAL.findOne({ orgId: orgPermission.orgId });
     if (!orgGatewayConfig) return [];
 
@@ -511,10 +505,7 @@ export const gatewayServiceFactory = ({
       actorOrgId: orgPermission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.ListGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.ListGateways, OrgPermissionSubjects.Gateway);
     const orgGatewayConfig = await orgGatewayConfigDAL.findOne({ orgId: orgPermission.orgId });
     if (!orgGatewayConfig) throw new NotFoundError({ message: `Gateway with ID ${id} not found.` });
 
@@ -532,10 +523,7 @@ export const gatewayServiceFactory = ({
       actorOrgId: orgPermission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.EditGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.EditGateways, OrgPermissionSubjects.Gateway);
     const orgGatewayConfig = await orgGatewayConfigDAL.findOne({ orgId: orgPermission.orgId });
     if (!orgGatewayConfig) throw new NotFoundError({ message: `Gateway with ID ${id} not found.` });
 
@@ -554,10 +542,7 @@ export const gatewayServiceFactory = ({
       actorOrgId: orgPermission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.DeleteGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.DeleteGateways, OrgPermissionSubjects.Gateway);
     const orgGatewayConfig = await orgGatewayConfigDAL.findOne({ orgId: orgPermission.orgId });
     if (!orgGatewayConfig) throw new NotFoundError({ message: `Gateway with ID ${id} not found.` });
 

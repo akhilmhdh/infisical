@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 
 import { TWorkflowIntegrationDALFactory } from "./workflow-integration-dal";
 import { TGetWorkflowIntegrationsByOrg } from "./workflow-integration-types";
@@ -33,7 +32,7 @@ export const workflowIntegrationServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     return workflowIntegrationDAL.find({
       orgId: actorOrgId

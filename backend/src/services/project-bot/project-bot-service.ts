@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType, ProjectVersion } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -50,7 +49,7 @@ export const projectBotServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
 
     const bot = await projectBotDAL.transaction(async (tx) => {
       const doc = await projectBotDAL.findOne({ projectId }, tx);
@@ -123,7 +122,7 @@ export const projectBotServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Integrations);
 
     const project = await projectBotDAL.findProjectByBotId(botId);
 

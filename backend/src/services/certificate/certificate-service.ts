@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { ActionProjectType, ProjectMembershipRole, ResourceType } from "@app/db/schemas";
@@ -14,6 +14,7 @@ import {
   ResourcePermissionCertificateActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -202,7 +203,7 @@ export const certificateServiceFactory = ({
         { type: actor, id: actorId, authMethod: actorAuthMethod, orgId: actorOrgId }
       );
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.Read, readSubject);
+        assertPermission(permission, ProjectPermissionCertificateActions.Read, readSubject);
       }
     }
 
@@ -358,7 +359,7 @@ export const certificateServiceFactory = ({
         });
       }
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
+      assertPermission(permission, ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
     }
 
     const { certPrivateKey } = await getCertificateCredentials({
@@ -394,10 +395,7 @@ export const certificateServiceFactory = ({
         actorAuthMethod,
         actorOrgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ResourcePermissionCertificateActions.Delete,
-        ResourcePermissionSub.Certificates
-      );
+      assertPermission(permission, ResourcePermissionCertificateActions.Delete, ResourcePermissionSub.Certificates);
     } else {
       const { permission } = await permissionService.getProjectPermission({
         actor,
@@ -408,15 +406,12 @@ export const certificateServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCertificateActions.Delete,
-        subject(ProjectPermissionSub.Certificates, {
-          commonName: cert.commonName,
-          altNames: cert.altNames?.split(",").map((s) => s.trim()),
-          serialNumber: cert.serialNumber,
-          metadata: certMetadata
-        })
-      );
+      assertPermission(permission, ProjectPermissionCertificateActions.Delete, ProjectPermissionSub.Certificates, {
+        commonName: cert.commonName,
+        altNames: cert.altNames?.split(",").map((s) => s.trim()),
+        serialNumber: cert.serialNumber,
+        metadata: certMetadata
+      });
     }
 
     let deletedCert;
@@ -545,10 +540,7 @@ export const certificateServiceFactory = ({
         actorAuthMethod,
         actorOrgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ResourcePermissionCertificateActions.Delete,
-        ResourcePermissionSub.Certificates
-      );
+      assertPermission(permission, ResourcePermissionCertificateActions.Delete, ResourcePermissionSub.Certificates);
     } else {
       const { permission } = await permissionService.getProjectPermission({
         actor,
@@ -559,17 +551,14 @@ export const certificateServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCertificateActions.Delete,
-        subject(ProjectPermissionSub.Certificates, {
-          commonName: cert.commonName,
-          altNames: cert.altNames?.split(",").map((s) => s.trim()),
-          serialNumber: cert.serialNumber,
-          friendlyName: cert.friendlyName,
-          status: cert.status,
-          metadata: certMetadata
-        })
-      );
+      assertPermission(permission, ProjectPermissionCertificateActions.Delete, ProjectPermissionSub.Certificates, {
+        commonName: cert.commonName,
+        altNames: cert.altNames?.split(",").map((s) => s.trim()),
+        serialNumber: cert.serialNumber,
+        friendlyName: cert.friendlyName,
+        status: cert.status,
+        metadata: certMetadata
+      });
     }
 
     if (cert.status === CertStatus.REVOKED) throw new Error("Certificate already revoked");
@@ -698,7 +687,7 @@ export const certificateServiceFactory = ({
         orgId: actorOrgId
       });
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.Read, readSubject);
+        assertPermission(permission, ProjectPermissionCertificateActions.Read, readSubject);
       }
     }
 
@@ -802,10 +791,7 @@ export const certificateServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ResourcePermissionCertificateActions.Import,
-        ResourcePermissionSub.Certificates
-      );
+      assertPermission(permission, ResourcePermissionCertificateActions.Import, ResourcePermissionSub.Certificates);
     } else {
       const { permission } = await permissionService.getProjectPermission({
         actor,
@@ -816,10 +802,7 @@ export const certificateServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCertificateActions.Import,
-        ProjectPermissionSub.Certificates
-      );
+      assertPermission(permission, ProjectPermissionCertificateActions.Import, ProjectPermissionSub.Certificates);
     }
 
     // Check PKI collection
@@ -1068,7 +1051,7 @@ export const certificateServiceFactory = ({
         orgId: actorOrgId
       });
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.Read, certSubject);
+        assertPermission(permission, ProjectPermissionCertificateActions.Read, certSubject);
       }
     }
     if (cert.applicationId) {
@@ -1083,7 +1066,7 @@ export const certificateServiceFactory = ({
         });
       }
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
+      assertPermission(permission, ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
     }
 
     const certBody = await certificateBodyDAL.findOne({ certId: cert.id });
@@ -1216,7 +1199,7 @@ export const certificateServiceFactory = ({
         });
       }
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
+      assertPermission(permission, ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
     }
 
     // Get certificate bundle (certificate, chain, private key)

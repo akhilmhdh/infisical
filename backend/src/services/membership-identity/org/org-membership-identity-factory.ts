@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionIdentityActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import {
@@ -8,6 +6,7 @@ import {
   validatePrivilegeChangeOperation
 } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, InternalServerError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -63,7 +62,7 @@ export const newOrgMembershipIdentityFactory = ({
       scope: OrganizationActionScope.ChildOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
 
     const identityDetails = await requestMemoize(requestMemoKeys.identityFindById(dto.data.identityId), () =>
       identityDAL.findById(dto.data.identityId)
@@ -118,7 +117,7 @@ export const newOrgMembershipIdentityFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
     const permissionRoles = await permissionService.getOrgPermissionByRoles(
       filterRolesNeedingPrivilegeBoundary(dto.data.roles).map((el) => el.role),
       dto.permission.orgId
@@ -187,7 +186,7 @@ export const newOrgMembershipIdentityFactory = ({
       scope: OrganizationActionScope.ChildOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
 
     const identityDetails = await requestMemoize(requestMemoKeys.identityFindById(dto.selector.identityId), () =>
       identityDAL.findById(dto.selector.identityId)
@@ -238,7 +237,7 @@ export const newOrgMembershipIdentityFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     return () => true;
   };
@@ -253,7 +252,7 @@ export const newOrgMembershipIdentityFactory = ({
         actorOrgId: dto.permission.orgId,
         scope: OrganizationActionScope.Any
       });
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
     };
 
   return {

@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope, OrgMembershipStatus } from "@app/db/schemas";
 import { TEmailDomainDALFactory } from "@app/ee/services/email-domain/email-domain-dal";
 import { EmailDomainStatus } from "@app/ee/services/email-domain/email-domain-types";
@@ -11,6 +9,7 @@ import { OrgPermissionMemberActions, OrgPermissionSubjects } from "@app/ee/servi
 import { assertRoleSetBoundary } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { TSamlConfigDALFactory } from "@app/ee/services/saml-config/saml-config-dal";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, ForbiddenRequestError, InternalServerError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
@@ -106,7 +105,7 @@ export const newOrgMembershipUserFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
 
     const rolesToBound = filterRolesNeedingPrivilegeBoundary(dto.data.roles);
     if (rolesToBound.length) {
@@ -332,7 +331,7 @@ export const newOrgMembershipUserFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Edit, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Edit, OrgPermissionSubjects.Member);
 
     const { shouldUseNewPrivilegeSystem } = await requestMemoize(
       requestMemoKeys.orgFindById(dto.permission.orgId),
@@ -400,7 +399,7 @@ export const newOrgMembershipUserFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
 
     const targetMembership = await membershipUserDAL.getUserById({
       scopeData: dto.scopeData,
@@ -434,7 +433,7 @@ export const newOrgMembershipUserFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
   };
 
   const onGetMembershipUserByUserIdGuard: TMembershipUserScopeFactory["onGetMembershipUserByUserIdGuard"] = async (
@@ -448,7 +447,7 @@ export const newOrgMembershipUserFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
   };
 
   return {

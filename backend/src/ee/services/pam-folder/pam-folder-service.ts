@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { packRules } from "@casl/ability/extra";
 
 import { RESOURCE_SCOPE, ResourceType } from "@app/db/schemas";
@@ -7,6 +6,7 @@ import {
   ResourcePermissionPamResourceActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { ActorType } from "@app/services/auth/auth-type";
@@ -70,7 +70,7 @@ export const pamFolderServiceFactory = ({
       actorAuthMethod: ctx.actorAuthMethod,
       actorOrgId: ctx.actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, ResourcePermissionSub.PamResource);
+    assertPermission(permission, action, ResourcePermissionSub.PamResource);
   };
 
   const list = async ({
@@ -231,10 +231,7 @@ export const pamFolderServiceFactory = ({
       actorOrgId: ctx.actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionPamResourceActions.ReadFolder,
-      ResourcePermissionSub.PamResource
-    );
+    assertPermission(permission, ResourcePermissionPamResourceActions.ReadFolder, ResourcePermissionSub.PamResource);
 
     // Only member managers get the roster; read-only roles must not enumerate members.
     const canManageMembers = permission.can(

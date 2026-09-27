@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import { Knex } from "knex";
 import isEqual from "lodash.isequal";
 
@@ -66,6 +66,7 @@ import {
 import { sqlCredentialsRotationFactory } from "@app/ee/services/secret-rotation-v2/shared/sql-credentials";
 import { snowflakeUserKeyPairRotationFactory } from "@app/ee/services/secret-rotation-v2/snowflake-user-key-pair/snowflake-user-key-pair-rotation-fns";
 import { KeyStorePrefixes, PgSqlLock, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, InternalServerError, NotFoundError } from "@app/lib/errors";
@@ -380,10 +381,7 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretRotationActions.Read,
-      ProjectPermissionSub.SecretRotation
-    );
+    assertPermission(permission, ProjectPermissionSecretRotationActions.Read, ProjectPermissionSub.SecretRotation);
 
     const secretRotations = await secretRotationV2DAL.find({
       ...(type && { type }),
@@ -425,10 +423,7 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretRotationActions.Read,
-      getSecretRotationSubject(secretRotation)
-    );
+    assertPermission(permission, ProjectPermissionSecretRotationActions.Read, getSecretRotationSubject(secretRotation));
 
     if (connection.app !== SECRET_ROTATION_CONNECTION_MAP[type])
       throw new BadRequestError({
@@ -468,7 +463,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.ReadGeneratedCredentials,
       getSecretRotationSubject(secretRotation)
     );
@@ -530,10 +526,7 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretRotationActions.Read,
-      getSecretRotationSubject(secretRotation)
-    );
+    assertPermission(permission, ProjectPermissionSecretRotationActions.Read, getSecretRotationSubject(secretRotation));
 
     if (connection.app !== SECRET_ROTATION_CONNECTION_MAP[type])
       throw new BadRequestError({
@@ -579,7 +572,8 @@ export const secretRotationV2ServiceFactory = ({
           "Project version does not support Secret Rotation V2. Please upgrade your project via the Infiscal Dashboard to gain access."
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.Create,
       getSecretRotationSubject({
         environment: { slug: environment },
@@ -805,10 +799,7 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretRotationActions.Edit,
-      getSecretRotationSubject(secretRotation)
-    );
+    assertPermission(permission, ProjectPermissionSecretRotationActions.Edit, getSecretRotationSubject(secretRotation));
 
     if (connection.app !== SECRET_ROTATION_CONNECTION_MAP[type])
       throw new BadRequestError({
@@ -946,7 +937,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.Delete,
       getSecretRotationSubject(secretRotation)
     );
@@ -1069,7 +1061,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.Delete,
       getSecretRotationSubject(secretRotation)
     );
@@ -1090,7 +1083,8 @@ export const secretRotationV2ServiceFactory = ({
         message: "Source and destination locations are the same"
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.Create,
       getSecretRotationSubject(secretRotation, {
         environment: destinationEnvironment,
@@ -1136,15 +1130,12 @@ export const secretRotationV2ServiceFactory = ({
       if (conflictingDestinationSecrets.length && overwriteDestination) {
         // Require secret-level delete permission.
         conflictingDestinationSecrets.forEach((conflictingSecret) => {
-          ForbiddenError.from(permission).throwUnlessCan(
-            ProjectPermissionSecretActions.Delete,
-            subject(ProjectPermissionSub.Secrets, {
-              environment: destinationEnvironment,
-              secretPath: destinationSecretPath,
-              secretName: conflictingSecret.key,
-              secretTags: conflictingSecret.tags?.map((el) => el.slug)
-            })
-          );
+          assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+            environment: destinationEnvironment,
+            secretPath: destinationSecretPath,
+            secretName: conflictingSecret.key,
+            secretTags: conflictingSecret.tags?.map((el) => el.slug)
+          });
         });
 
         await secretV2BridgeDAL.deleteMany(
@@ -1572,7 +1563,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.RotateSecrets,
       getSecretRotationSubject(secretRotation)
     );
@@ -1631,7 +1623,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.ReadGeneratedCredentials,
       getSecretRotationSubject(secretRotation)
     );
@@ -2006,7 +1999,8 @@ export const secretRotationV2ServiceFactory = ({
       projectId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionSecretRotationActions.RotateSecrets,
       getSecretRotationSubject(secretRotation)
     );

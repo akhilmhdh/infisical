@@ -1,11 +1,10 @@
 import dns from "node:dns/promises";
 
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionEmailDomainActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { PgSqlLock } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -57,10 +56,7 @@ export const emailDomainServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionEmailDomainActions.Create,
-      OrgPermissionSubjects.EmailDomains
-    );
+    assertPermission(permission, OrgPermissionEmailDomainActions.Create, OrgPermissionSubjects.EmailDomains);
 
     const plan = await licenseService.getPlan(orgId);
     const canEmailDomainVerification = plan.samlSSO || plan.ldap || plan.oidcSSO;
@@ -138,10 +134,7 @@ export const emailDomainServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionEmailDomainActions.VerifyDomain,
-      OrgPermissionSubjects.EmailDomains
-    );
+    assertPermission(permission, OrgPermissionEmailDomainActions.VerifyDomain, OrgPermissionSubjects.EmailDomains);
 
     const plan = await licenseService.getPlan(orgId);
     const canEmailDomainVerification = plan.samlSSO || plan.ldap || plan.oidcSSO;
@@ -231,10 +224,7 @@ export const emailDomainServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionEmailDomainActions.Read,
-      OrgPermissionSubjects.EmailDomains
-    );
+    assertPermission(permission, OrgPermissionEmailDomainActions.Read, OrgPermissionSubjects.EmailDomains);
 
     const emailDomains = await emailDomainDAL.find({ orgId });
     return emailDomains;
@@ -256,10 +246,7 @@ export const emailDomainServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionEmailDomainActions.Delete,
-      OrgPermissionSubjects.EmailDomains
-    );
+    assertPermission(permission, OrgPermissionEmailDomainActions.Delete, OrgPermissionSubjects.EmailDomains);
 
     const emailDomainRecord = await emailDomainDAL.findOne({ id: emailDomainId, orgId });
     if (!emailDomainRecord) {

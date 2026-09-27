@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType, TPkiCollectionItems } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { TCertificateDALFactory } from "@app/services/certificate/certificate-dal";
 import { TCertificateAuthorityDALFactory } from "@app/services/certificate-authority/certificate-authority-dal";
@@ -59,10 +58,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      ProjectPermissionSub.PkiCollections
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.PkiCollections);
 
     const pkiCollection = await pkiCollectionDAL.create({
       projectId,
@@ -92,7 +88,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
     return pkiCollection;
   };
 
@@ -117,7 +113,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.PkiCollections);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.PkiCollections);
     pkiCollection = await pkiCollectionDAL.updateById(collectionId, {
       name,
       description
@@ -145,10 +141,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      ProjectPermissionSub.PkiCollections
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.PkiCollections);
     pkiCollection = await pkiCollectionDAL.deleteById(collectionId);
     return pkiCollection;
   };
@@ -175,7 +168,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
 
     const pkiCollectionItems = await pkiCollectionItemDAL.findPkiCollectionItems({
       collectionId,
@@ -219,10 +212,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      ProjectPermissionSub.PkiCollections
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.PkiCollections);
 
     let pkiCollectionItem: TPkiCollectionItems;
     switch (type) {
@@ -307,10 +297,7 @@ export const pkiCollectionServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      ProjectPermissionSub.PkiCollections
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.PkiCollections);
 
     pkiCollectionItem = await pkiCollectionItemDAL.deleteById(itemId);
 

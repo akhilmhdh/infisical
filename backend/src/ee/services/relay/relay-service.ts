@@ -1,10 +1,10 @@
 import { isIP } from "node:net";
 
-import { ForbiddenError } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { OrganizationActionScope, OrgMembershipRole, OrgMembershipStatus, TRelays } from "@app/db/schemas";
 import { PgSqlLock } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
@@ -983,10 +983,7 @@ export const relayServiceFactory = ({
         actorOrgId: orgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionRelayActions.CreateRelays,
-        OrgPermissionSubjects.Relay
-      );
+      assertPermission(permission, OrgPermissionRelayActions.CreateRelays, OrgPermissionSubjects.Relay);
 
       relay = await relayDAL.transaction(async (tx) => {
         const existingRelay = await relayDAL.findOne(
@@ -1115,10 +1112,7 @@ export const relayServiceFactory = ({
         actorAuthMethod: actorAuthMethod!,
         actorOrgId: orgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionRelayActions.CreateRelays,
-        OrgPermissionSubjects.Relay
-      );
+      assertPermission(permission, OrgPermissionRelayActions.CreateRelays, OrgPermissionSubjects.Relay);
       clientOrgId = orgId;
       clientOrgName = orgId;
     } else {
@@ -1172,7 +1166,7 @@ export const relayServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionRelayActions.ListRelays, OrgPermissionSubjects.Relay);
+      assertPermission(permission, OrgPermissionRelayActions.ListRelays, OrgPermissionSubjects.Relay);
     }
 
     const instanceRelays = await relayDAL.find({
@@ -1208,7 +1202,7 @@ export const relayServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionRelayActions.DeleteRelays, OrgPermissionSubjects.Relay);
+    assertPermission(permission, OrgPermissionRelayActions.DeleteRelays, OrgPermissionSubjects.Relay);
 
     const relay = await relayDAL.findById(id);
     if (!relay || relay.orgId !== actorOrgId || relay.orgId === null) {
@@ -1323,7 +1317,7 @@ export const relayServiceFactory = ({
       actorAuthMethod: actor.authMethod,
       actorOrgId: actor.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionRelayActions.CreateRelays, OrgPermissionSubjects.Relay);
+    assertPermission(permission, OrgPermissionRelayActions.CreateRelays, OrgPermissionSubjects.Relay);
 
     await verifyHostInputValidity({ host, isDynamicSecret: false });
 
@@ -1421,7 +1415,7 @@ export const relayServiceFactory = ({
       actorAuthMethod: actor.authMethod,
       actorOrgId: actor.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionRelayActions.EditRelays, OrgPermissionSubjects.Relay);
+    assertPermission(permission, OrgPermissionRelayActions.EditRelays, OrgPermissionSubjects.Relay);
 
     await verifyHostInputValidity({ host, isDynamicSecret: false });
 
@@ -1465,7 +1459,7 @@ export const relayServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionRelayActions.ListRelays, OrgPermissionSubjects.Relay);
+    assertPermission(permission, OrgPermissionRelayActions.ListRelays, OrgPermissionSubjects.Relay);
 
     const gateways = await gatewayV2DAL.find({ relayId });
     return gateways.map((g) => ({

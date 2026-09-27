@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { groupBy } from "@app/lib/fn";
 import { TAdditionalPrivilegeDALFactory } from "@app/services/additional-privilege/additional-privilege-dal";
@@ -126,10 +125,7 @@ export const accessApprovalPolicyServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      ProjectPermissionSub.SecretApproval
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretApproval);
     const mergedEnvs = (environment ? [environment] : environments) || [];
     if (mergedEnvs.length === 0) {
       throw new BadRequestError({ message: "Must provide either environment or environments" });
@@ -399,7 +395,7 @@ export const accessApprovalPolicyServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.SecretApproval);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretApproval);
 
     let groupBypassers: string[] = [];
     let bypasserUserIds: string[] = [];
@@ -607,10 +603,7 @@ export const accessApprovalPolicyServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      ProjectPermissionSub.SecretApproval
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretApproval);
 
     await accessApprovalPolicyDAL.transaction(async (tx) => {
       await accessApprovalPolicyDAL.softDeleteById(policyId, tx);
@@ -701,7 +694,7 @@ export const accessApprovalPolicyServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretApproval);
 
     return {
       ...policy,

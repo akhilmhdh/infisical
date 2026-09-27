@@ -1,9 +1,9 @@
-import { ForbiddenError } from "@casl/ability";
 import picomatch from "picomatch";
 
 import { ActionProjectType, TSecretValidationRules } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { NotFoundError } from "@app/lib/errors";
 import { TProjectEnvDALFactory } from "@app/services/project-env/project-env-dal";
 
@@ -89,7 +89,7 @@ export const secretValidationRuleServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Settings);
 
     const rules = await secretValidationRuleDAL.find({ projectId });
 
@@ -131,7 +131,7 @@ export const secretValidationRuleServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     let envId: string | null = null;
     if (environmentSlug) {
@@ -214,7 +214,7 @@ export const secretValidationRuleServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     const existingRule = await secretValidationRuleDAL.findOne({ id: ruleId, projectId });
     if (!existingRule) {
@@ -310,7 +310,7 @@ export const secretValidationRuleServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     const existingRule = await secretValidationRuleDAL.findOne({ id: ruleId, projectId });
     if (!existingRule) {

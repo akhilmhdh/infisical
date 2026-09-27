@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 import { randomBytes } from "crypto";
 
@@ -13,6 +12,7 @@ import {
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
 import { TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { extractX509CertFromChain } from "@app/lib/certificates/extract-certificate";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
@@ -1164,7 +1164,8 @@ export const pkiScepServiceFactory = ({
         actorAuthMethod,
         actorOrgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ResourcePermissionApplicationEnrollmentActions.GenerateScepChallenge,
         ResourcePermissionSub.ApplicationEnrollment
       );
@@ -1178,9 +1179,11 @@ export const pkiScepServiceFactory = ({
         actorOrgId,
         actionProjectType: ActionProjectType.CertificateManager
       });
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.Edit,
-        subject(ProjectPermissionSub.CertificateProfiles, { slug: profile.slug })
+        ProjectPermissionSub.CertificateProfiles,
+        { slug: profile.slug }
       );
     }
 

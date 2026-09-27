@@ -1,9 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionCmekActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { AsymmetricKeyAlgorithm, isPqcKeyAlgorithm, SigningAlgorithm, signingService } from "@app/lib/crypto/sign";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
@@ -55,7 +54,7 @@ export const cmekServiceFactory = ({
       actorOrgId: actor.orgId,
       actionProjectType: ActionProjectType.KMS
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Create, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Create, ProjectPermissionSub.Cmek);
 
     if (isPqcKeyAlgorithm(dto.encryptionAlgorithm as string)) {
       const plan = await licenseService.getPlan(dto.orgId);
@@ -106,7 +105,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Edit, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Edit, ProjectPermissionSub.Cmek);
 
     try {
       const cmek = await kmsDAL.updateById(keyId, data);
@@ -145,7 +144,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Rotate, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Rotate, ProjectPermissionSub.Cmek);
 
     const { version } = await kmsService.rotateKmsKey(keyId);
 
@@ -171,7 +170,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Delete, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Delete, ProjectPermissionSub.Cmek);
 
     const [deletedKey] = await kmsDAL.delete({ id: keyId, hasDeleteProtection: false });
 
@@ -194,7 +193,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
 
     const { keys: cmeks, totalCount } = await kmsDAL.listCmeksByProjectId({ projectId, ...filters });
 
@@ -217,7 +216,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
 
     return key;
   };
@@ -239,7 +238,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
 
     return key;
   };
@@ -262,7 +261,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Encrypt, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Encrypt, ProjectPermissionSub.Cmek);
 
     const encrypt = await kmsService.encryptWithKmsKey({ kmsId: keyId });
 
@@ -290,7 +289,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
 
     if (key.keyUsage !== KmsKeyUsage.SIGN_VERIFY) {
       throw new BadRequestError({ message: `Key with ID '${keyId}' is not intended for signing` });
@@ -338,7 +337,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Read, ProjectPermissionSub.Cmek);
 
     const publicKey = await kmsService.getPublicKey({ kmsId: keyId });
     return { publicKey: publicKey.toString("base64"), projectId: key.projectId, keyName: key.name };
@@ -360,10 +359,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCmekActions.ExportPrivateKey,
-      ProjectPermissionSub.Cmek
-    );
+    assertPermission(permission, ProjectPermissionCmekActions.ExportPrivateKey, ProjectPermissionSub.Cmek);
 
     if (!key.isExportable) throw new BadRequestError({ message: "You are not allowed to export this key" });
 
@@ -411,10 +407,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCmekActions.ExportPrivateKey,
-      ProjectPermissionSub.Cmek
-    );
+    assertPermission(permission, ProjectPermissionCmekActions.ExportPrivateKey, ProjectPermissionSub.Cmek);
 
     for (const key of keys) {
       if (!key.isExportable) throw new BadRequestError({ message: "You are not allowed to export this key" });
@@ -473,7 +466,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Sign, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Sign, ProjectPermissionSub.Cmek);
 
     if (isPqcKeyAlgorithm(key.encryptionAlgorithm)) {
       const plan = await licenseService.getPlan(key.orgId);
@@ -518,7 +511,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Verify, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Verify, ProjectPermissionSub.Cmek);
 
     if (isPqcKeyAlgorithm(key.encryptionAlgorithm)) {
       const plan = await licenseService.getPlan(key.orgId);
@@ -564,7 +557,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.GenerateMac, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.GenerateMac, ProjectPermissionSub.Cmek);
 
     if (key.keyUsage !== KmsKeyUsage.GENERATE_VERIFY_MAC) {
       throw new BadRequestError({ message: `Key with ID '${keyId}' is not intended for MAC generation` });
@@ -600,7 +593,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.VerifyMac, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.VerifyMac, ProjectPermissionSub.Cmek);
 
     if (key.keyUsage !== KmsKeyUsage.GENERATE_VERIFY_MAC) {
       throw new BadRequestError({ message: `Key with ID '${keyId}' is not intended for MAC verification` });
@@ -639,7 +632,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Decrypt, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Decrypt, ProjectPermissionSub.Cmek);
 
     const decrypt = await kmsService.decryptWithKmsKey({ kmsId: keyId });
 
@@ -664,7 +657,7 @@ export const cmekServiceFactory = ({
       actionProjectType: ActionProjectType.KMS
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCmekActions.Create, ProjectPermissionSub.Cmek);
+    assertPermission(permission, ProjectPermissionCmekActions.Create, ProjectPermissionSub.Cmek);
 
     const hasPqcKeys = keys.some((entry) => isPqcKeyAlgorithm(entry.algorithm as string));
     let pqcLicensed = true;

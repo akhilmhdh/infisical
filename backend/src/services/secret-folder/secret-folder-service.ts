@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import { Knex } from "knex";
 import path from "path";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
@@ -16,6 +16,7 @@ import { TSecretApprovalRequestDALFactory } from "@app/ee/services/secret-approv
 import { TSecretApprovalRequestSecretDALFactory } from "@app/ee/services/secret-approval-request/secret-approval-request-secret-dal";
 import { TSecretRotationV2DALFactory } from "@app/ee/services/secret-rotation-v2/secret-rotation-v2-dal";
 import { KeyStorePrefixes, PgSqlLock, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { OrderByDirection, OrgServiceActor } from "@app/lib/types";
 import { TAdditionalPrivilegeDALFactory } from "@app/services/additional-privilege/additional-privilege-dal";
@@ -168,10 +169,10 @@ export const secretFolderServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretFolders, {
+      environment,
+      secretPath
+    });
 
     const env = await projectEnvDAL.findOne({ projectId, slug: environment });
     if (!env) {
@@ -360,10 +361,10 @@ export const secretFolderServiceFactory = ({
     });
 
     folders.forEach(({ environment, path: secretPath }) => {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionActions.Edit,
-        subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-      );
+      assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretFolders, {
+        environment,
+        secretPath
+      });
     });
 
     const executeBulkUpdate = async (tx: Knex) => {
@@ -502,10 +503,10 @@ export const secretFolderServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Edit,
-      subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretFolders, {
+      environment,
+      secretPath
+    });
 
     const parentFolder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!parentFolder)
@@ -730,10 +731,10 @@ export const secretFolderServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretFolders, {
+      environment,
+      secretPath
+    });
 
     const env = await projectEnvDAL.findOne({ projectId, slug: environment });
     if (!env) throw new NotFoundError({ message: `Environment with slug '${environment}' not found` });
@@ -1162,10 +1163,10 @@ export const secretFolderServiceFactory = ({
     });
 
     folders.forEach(({ environment, path: secretPath }) => {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionActions.Create,
-        subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-      );
+      assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretFolders, {
+        environment,
+        secretPath
+      });
     });
 
     const foldersByEnv = folders.reduce(
@@ -1372,10 +1373,10 @@ export const secretFolderServiceFactory = ({
     });
 
     folders.forEach(({ environment, path: secretPath }) => {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionActions.Delete,
-        subject(ProjectPermissionSub.SecretFolders, { environment, secretPath })
-      );
+      assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretFolders, {
+        environment,
+        secretPath
+      });
     });
 
     const foldersByEnv = folders.reduce(
@@ -1715,14 +1716,14 @@ export const secretFolderServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      subject(ProjectPermissionSub.SecretFolders, { environment: destinationEnvironment, secretPath: destinationPath })
-    );
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      subject(ProjectPermissionSub.SecretFolders, { environment: sourceEnvironment, secretPath: sourceParentPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretFolders, {
+      environment: destinationEnvironment,
+      secretPath: destinationPath
+    });
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretFolders, {
+      environment: sourceEnvironment,
+      secretPath: sourceParentPath
+    });
 
     // 3. cyclic / no-op validation (only meaningful within the same environment)
     if (destinationEnvironment === sourceEnvironment) {
@@ -1862,21 +1863,18 @@ export const secretFolderServiceFactory = ({
           checkedSourceParents.add(sourceParent);
           // a move only requires Delete at each source parent path. folder read is implied-for-all (folder
           // list/get is not gated by a Read permission), so it is not required here.
-          ForbiddenError.from(permission).throwUnlessCan(
-            ProjectPermissionActions.Delete,
-            subject(ProjectPermissionSub.SecretFolders, { environment: sourceEnvironment, secretPath: sourceParent })
-          );
+          assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretFolders, {
+            environment: sourceEnvironment,
+            secretPath: sourceParent
+          });
         }
         const destinationParent = path.dirname(entry.destinationAbsPath);
         if (!checkedDestinationParents.has(destinationParent)) {
           checkedDestinationParents.add(destinationParent);
-          ForbiddenError.from(permission).throwUnlessCan(
-            ProjectPermissionActions.Create,
-            subject(ProjectPermissionSub.SecretFolders, {
-              environment: destinationEnvironment,
-              secretPath: destinationParent
-            })
-          );
+          assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretFolders, {
+            environment: destinationEnvironment,
+            secretPath: destinationParent
+          });
         }
       }
 

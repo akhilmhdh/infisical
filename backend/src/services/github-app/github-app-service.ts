@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { AxiosError, AxiosRequestConfig } from "axios";
 
 import { ActionProjectType, OrganizationActionScope } from "@app/db/schemas";
@@ -20,6 +19,7 @@ import {
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
 import { KeyStorePrefixes, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
@@ -110,7 +110,7 @@ export const gitHubAppServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(projectAction, ProjectPermissionSub.AppConnections);
+      assertPermission(permission, projectAction, ProjectPermissionSub.AppConnections);
     } else {
       const { permission } = await permissionService.getOrgPermission({
         actor: actor.type,
@@ -121,7 +121,7 @@ export const gitHubAppServiceFactory = ({
         scope: orgScope
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(orgAction, OrgPermissionSubjects.AppConnections);
+      assertPermission(permission, orgAction, OrgPermissionSubjects.AppConnections);
     }
   };
 
@@ -146,10 +146,7 @@ export const gitHubAppServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.AttachGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.AttachGateways, OrgPermissionSubjects.Gateway);
 
     const [gateway] = await gatewayDAL.find({ id: gatewayId, orgId: orgPermission.orgId });
     const [gatewayV2] = await gatewayV2DAL.find({ id: gatewayId, orgId: orgPermission.orgId });

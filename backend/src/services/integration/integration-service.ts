@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import { throwIfMissingSecretReadValueOrDescribePermission } from "@app/ee/services/permission/permission-fns";
@@ -9,6 +7,7 @@ import {
   ProjectPermissionSecretActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { NotFoundError } from "@app/lib/errors";
 import { TProjectPermission } from "@app/lib/types";
 
@@ -96,7 +95,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Integrations);
 
     const newEnvironment = environment || integration.environment.slug;
     const newSecretPath = secretPath || integration.secretPath;
@@ -160,7 +159,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
 
     if (!integration) {
       throw new NotFoundError({
@@ -188,7 +187,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
 
     const integrationAuth = await integrationAuthDAL.findById(integration.integrationAuthId);
 
@@ -231,7 +230,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Integrations);
 
     const integrationAuth = await integrationAuthDAL.findById(integration.integrationAuthId);
 
@@ -272,7 +271,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
 
     const integrations = await integrationDAL.findByProjectId(projectId);
     return integrations;
@@ -292,7 +291,7 @@ export const integrationServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Integrations);
 
     await secretQueueService.syncIntegrations({
       isManual: true,

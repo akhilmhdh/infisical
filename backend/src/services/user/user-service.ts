@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { AccessScope, OrganizationActionScope, TUsers } from "@app/db/schemas";
@@ -6,6 +5,7 @@ import { TEmailDomainDALFactory } from "@app/ee/services/email-domain/email-doma
 import { EmailDomainStatus } from "@app/ee/services/email-domain/email-domain-types";
 import { OrgPermissionMemberActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
@@ -754,7 +754,7 @@ export const userServiceFactory = ({
         actorOrgId,
         scope: OrganizationActionScope.Any
       });
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+      assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
     }
 
     const memberships = await groupProjectDAL.findByUserId(user.id, actorOrgId);

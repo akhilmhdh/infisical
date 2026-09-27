@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError, subject } from "@casl/ability";
 import { Knex } from "knex";
 
 import {
@@ -11,6 +10,7 @@ import {
 } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionCommitsActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 import { chunkArray } from "@app/lib/fn";
@@ -270,10 +270,10 @@ export const folderCommitServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCommitsActions.Read,
-      subject(ProjectPermissionSub.Commits, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionCommitsActions.Read, ProjectPermissionSub.Commits, {
+      environment,
+      secretPath
+    });
   };
 
   /**
@@ -2222,13 +2222,10 @@ export const folderCommitServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCommitsActions.PerformRollback,
-      subject(ProjectPermissionSub.Commits, {
-        environment: folderWithPath.environmentSlug,
-        secretPath: folderWithPath.path
-      })
-    );
+    assertPermission(permission, ProjectPermissionCommitsActions.PerformRollback, ProjectPermissionSub.Commits, {
+      environment: folderWithPath.environmentSlug,
+      secretPath: folderWithPath.path
+    });
 
     // Check read permissions
     await checkProjectCommitReadPermission({

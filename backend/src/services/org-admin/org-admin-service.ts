@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope, ProjectMembershipRole } from "@app/db/schemas";
 import { OrgPermissionAdminConsoleAction, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { NotFoundError } from "@app/lib/errors";
 
 import { TMembershipRoleDALFactory } from "../membership/membership-role-dal";
@@ -52,10 +51,7 @@ export const orgAdminServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionAdminConsoleAction.AccessAllProjects,
-      OrgPermissionSubjects.AdminConsole
-    );
+    assertPermission(permission, OrgPermissionAdminConsoleAction.AccessAllProjects, OrgPermissionSubjects.AdminConsole);
     const projects = await projectDAL.find(
       {
         orgId: actorOrgId,
@@ -85,10 +81,7 @@ export const orgAdminServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionAdminConsoleAction.AccessAllProjects,
-      OrgPermissionSubjects.AdminConsole
-    );
+    assertPermission(permission, OrgPermissionAdminConsoleAction.AccessAllProjects, OrgPermissionSubjects.AdminConsole);
 
     const project = await projectDAL.findOne({ id: projectId, orgId: actorOrgId });
     if (!project) throw new NotFoundError({ message: `Project with ID '${projectId}' not found` });

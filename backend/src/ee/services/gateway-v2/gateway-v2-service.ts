@@ -1,10 +1,10 @@
 import net from "node:net";
 
-import { ForbiddenError } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { OrganizationActionScope, OrgMembershipRole, OrgMembershipStatus, TRelays } from "@app/db/schemas";
 import { PgSqlLock } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
@@ -107,10 +107,7 @@ export const gatewayV2ServiceFactory = ({
       actorOrgId: orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.CreateGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.CreateGateways, OrgPermissionSubjects.Gateway);
   };
 
   const $getOrgCAs = async (orgId: string) => {
@@ -293,10 +290,7 @@ export const gatewayV2ServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.ListGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.ListGateways, OrgPermissionSubjects.Gateway);
 
     const gateways = await gatewayV2DAL.find({
       orgId: orgPermission.orgId
@@ -947,10 +941,7 @@ export const gatewayV2ServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.ListGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.ListGateways, OrgPermissionSubjects.Gateway);
 
     await $checkGatewayHealth(gateway.id);
   };
@@ -1033,10 +1024,7 @@ export const gatewayV2ServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.DeleteGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.DeleteGateways, OrgPermissionSubjects.Gateway);
 
     const proxyDependents = await resourceAuthMethodService.findKubernetesProxyDependents(gateway.id);
     if (proxyDependents.length) {
@@ -1073,10 +1061,7 @@ export const gatewayV2ServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionGatewayActions.CreateGateways,
-        OrgPermissionSubjects.Gateway
-      );
+      assertPermission(permission, OrgPermissionGatewayActions.CreateGateways, OrgPermissionSubjects.Gateway);
     }
 
     return gatewayV2DAL.transaction(async (tx) => {
@@ -1188,10 +1173,7 @@ export const gatewayV2ServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.ListGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.ListGateways, OrgPermissionSubjects.Gateway);
 
     const [appConnections, dynamicSecrets, kubernetesAuths, pkiDiscoveryConfigs] = await Promise.all([
       appConnectionDAL.findByGatewayId(gatewayId),
@@ -1245,10 +1227,7 @@ export const gatewayV2ServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayActions.CreateGateways,
-      OrgPermissionSubjects.Gateway
-    );
+    assertPermission(permission, OrgPermissionGatewayActions.CreateGateways, OrgPermissionSubjects.Gateway);
 
     // The host check (DNS) and the secret encryption (possibly an external KMS) both reach
     // the network, so they run before the transaction is opened rather than inside it.

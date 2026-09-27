@@ -1,5 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
@@ -7,6 +5,7 @@ import {
   ProjectPermissionProjectFolderGrantActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { prefixWithSlash } from "@app/lib/fn";
 import { TOrgDALFactory } from "@app/services/org/org-dal";
@@ -72,9 +71,11 @@ export const projectFolderGrantServiceFactory = ({
       projectId: sourceProjectId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionProjectFolderGrantActions.CreateGrant,
-      subject(ProjectPermissionSub.ProjectFolderGrant, { environment, secretPath: canonicalSecretPath })
+      ProjectPermissionSub.ProjectFolderGrant,
+      { environment, secretPath: canonicalSecretPath }
     );
 
     const folder = await folderDAL.findBySecretPath(sourceProjectId, environment, canonicalSecretPath);
@@ -139,12 +140,14 @@ export const projectFolderGrantServiceFactory = ({
       projectId: sourceProjectId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionProjectFolderGrantActions.RevokeGrant,
-      subject(ProjectPermissionSub.ProjectFolderGrant, {
+      ProjectPermissionSub.ProjectFolderGrant,
+      {
         environment: folderInfo.environmentSlug,
         secretPath: folderInfo.path
-      })
+      }
     );
 
     const deleted = await projectFolderGrantDAL.deleteById(grantId);
@@ -173,7 +176,8 @@ export const projectFolderGrantServiceFactory = ({
       projectId: sourceProjectId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionProjectFolderGrantActions.ReadGrant,
       ProjectPermissionSub.ProjectFolderGrant
     );
@@ -258,7 +262,8 @@ export const projectFolderGrantServiceFactory = ({
       projectId: sourceProjectId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionProjectFolderGrantActions.ReadGrant,
       ProjectPermissionSub.ProjectFolderGrant
     );

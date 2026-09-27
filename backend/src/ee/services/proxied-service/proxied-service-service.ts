@@ -1,4 +1,4 @@
-import { ForbiddenError, MongoAbility, subject } from "@casl/ability";
+import { MongoAbility, subject } from "@casl/ability";
 
 import { ActionProjectType } from "@app/db/schemas";
 import {
@@ -8,6 +8,7 @@ import {
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
 import { KeyStorePrefixes, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { prefixWithSlash, removeTrailingSlash } from "@app/lib/fn";
 import { OrgServiceActor, TDynamicSecretWithMetadata } from "@app/lib/types";
@@ -199,10 +200,11 @@ export const proxiedServiceServiceFactory = ({
     dynamicCreds.forEach((cred) => {
       const ds = byName.get(cred.dynamicSecretName as string) as TDynamicSecretWithMetadata;
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionDynamicSecretActions.Lease,
-        subject(ProjectPermissionSub.DynamicSecrets, { environment, secretPath, metadata: ds.metadata })
-      );
+      assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets, {
+        environment,
+        secretPath,
+        metadata: ds.metadata
+      });
 
       const brokerable = BROKERABLE_DYNAMIC_SECRETS[ds.type as DynamicSecretProviders];
       if (!brokerable) {
@@ -263,10 +265,10 @@ export const proxiedServiceServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager,
       projectId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionProxiedServiceActions.Create,
-      subject(ProjectPermissionSub.ProxiedServices, { environment, secretPath: canonicalPath })
-    );
+    assertPermission(permission, ProjectPermissionProxiedServiceActions.Create, ProjectPermissionSub.ProxiedServices, {
+      environment,
+      secretPath: canonicalPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder) {
@@ -466,13 +468,10 @@ export const proxiedServiceServiceFactory = ({
       projectId: service.projectId
     });
     const resolvedSecretPath = await $resolveSecretPath(service.projectId, service.folderId);
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionProxiedServiceActions.Edit,
-      subject(ProjectPermissionSub.ProxiedServices, {
-        environment: service.environmentSlug,
-        secretPath: resolvedSecretPath
-      })
-    );
+    assertPermission(permission, ProjectPermissionProxiedServiceActions.Edit, ProjectPermissionSub.ProxiedServices, {
+      environment: service.environmentSlug,
+      secretPath: resolvedSecretPath
+    });
 
     if (name && name !== service.name) {
       const conflicting = await proxiedServiceDAL.findOne({ folderId: service.folderId, name });
@@ -553,13 +552,10 @@ export const proxiedServiceServiceFactory = ({
       projectId: service.projectId
     });
     const resolvedSecretPath = await $resolveSecretPath(service.projectId, service.folderId);
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionProxiedServiceActions.Delete,
-      subject(ProjectPermissionSub.ProxiedServices, {
-        environment: service.environmentSlug,
-        secretPath: resolvedSecretPath
-      })
-    );
+    assertPermission(permission, ProjectPermissionProxiedServiceActions.Delete, ProjectPermissionSub.ProxiedServices, {
+      environment: service.environmentSlug,
+      secretPath: resolvedSecretPath
+    });
 
     await proxiedServiceDAL.deleteById(serviceId);
     const { environmentSlug, ...rest } = service;
@@ -672,12 +668,14 @@ export const proxiedServiceServiceFactory = ({
       projectId: service.projectId
     });
     const resolvedSecretPath = await $resolveSecretPath(service.projectId, service.folderId);
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionProxiedServiceActions.ReportUsage,
-      subject(ProjectPermissionSub.ProxiedServices, {
+      ProjectPermissionSub.ProxiedServices,
+      {
         environment: service.environmentSlug,
         secretPath: resolvedSecretPath
-      })
+      }
     );
 
     // Only the report that claims the key writes; the rest within the window are dropped.

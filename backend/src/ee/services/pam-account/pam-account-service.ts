@@ -13,6 +13,7 @@ import {
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
 import { conditionsMatcher } from "@app/lib/casl";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { hasPostgresErrorCode } from "@app/lib/errors/postgres";
@@ -563,7 +564,8 @@ export const pamAccountServiceFactory = (deps: TPamAccountServiceFactoryDep) => 
     ...ctx
   }: TCreatePamAccountDTO & TActorContext) => {
     const { permission } = await checkFolder(folderId, projectId, ctx);
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ResourcePermissionPamResourceActions.CreateAccounts,
       ResourcePermissionSub.PamResource
     );
@@ -763,7 +765,8 @@ export const pamAccountServiceFactory = (deps: TPamAccountServiceFactoryDep) => 
       // folder where the actor would gain ViewCredentials/LaunchSessions.
       if (folderId !== existing.folderId) {
         const { permission } = await checkFolder(folderId, projectId, ctx);
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ResourcePermissionPamResourceActions.CreateAccounts,
           ResourcePermissionSub.PamResource
         );

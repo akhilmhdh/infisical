@@ -1,4 +1,4 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { ActionProjectType, ResourceType } from "@app/db/schemas";
@@ -17,6 +17,7 @@ import { buildUrl } from "@app/ee/services/pki-acme/pki-acme-fns";
 import { ScepChallengeType } from "@app/ee/services/pki-scep/challenge";
 import { TScepDynamicChallengeDALFactory } from "@app/ee/services/pki-scep/pki-scep-dynamic-challenge-dal";
 import { generateAndEncryptScepRaCertificate, resolveScepRaSigning } from "@app/ee/services/pki-scep/pki-scep-fns";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getProcessedPermissionRules } from "@app/lib/casl/permission-filter-utils";
 import { extractX509CertFromChain } from "@app/lib/certificates/extract-certificate";
 import { getConfig } from "@app/lib/config/env";
@@ -418,19 +419,23 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.Create,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: data.slug
-      })
+      }
     );
 
     if (requiresIssueCertForEnrollmentConfig(data)) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.IssueCert,
-        subject(ProjectPermissionSub.CertificateProfiles, {
+        ProjectPermissionSub.CertificateProfiles,
+        {
           slug: data.slug
-        })
+        }
       );
     }
 
@@ -703,19 +708,23 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.Edit,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: existingProfile.slug
-      })
+      }
     );
 
     if (requiresIssueCertForEnrollmentConfig(data)) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.IssueCert,
-        subject(ProjectPermissionSub.CertificateProfiles, {
+        ProjectPermissionSub.CertificateProfiles,
+        {
           slug: existingProfile.slug
-        })
+        }
       );
     }
 
@@ -996,7 +1005,7 @@ export const certificateProfileServiceFactory = ({
         actorOrgId
       );
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateProfileActions.Read, profileSubject);
+        assertPermission(permission, ProjectPermissionCertificateProfileActions.Read, profileSubject);
       }
     }
 
@@ -1045,10 +1054,7 @@ export const certificateProfileServiceFactory = ({
         actorOrgId
       );
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionCertificateProfileActions.Read,
-          profileWithConfigsSubject
-        );
+        assertPermission(permission, ProjectPermissionCertificateProfileActions.Read, profileWithConfigsSubject);
       }
     }
 
@@ -1151,10 +1157,7 @@ export const certificateProfileServiceFactory = ({
         actorOrgId
       );
       if (!allowedByApplication) {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionCertificateProfileActions.Read,
-          profileSlugSubject
-        );
+        assertPermission(permission, ProjectPermissionCertificateProfileActions.Read, profileSlugSubject);
       }
     }
 
@@ -1203,10 +1206,7 @@ export const certificateProfileServiceFactory = ({
         actorAuthMethod,
         actorOrgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ResourcePermissionApplicationActions.Read,
-        ResourcePermissionSub.Application
-      );
+      assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
       const attached = await pkiApplicationProfileDAL.findByApplicationId(applicationId);
       attachedProfileIds = attached.map((p) => p.profileId);
     } else {
@@ -1218,7 +1218,8 @@ export const certificateProfileServiceFactory = ({
         actorOrgId,
         actionProjectType: ActionProjectType.CertificateManager
       });
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.Read,
         ProjectPermissionSub.CertificateProfiles
       );
@@ -1355,11 +1356,13 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.Delete,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: profile.slug
-      })
+      }
     );
 
     if (pkiApplicationProfileDAL) {
@@ -1418,11 +1421,13 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.Read,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: profile.slug
-      })
+      }
     );
 
     const certificates = await certificateProfileDAL.getCertificatesByProfile(profileId, {
@@ -1461,11 +1466,13 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.Read,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: profile.slug
-      })
+      }
     );
 
     const cert = await certificateProfileDAL.getLatestActiveCertificateForProfile(profileId);
@@ -1483,7 +1490,7 @@ export const certificateProfileServiceFactory = ({
       serialNumber: cert.serialNumber,
       metadata: certMetadata
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.Read, certSubject);
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, certSubject);
 
     if (cert.applicationId) {
       const { permission: resourcePermission } = await permissionService.getResourcePermission({
@@ -1505,7 +1512,7 @@ export const certificateProfileServiceFactory = ({
         });
       }
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
+      assertPermission(permission, ProjectPermissionCertificateActions.ReadPrivateKey, certSubject);
     }
 
     const certBody = await certificateBodyDAL.findOne({ certId: cert.id });
@@ -1601,11 +1608,13 @@ export const certificateProfileServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.Read,
-        subject(ProjectPermissionSub.CertificateProfiles, {
+        ProjectPermissionSub.CertificateProfiles,
+        {
           slug: profile.slug
-        })
+        }
       );
     }
 
@@ -1679,11 +1688,13 @@ export const certificateProfileServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.RevealAcmeEabSecret,
-      subject(ProjectPermissionSub.CertificateProfiles, {
+      ProjectPermissionSub.CertificateProfiles,
+      {
         slug: profile.slug
-      })
+      }
     );
 
     if (profile.enrollmentType !== EnrollmentType.ACME) {

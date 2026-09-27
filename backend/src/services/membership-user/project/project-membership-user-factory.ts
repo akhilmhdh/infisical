@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import {
   AccessScope,
   ActionProjectType,
@@ -18,6 +16,7 @@ import {
   ProjectPermissionMemberActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, InternalServerError, NotFoundError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
@@ -83,7 +82,7 @@ export const newProjectMembershipUserFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Create, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Create, ProjectPermissionSub.Member);
 
     // TODO(namespace): this becomes tricky in namespace due to group flow
     const orgMemberships = await membershipUserDAL.find({
@@ -210,7 +209,7 @@ export const newProjectMembershipUserFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Edit, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Edit, ProjectPermissionSub.Member);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(scope.value), () =>
       projectDAL.findById(scope.value)
@@ -297,7 +296,7 @@ export const newProjectMembershipUserFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Delete, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Delete, ProjectPermissionSub.Member);
 
     const targetMembership = await membershipUserDAL.getUserById({
       scopeData: dto.scopeData,
@@ -333,7 +332,7 @@ export const newProjectMembershipUserFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
   };
 
   const onGetMembershipUserByUserIdGuard: TMembershipUserScopeFactory["onGetMembershipUserByUserIdGuard"] = async (
@@ -348,7 +347,7 @@ export const newProjectMembershipUserFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
   };
 
   return {

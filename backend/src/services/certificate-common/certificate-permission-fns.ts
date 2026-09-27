@@ -11,6 +11,7 @@ import {
   ResourcePermissionCertificateActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { ActorAuthMethod, ActorType } from "@app/services/auth/auth-type";
 
 import { TResourceMetadataDALFactory } from "../resource-metadata/resource-metadata-dal";
@@ -58,10 +59,7 @@ export const assertCanEditCertificate = async ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionCertificateActions.Edit,
-      ResourcePermissionSub.Certificates
-    );
+    assertPermission(permission, ResourcePermissionCertificateActions.Edit, ResourcePermissionSub.Certificates);
 
     return { certMetadata: [] };
   }
@@ -78,15 +76,12 @@ export const assertCanEditCertificate = async ({
     actionProjectType: ActionProjectType.CertificateManager
   });
 
-  ForbiddenError.from(permission).throwUnlessCan(
-    ProjectPermissionCertificateActions.Edit,
-    subject(ProjectPermissionSub.Certificates, {
-      commonName: certificate.commonName ?? undefined,
-      altNames: certificate.altNames?.split(",").map((s) => s.trim()),
-      serialNumber: certificate.serialNumber ?? undefined,
-      metadata: certMetadata
-    })
-  );
+  assertPermission(permission, ProjectPermissionCertificateActions.Edit, ProjectPermissionSub.Certificates, {
+    commonName: certificate.commonName ?? undefined,
+    altNames: certificate.altNames?.split(",").map((s) => s.trim()),
+    serialNumber: certificate.serialNumber ?? undefined,
+    metadata: certMetadata
+  });
 
   return { certMetadata, projectPermission: permission };
 };

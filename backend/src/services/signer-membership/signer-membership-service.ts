@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, RESOURCE_SCOPE, ResourceMembershipRole, ResourceType } from "@app/db/schemas";
 import { TGroupDALFactory } from "@app/ee/services/group/group-dal";
 import { TIdentityGroupMembershipDALFactory } from "@app/ee/services/group/identity-group-membership-dal";
@@ -9,6 +7,7 @@ import {
   ResourcePermissionSignerActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 
 import { TApprovalPolicyDALFactory } from "../approval-policy/approval-policy-dal";
@@ -185,10 +184,7 @@ export const signerMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageMembers,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageMembers, ResourcePermissionSub.Signer);
 
     if (!isBuiltInSignerRole(role)) {
       throw new BadRequestError({ message: unknownSignerRoleMessage(role) });
@@ -289,7 +285,7 @@ export const signerMembershipServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     const memberships = await membershipDAL.find({
       scope: RESOURCE_SCOPE,
@@ -385,7 +381,7 @@ export const signerMembershipServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     const allMemberships = await membershipDAL.find({
       scope: RESOURCE_SCOPE,
@@ -526,10 +522,7 @@ export const signerMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageMembers,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageMembers, ResourcePermissionSub.Signer);
 
     if (!isBuiltInSignerRole(role)) {
       throw new BadRequestError({ message: unknownSignerRoleMessage(role) });
@@ -602,10 +595,7 @@ export const signerMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageMembers,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageMembers, ResourcePermissionSub.Signer);
 
     const membership = await $findMembershipByMember(signerId, projectId, kind, memberId);
     const details = await $buildMemberDetails(membership);
@@ -666,10 +656,7 @@ export const signerMembershipServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageMembers,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageMembers, ResourcePermissionSub.Signer);
 
     const usersByEmail = emails.length ? await userDAL.find({ $in: { username: emails } }) : [];
     const userByEmail = new Map<string, (typeof usersByEmail)[number]>();

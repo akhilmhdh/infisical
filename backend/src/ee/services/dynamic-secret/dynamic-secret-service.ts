@@ -7,6 +7,7 @@ import {
   ProjectPermissionDynamicSecretActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { extractObjectFieldPaths, takeDistinctKeyScanWindow } from "@app/lib/fn";
@@ -124,9 +125,11 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.CreateRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, { environment: environmentSlug, secretPath: path, metadata })
+      ProjectPermissionSub.DynamicSecrets,
+      { environment: environmentSlug, secretPath: path, metadata }
     );
 
     const plan = await licenseService.getPlan(actorOrgId);
@@ -306,23 +309,27 @@ export const dynamicSecretServiceFactory = ({
       });
     }
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.EditRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: environmentSlug,
         secretPath: path,
         metadata: dynamicSecretCfg.metadata
-      })
+      }
     );
 
     if (metadata) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionDynamicSecretActions.EditRootCredential,
-        subject(ProjectPermissionSub.DynamicSecrets, {
+        ProjectPermissionSub.DynamicSecrets,
+        {
           environment: environmentSlug,
           secretPath: path,
           metadata
-        })
+        }
       );
     }
 
@@ -543,13 +550,15 @@ export const dynamicSecretServiceFactory = ({
       throw new NotFoundError({ message: `Dynamic secret with name '${name}' in folder '${folder.path}' not found` });
     }
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.DeleteRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: environmentSlug,
         secretPath: path,
         metadata: dynamicSecretCfg.metadata
-      })
+      }
     );
 
     const leases = await dynamicSecretLeaseDAL.find({ dynamicSecretId: dynamicSecretCfg.id });
@@ -624,22 +633,26 @@ export const dynamicSecretServiceFactory = ({
       throw new NotFoundError({ message: `Dynamic secret with name '${name} in folder '${path}' not found` });
     }
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: environmentSlug,
         secretPath: path,
         metadata: dynamicSecretCfg.metadata
-      })
+      }
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.EditRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: environmentSlug,
         secretPath: path,
         metadata: dynamicSecretCfg.metadata
-      })
+      }
     );
 
     const { decryptor: secretManagerDecryptor } = await kmsService.createCipherPairWithDataKey({
@@ -697,9 +710,11 @@ export const dynamicSecretServiceFactory = ({
 
       // verify user has access to each env in request
       environmentSlugs.forEach((environmentSlug) =>
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionDynamicSecretActions.ReadRootCredential,
-          subject(ProjectPermissionSub.DynamicSecrets, { environment: environmentSlug, secretPath: path })
+          ProjectPermissionSub.DynamicSecrets,
+          { environment: environmentSlug, secretPath: path }
         )
       );
     }
@@ -738,9 +753,11 @@ export const dynamicSecretServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, { environment: environmentSlug, secretPath: path })
+      ProjectPermissionSub.DynamicSecrets,
+      { environment: environmentSlug, secretPath: path }
     );
 
     const folder = await folderDAL.findBySecretPath(projectId, environmentSlug, path);
@@ -787,12 +804,14 @@ export const dynamicSecretServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: environmentSlug,
         secretPath: path
-      })
+      }
     );
 
     const folder = await folderDAL.findBySecretPath(projectId, environmentSlug, path);
@@ -954,13 +973,15 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.EditRootCredential,
-      subject(ProjectPermissionSub.DynamicSecrets, {
+      ProjectPermissionSub.DynamicSecrets,
+      {
         environment: folder.environment.envSlug,
         secretPath,
         metadata: dynamicSecretCfg.metadata
-      })
+      }
     );
 
     const { decryptor: secretManagerDecryptor } = await kmsService.createCipherPairWithDataKey({
@@ -997,7 +1018,8 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
       ProjectPermissionSub.DynamicSecrets
     );
@@ -1033,7 +1055,8 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
       ProjectPermissionSub.DynamicSecrets
     );
@@ -1065,7 +1088,8 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
       ProjectPermissionSub.DynamicSecrets
     );
@@ -1098,7 +1122,8 @@ export const dynamicSecretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionDynamicSecretActions.ReadRootCredential,
       ProjectPermissionSub.DynamicSecrets
     );

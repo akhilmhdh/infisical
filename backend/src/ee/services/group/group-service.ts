@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import slugify from "@sindresorhus/slugify";
 import { Knex } from "knex";
 
@@ -11,6 +10,7 @@ import {
   TRoles
 } from "@app/db/schemas";
 import { TOidcConfigDALFactory } from "@app/ee/services/oidc/oidc-config-dal";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import {
   BadRequestError,
@@ -156,7 +156,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Create, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Create, OrgPermissionSubjects.Groups);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.groups)
@@ -258,7 +258,7 @@ export const groupServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.groups)
@@ -703,7 +703,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Delete, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Delete, OrgPermissionSubjects.Groups);
 
     const plan = await licenseService.getPlan(actorOrgId);
 
@@ -770,7 +770,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: { scope: AccessScope.Organization, orgId: actorOrgId },
@@ -830,7 +830,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: { scope: AccessScope.Organization, orgId: actorOrgId },
@@ -875,7 +875,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: { scope: AccessScope.Organization, orgId: actorOrgId },
@@ -921,7 +921,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: { scope: AccessScope.Organization, orgId: actorOrgId },
@@ -969,7 +969,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: { scope: AccessScope.Organization, orgId: actorOrgId },
@@ -1011,7 +1011,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
 
     return groupDAL.listAvailableGroups(actorOrgId, rootOrgId);
   };
@@ -1027,7 +1027,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     // check if group with slug exists
     const groupMembership = await membershipGroupDAL.getGroupById({
@@ -1136,7 +1136,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     // check if group with slug exists
     const groupMembership = await membershipGroupDAL.getGroupById({
@@ -1218,7 +1218,7 @@ export const groupServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     // check if group with slug exists
     const groupMembership = await membershipGroupDAL.getGroupById({
@@ -1307,7 +1307,7 @@ export const groupServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     const groupMembership = await membershipGroupDAL.getGroupById({
       scopeData: {

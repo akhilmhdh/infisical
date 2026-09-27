@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, ActionProjectType, ProjectMembershipRole, ProjectType } from "@app/db/schemas";
 import { TGroupDALFactory } from "@app/ee/services/group/group-dal";
 import {
@@ -13,6 +11,7 @@ import {
   ProjectPermissionGroupActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, InternalServerError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -67,7 +66,7 @@ export const newProjectMembershipGroupFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Create, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Create, ProjectPermissionSub.Groups);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(scope.value), () =>
       projectDAL.findById(scope.value)
@@ -137,7 +136,7 @@ export const newProjectMembershipGroupFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Edit, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Edit, ProjectPermissionSub.Groups);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(scope.value), () =>
       projectDAL.findById(scope.value)
@@ -228,7 +227,7 @@ export const newProjectMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Delete, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Delete, ProjectPermissionSub.Groups);
 
     const groupDetails = await groupDAL.findById(dto.selector.groupId);
     if (!groupDetails) throw new BadRequestError({ message: "Group details not found" });
@@ -270,7 +269,7 @@ export const newProjectMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
   };
 
   const onGetMembershipGroupByGroupIdGuard: TMembershipGroupScopeFactory["onGetMembershipGroupByGroupIdGuard"] = async (
@@ -286,7 +285,7 @@ export const newProjectMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
+    assertPermission(permission, ProjectPermissionGroupActions.Read, ProjectPermissionSub.Groups);
   };
 
   return {

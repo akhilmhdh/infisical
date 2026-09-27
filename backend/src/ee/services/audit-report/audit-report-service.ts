@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType, OrganizationActionScope } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import {
@@ -9,6 +7,7 @@ import {
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionInsightsActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
 import { PgSqlLock } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -152,10 +151,7 @@ export const auditReportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionInsightsActions.GenerateReport,
-      ProjectPermissionSub.Insights
-    );
+    assertPermission(permission, ProjectPermissionInsightsActions.GenerateReport, ProjectPermissionSub.Insights);
 
     const project = await projectDAL.findById(dto.projectId);
     if (!project) {
@@ -249,10 +245,7 @@ export const auditReportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionInsightsActions.Read,
-      ProjectPermissionSub.Insights
-    );
+    assertPermission(permission, ProjectPermissionInsightsActions.Read, ProjectPermissionSub.Insights);
 
     const reports = await auditReportDAL.findByProject(dto.projectId, {
       offset: dto.offset,
@@ -286,10 +279,7 @@ export const auditReportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionInsightsActions.Read,
-      ProjectPermissionSub.Insights
-    );
+    assertPermission(permission, ProjectPermissionInsightsActions.Read, ProjectPermissionSub.Insights);
 
     return presentAuditReport(report);
   };
@@ -342,7 +332,8 @@ export const auditReportServiceFactory = ({
     }
 
     const permission = await $getOrgInsightsPermission(actor);
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionSecretsManagementInsightsActions.GenerateReport,
       OrgPermissionSubjects.SecretsManagementInsights
     );
@@ -435,7 +426,8 @@ export const auditReportServiceFactory = ({
     }
 
     const permission = await $getOrgInsightsPermission(actor);
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionSecretsManagementInsightsActions.Read,
       OrgPermissionSubjects.SecretsManagementInsights
     );

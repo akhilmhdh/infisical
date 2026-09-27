@@ -1,4 +1,4 @@
-import { ForbiddenError, MongoAbility } from "@casl/ability";
+import { MongoAbility } from "@casl/ability";
 import slugify from "@sindresorhus/slugify";
 import { Knex } from "knex";
 
@@ -29,6 +29,7 @@ import {
 import { assertRoleSetBoundary } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { TSamlConfigDALFactory } from "@app/ee/services/saml-config/saml-config-dal";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { generateUserSrpKeys } from "@app/lib/crypto/srp";
@@ -260,7 +261,7 @@ export const orgServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
 
     const members = await orgDAL.findAllOrgMembers(orgId);
     return members;
@@ -275,7 +276,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
     const groups = await groupDAL.findByOrgId(orgId);
     return groups;
   };
@@ -296,7 +297,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
 
     const members = await orgDAL.findOrgMembersByUsername(orgId, emails);
 
@@ -464,20 +465,14 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
 
     if (allowSecretSharingOutsideOrganization !== undefined) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionSecretShareAction.ManageSettings,
-        OrgPermissionSubjects.SecretShare
-      );
+      assertPermission(permission, OrgPermissionSecretShareAction.ManageSettings, OrgPermissionSubjects.SecretShare);
     }
 
     if (secretShareBrandConfig !== undefined) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionSecretShareAction.ManageSettings,
-        OrgPermissionSubjects.SecretShare
-      );
+      assertPermission(permission, OrgPermissionSecretShareAction.ManageSettings, OrgPermissionSubjects.SecretShare);
     }
 
     const plan = await licenseService.getPlan(orgId);
@@ -513,7 +508,7 @@ export const orgServiceFactory = ({
         throw new BadRequestError({
           message: "Failed to enforce/un-enforce SSO due to plan restriction. Upgrade plan to enforce/un-enforce SSO."
         });
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
+      assertPermission(permission, OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
     }
 
     if (scimEnabled !== undefined) {
@@ -522,7 +517,7 @@ export const orgServiceFactory = ({
           message:
             "Failed to enable/disable SCIM provisioning due to plan restriction. Upgrade plan to enable/disable SCIM provisioning."
         });
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Scim);
+      assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Scim);
       if (scimEnabled && !currentOrg.orgAuthMethod) {
         throw new BadRequestError({
           message: "Cannot enable SCIM when neither SAML or OIDC is configured."
@@ -536,7 +531,7 @@ export const orgServiceFactory = ({
           message: "Failed to enforce Google SSO due to plan restriction. Upgrade plan to enforce Google SSO."
         });
       }
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
+      assertPermission(permission, OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
     }
 
     if (authEnforced && googleSsoAuthEnforced) {
@@ -853,7 +848,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Edit, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Edit, OrgPermissionSubjects.Member);
 
     const foundMembership = await membershipUserDAL.findOne({
       id: membershipId,
@@ -1020,7 +1015,7 @@ export const orgServiceFactory = ({
       scope: OrganizationActionScope.ParentOrganization
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
 
     const invitingUser = await userDAL.findOne({ id: actorId });
 
@@ -1203,7 +1198,7 @@ export const orgServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
 
     const membership = await orgMembershipDAL.findOrgMembershipById(membershipId);
     if (!membership) {
@@ -1259,7 +1254,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
 
     const membershipToDelete = await membershipUserDAL.findOne({
       id: membershipId,
@@ -1309,7 +1304,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Delete, OrgPermissionSubjects.Member);
 
     const membershipsToDelete = await membershipUserDAL.find({
       scope: AccessScope.Organization,
@@ -1364,7 +1359,7 @@ export const orgServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
+    assertPermission(permission, OrgPermissionMemberActions.Read, OrgPermissionSubjects.Member);
 
     const membership = await orgMembershipDAL.findOrgMembershipById(orgMembershipId);
     if (!membership) {
@@ -1394,7 +1389,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.IncidentAccount);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.IncidentAccount);
     const incidentContacts = await incidentContactDAL.findByOrgId(orgId);
     return incidentContacts;
   };
@@ -1414,7 +1409,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.IncidentAccount);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.IncidentAccount);
     const doesIncidentContactExist = await incidentContactDAL.findOne(orgId, { email });
     if (doesIncidentContactExist) {
       throw new BadRequestError({
@@ -1442,7 +1437,7 @@ export const orgServiceFactory = ({
       actorOrgId,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.IncidentAccount);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.IncidentAccount);
 
     const incidentContact = await incidentContactDAL.deleteById(id, orgId);
     return incidentContact;

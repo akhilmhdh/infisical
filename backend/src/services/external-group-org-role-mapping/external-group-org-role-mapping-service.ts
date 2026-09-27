@@ -1,9 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { OrgServiceActor } from "@app/lib/types";
 import { constructGroupOrgMembershipRoleMappings } from "@app/services/external-group-org-role-mapping/external-group-org-role-mapping-fns";
 import { TSyncExternalGroupOrgMembershipRoleMappingsDTO } from "@app/services/external-group-org-role-mapping/external-group-org-role-mapping-types";
@@ -37,7 +36,7 @@ export const externalGroupOrgRoleMappingServiceFactory = ({
     });
 
     // TODO: will need to change if we add support for ldap, oidc, etc.
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Scim);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Scim);
 
     const mappings = await externalGroupOrgRoleMappingDAL.find({
       orgId: actor.orgId
@@ -60,7 +59,7 @@ export const externalGroupOrgRoleMappingServiceFactory = ({
     });
 
     // TODO: will need to change if we add support for ldap, oidc, etc.
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Scim);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Scim);
 
     const mappings = await constructGroupOrgMembershipRoleMappings({
       mappingsDTO: dto.mappings,

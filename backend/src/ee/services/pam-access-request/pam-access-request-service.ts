@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { RESOURCE_SCOPE, ResourceType, TApprovalRequestGrants } from "@app/db/schemas";
@@ -11,6 +10,7 @@ import {
   ResourcePermissionPamResourceActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -324,7 +324,8 @@ export const pamAccessRequestServiceFactory = ({
       throw new NotFoundError({ message: "Folder not found" });
     }
     const { permission } = await checkFolderPermission(permissionService, folderId, projectId, ctx);
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ResourcePermissionPamResourceActions.ManagePolicies,
       ResourcePermissionSub.PamResource
     );

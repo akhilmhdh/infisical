@@ -13,6 +13,7 @@ import {
   validatePrivilegeChangeOperation
 } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, InternalServerError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -83,7 +84,7 @@ export const newOrgMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.ChildOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Create, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Create, OrgPermissionSubjects.Groups);
 
     const group = await groupDAL.findById(dto.data.groupId);
     if (!group || group.orgId !== dto.permission.rootOrgId) {
@@ -132,7 +133,7 @@ export const newOrgMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Edit, OrgPermissionSubjects.Groups);
 
     const groupDetails = await groupDAL.findById(dto.selector.groupId);
     if (!groupDetails) throw new BadRequestError({ message: "Group details not found" });
@@ -219,7 +220,7 @@ export const newOrgMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.ChildOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Delete, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Delete, OrgPermissionSubjects.Groups);
 
     const targetMembership = await membershipGroupDAL.getGroupById({
       scopeData: dto.scopeData,
@@ -255,7 +256,7 @@ export const newOrgMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
   };
 
   const onGetMembershipGroupByGroupIdGuard: TMembershipGroupScopeFactory["onGetMembershipGroupByGroupIdGuard"] = async (
@@ -269,7 +270,7 @@ export const newOrgMembershipGroupFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
+    assertPermission(permission, OrgPermissionGroupActions.Read, OrgPermissionSubjects.Groups);
   };
 
   return {

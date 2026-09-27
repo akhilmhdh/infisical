@@ -1,7 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "@app/lib/errors";
 import { OrgServiceActor } from "@app/lib/types";
@@ -211,14 +211,11 @@ export const resourceAuthMethodServiceFactory = ({
       actorOrgId: actor.orgId
     });
     if (resourceType === RESOURCE_TYPE_GATEWAY) {
-      ForbiddenError.from(permission).throwUnlessCan(GATEWAY_PERMISSION_MAP[intent], OrgPermissionSubjects.Gateway);
+      assertPermission(permission, GATEWAY_PERMISSION_MAP[intent], OrgPermissionSubjects.Gateway);
     } else if (resourceType === RESOURCE_TYPE_RELAY) {
-      ForbiddenError.from(permission).throwUnlessCan(RELAY_PERMISSION_MAP[intent], OrgPermissionSubjects.Relay);
+      assertPermission(permission, RELAY_PERMISSION_MAP[intent], OrgPermissionSubjects.Relay);
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
-        KMIP_SERVER_PERMISSION_MAP[intent],
-        OrgPermissionSubjects.KmipServer
-      );
+      assertPermission(permission, KMIP_SERVER_PERMISSION_MAP[intent], OrgPermissionSubjects.KmipServer);
     }
   };
 
@@ -239,15 +236,13 @@ export const resourceAuthMethodServiceFactory = ({
       actorOrgId: actor.orgId
     });
     if (proxy.gatewayV2Id) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionGatewayActions.AttachGateways,
-        OrgPermissionSubjects.Gateway
-      );
+      assertPermission(permission, OrgPermissionGatewayActions.AttachGateways, OrgPermissionSubjects.Gateway);
     }
 
     // Pools carry their own attach permission, so holding it for gateways is not sufficient.
     if (proxy.gatewayPoolId) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         OrgPermissionGatewayPoolActions.AttachGatewayPools,
         OrgPermissionSubjects.GatewayPool
       );

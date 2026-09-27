@@ -20,6 +20,7 @@ import {
   ResourcePermissionApprovalPolicyActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -268,7 +269,7 @@ export const approvalPolicyServiceFactory = ({
         actorAuthMethod: actor.authMethod,
         actorOrgId: actor.orgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(resourceAction, ResourcePermissionSub.ApprovalPolicies);
+      assertPermission(permission, resourceAction, ResourcePermissionSub.ApprovalPolicies);
       return;
     }
 
@@ -965,12 +966,10 @@ export const approvalPolicyServiceFactory = ({
     });
 
     if (policyType === ApprovalPolicyType.CertCodeSigning) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCodeSigningActions.Sign,
-        ProjectPermissionSub.CodeSigners
-      );
+      assertPermission(permission, ProjectPermissionCodeSigningActions.Sign, ProjectPermissionSub.CodeSigners);
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionApprovalRequestActions.Create,
         ProjectPermissionSub.ApprovalRequests
       );
@@ -1076,7 +1075,8 @@ export const approvalPolicyServiceFactory = ({
           projectId: request.projectId,
           actionProjectType: ActionProjectType.Any
         });
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionApprovalRequestActions.Read,
           ProjectPermissionSub.ApprovalRequests
         );
@@ -1520,7 +1520,8 @@ export const approvalPolicyServiceFactory = ({
         projectId,
         actionProjectType: ActionProjectType.Any
       });
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionApprovalRequestGrantActions.Read,
         ProjectPermissionSub.ApprovalRequestGrants
       );
@@ -1561,7 +1562,8 @@ export const approvalPolicyServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionApprovalRequestGrantActions.Read,
       ProjectPermissionSub.ApprovalRequestGrants
     );
@@ -1620,7 +1622,8 @@ export const approvalPolicyServiceFactory = ({
           ResourcePermissionSub.ApprovalRequestGrants
         );
       } else {
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionApprovalRequestGrantActions.Revoke,
           ProjectPermissionSub.ApprovalRequestGrants
         );

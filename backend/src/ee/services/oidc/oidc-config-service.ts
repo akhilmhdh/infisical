@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { ForbiddenError } from "@casl/ability";
 import { requestContext } from "@fastify/request-context";
 import { Issuer, Issuer as OpenIdIssuer, Strategy as OpenIdStrategy, TokenSet } from "openid-client";
 
@@ -13,6 +12,7 @@ import { getEnforcedIdentityLimit, throwOnPlanSeatLimitReached } from "@app/ee/s
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
 import { OrgPermissionSsoActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, ForbiddenRequestError, NotFoundError, OidcAuthError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -171,7 +171,7 @@ export const oidcConfigServiceFactory = ({
         actorAuthMethod: dto.actorAuthMethod,
         scope: OrganizationActionScope.ParentOrganization
       });
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionSsoActions.Read, OrgPermissionSubjects.Sso);
+      assertPermission(permission, OrgPermissionSsoActions.Read, OrgPermissionSubjects.Sso);
     }
 
     const { decryptor } = await kmsService.createCipherPairWithDataKey({
@@ -638,7 +638,7 @@ export const oidcConfigServiceFactory = ({
       actorAuthMethod,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
+    assertPermission(permission, OrgPermissionSsoActions.Edit, OrgPermissionSubjects.Sso);
 
     if (org.googleSsoAuthEnforced && isActive) {
       throw new BadRequestError({
@@ -746,7 +746,7 @@ export const oidcConfigServiceFactory = ({
       actorAuthMethod,
       scope: OrganizationActionScope.ParentOrganization
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionSsoActions.Create, OrgPermissionSubjects.Sso);
+    assertPermission(permission, OrgPermissionSsoActions.Create, OrgPermissionSubjects.Sso);
 
     if (org.googleSsoAuthEnforced && isActive) {
       throw new BadRequestError({

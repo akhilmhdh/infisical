@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { AccessScope, ActionProjectType, ProjectMembershipRole, ProjectVersion, TableName } from "@app/db/schemas";
@@ -7,6 +6,7 @@ import { TLicenseServiceFactory } from "@app/ee/services/license/license-service
 import { assertRoleSetBoundary } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionMemberActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { groupBy, unique } from "@app/lib/fn";
@@ -162,7 +162,7 @@ export const projectMembershipServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
 
     const projectMembers = await projectMembershipDAL.findAllProjectMembers(projectId, { roles });
 
@@ -243,7 +243,7 @@ export const projectMembershipServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
 
     const [canonicalUsername] = await $toCanonicalUsernames([username], projectId);
     const [membership] = await projectMembershipDAL.findAllProjectMembers(projectId, {
@@ -270,7 +270,7 @@ export const projectMembershipServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Create, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Create, ProjectPermissionSub.Member);
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(projectId), () =>
       projectDAL.findById(projectId)
@@ -392,7 +392,7 @@ export const projectMembershipServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Delete, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Delete, ProjectPermissionSub.Member);
 
     const usernamesAndEmails = await $toCanonicalUsernames([...emails, ...usernames], projectId);
 

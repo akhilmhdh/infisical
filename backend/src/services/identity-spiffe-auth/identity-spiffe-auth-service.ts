@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import { requestContext } from "@fastify/request-context";
 import { createLocalJWKSet, errors as joseErrors, JSONWebKeySet, jwtVerify } from "jose";
 
@@ -19,6 +18,7 @@ import {
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionIdentityActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
 import { TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import {
   BadRequestError,
@@ -531,10 +531,9 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.EditAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.EditAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -545,10 +544,7 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionIdentityActions.EditAuth,
-        OrgPermissionSubjects.Identity
-      );
+      assertPermission(permission, OrgPermissionIdentityActions.EditAuth, OrgPermissionSubjects.Identity);
     }
 
     await validateIdentityUpdateForSuperAdminPrivileges(identityId, isActorSuperAdmin);
@@ -679,10 +675,9 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.EditAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.EditAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -693,10 +688,7 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionIdentityActions.EditAuth,
-        OrgPermissionSubjects.Identity
-      );
+      assertPermission(permission, OrgPermissionIdentityActions.EditAuth, OrgPermissionSubjects.Identity);
     }
 
     await validateIdentityUpdateForSuperAdminPrivileges(identityId, isActorSuperAdmin);
@@ -805,10 +797,9 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.Read,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -819,7 +810,7 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
     }
 
     const identitySpiffeAuth = await identitySpiffeAuthDAL.findOne({ identityId });
@@ -883,10 +874,9 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.RevokeAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.RevokeAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -897,7 +887,7 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
 
       const { permission: rolePermission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -1005,10 +995,9 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.Edit,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.Edit, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -1019,7 +1008,7 @@ export const identitySpiffeAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
     }
 
     const identitySpiffeAuth = await identitySpiffeAuthDAL.findOne({ identityId });

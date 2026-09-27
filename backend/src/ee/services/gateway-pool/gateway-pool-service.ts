@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, GatewayTransportError, NotFoundError } from "@app/lib/errors";
 import { runGatewayAttempt } from "@app/lib/gateway-v2/gateway-attempt-context";
@@ -72,7 +71,7 @@ export const gatewayPoolServiceFactory = ({
       actorOrgId: actor.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, OrgPermissionSubjects.GatewayPool);
+    assertPermission(permission, action, OrgPermissionSubjects.GatewayPool);
   };
 
   const $checkLicense = async (orgId: string) => {
@@ -440,10 +439,7 @@ export const gatewayPoolServiceFactory = ({
       actorOrgId: actor.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionGatewayPoolActions.AttachGatewayPools,
-      OrgPermissionSubjects.GatewayPool
-    );
+    assertPermission(permission, OrgPermissionGatewayPoolActions.AttachGatewayPools, OrgPermissionSubjects.GatewayPool);
 
     const pool = await gatewayPoolDAL.findById(poolId);
     if (!pool || pool.orgId !== orgId) {

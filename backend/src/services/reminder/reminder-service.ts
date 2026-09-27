@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError, subject } from "@casl/ability";
 import { Knex } from "knex";
 
 import { ActionProjectType, TableName } from "@app/db/schemas";
 import { throwIfMissingSecretReadValueOrDescribePermission } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionSecretActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -187,10 +187,7 @@ export const reminderServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, subjectFields)
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, subjectFields);
 
     const response = await createReminderInternal({
       ...reminder,
@@ -333,10 +330,7 @@ export const reminderServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, subjectFields)
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, subjectFields);
     await reminderDAL.delete({ secretId });
     await secretV2BridgeDAL.invalidateSecretCacheByProjectId(secret.projectId);
   };

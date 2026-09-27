@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 // import geoip from "geoip-lite";
 import { ActionProjectType, IdentityAuthMethod, OrganizationActionScope } from "@app/db/schemas";
 import { TClickHouseAuditLogDALFactory } from "@app/ee/services/audit-log/audit-log-clickhouse-dal";
@@ -21,6 +19,7 @@ import {
 import { TSecretRotationV2DALFactory } from "@app/ee/services/secret-rotation-v2/secret-rotation-v2-dal";
 import { KeyStorePrefixes, KeyStoreTtls, TKeyStoreFactory } from "@app/keystore/keystore";
 import { getCacheTtl, withCache } from "@app/lib/cache/with-cache";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError } from "@app/lib/errors";
 import { OrgServiceActor } from "@app/lib/types";
@@ -130,7 +129,7 @@ const checkInsightsPermission = async (
     actionProjectType: ActionProjectType.SecretManager
   });
 
-  ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionInsightsActions.Read, ProjectPermissionSub.Insights);
+  assertPermission(permission, ProjectPermissionInsightsActions.Read, ProjectPermissionSub.Insights);
 
   return { permission };
 };
@@ -169,7 +168,8 @@ export const insightsServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionSecretsManagementInsightsActions.Read,
       OrgPermissionSubjects.SecretsManagementInsights
     );

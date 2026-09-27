@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope, TIdentityKubernetesAuthsUpdate, TIdentityOidcAuthsUpdate } from "@app/db/schemas";
 import { TIdentityAuthTemplates } from "@app/db/schemas/identity-auth-templates";
 import { EventType, TAuditLogServiceFactory } from "@app/ee/services/audit-log/audit-log-types";
@@ -14,6 +12,7 @@ import {
   OrgPermissionSubjects
 } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { chunkArray } from "@app/lib/fn";
 import { TOrgPermission } from "@app/lib/types";
@@ -192,10 +191,7 @@ export const identityAuthTemplateServiceFactory = ({
             "Your current plan does not support gateway usage with identity k8s auth. Please upgrade your plan or contact Infisical Sales for assistance."
         });
       }
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionGatewayActions.AttachGateways,
-        OrgPermissionSubjects.Gateway
-      );
+      assertPermission(permission, OrgPermissionGatewayActions.AttachGateways, OrgPermissionSubjects.Gateway);
     }
     if (gatewayPoolId) {
       if (!plan.gatewayPool) {
@@ -203,7 +199,8 @@ export const identityAuthTemplateServiceFactory = ({
           message: "Your current plan does not support gateway pools. Please upgrade to an Enterprise plan."
         });
       }
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         OrgPermissionGatewayPoolActions.AttachGatewayPools,
         OrgPermissionSubjects.GatewayPool
       );
@@ -303,7 +300,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.CreateTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -405,7 +403,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.EditTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -645,7 +644,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.DeleteTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -719,7 +719,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.ListTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -752,7 +753,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.ListTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -791,7 +793,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.AttachTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -827,7 +830,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.ListTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );
@@ -858,7 +862,8 @@ export const identityAuthTemplateServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       OrgPermissionMachineIdentityAuthTemplateActions.UnlinkTemplates,
       OrgPermissionSubjects.MachineIdentityAuthTemplate
     );

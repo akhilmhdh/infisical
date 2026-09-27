@@ -45,6 +45,7 @@ import {
 } from "@app/ee/services/project-template/project-template-types";
 import { KeyStorePrefixes, KeyStoreTtls, PgSqlLock, TKeyStoreFactory } from "@app/keystore/keystore";
 import { withCache } from "@app/lib/cache/with-cache";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getProcessedPermissionRules } from "@app/lib/casl/permission-filter-utils";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
@@ -761,7 +762,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Project);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Project);
 
     if (project.hasDeleteProtection) {
       throw new ForbiddenRequestError({
@@ -875,7 +876,7 @@ export const projectServiceFactory = ({
       });
 
       // `includeRoles` is specifically used by organization admins when inviting new users to the organizations to avoid looping redundant api calls.
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
+      assertPermission(permission, OrgPermissionMemberActions.Create, OrgPermissionSubjects.Member);
       const customRoles = await roleDAL.find({
         $in: {
           projectId: workspaces.map((workspace) => workspace.id)
@@ -931,7 +932,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     if (update.secretDetectionIgnoreValues && !hasRole(ProjectMembershipRole.Admin)) {
       throw new ForbiddenRequestError({
@@ -1026,7 +1027,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     const updatedProject = await projectDAL.updateById(projectId, {
       autoCapitalization,
@@ -1052,7 +1053,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     const updatedProject = await projectDAL.updateById(projectId, { hasDeleteProtection });
 
@@ -1149,7 +1150,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     const updatedProject = await projectDAL.updateById(projectId, { name });
     return updatedProject;
@@ -1172,7 +1173,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Project);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Project);
 
     if (!hasRole(ProjectMembershipRole.Admin)) {
       throw new ForbiddenRequestError({
@@ -1283,7 +1284,8 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
       ProjectPermissionSub.CertificateAuthorities
     );
@@ -1373,10 +1375,7 @@ export const projectServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
       projectPermission = permission;
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCertificateActions.Read,
-        ProjectPermissionSub.Certificates
-      );
+      assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
     }
 
     const regularFilters = {
@@ -1486,10 +1485,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.Read,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
 
     return withCache({
       keyStore,
@@ -1519,10 +1515,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.Read,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
 
     const rangeDaysMap: Record<string, number> = { "7d": 7, "30d": 30, "6m": 180 };
     const daysBack = rangeDaysMap[range];
@@ -1555,10 +1548,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCertificateActions.Read,
-      ProjectPermissionSub.Certificates
-    );
+    assertPermission(permission, ProjectPermissionCertificateActions.Read, ProjectPermissionSub.Certificates);
 
     const rangeDaysMap: Record<string, number> = { "7d": 7, "30d": 30, "6m": 180 };
     const daysBack = rangeDaysMap[range];
@@ -1590,7 +1580,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.PkiAlerts);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.PkiAlerts);
 
     const alerts = await pkiAlertDAL.find({ projectId });
 
@@ -1618,7 +1608,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.PkiCollections);
 
     const pkiCollections = await pkiCollectionDAL.find({ projectId });
 
@@ -1714,7 +1704,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
 
     const secretManagerKmsKey = await kmsService.updateProjectSecretManagerKmsKey({
       projectId,
@@ -1742,7 +1732,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.externalKms) {
@@ -1772,7 +1762,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Kms);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.externalKms) {
@@ -1818,7 +1808,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Settings);
 
     if (integration === WorkflowIntegration.SLACK) {
       const config = await projectSlackConfigDAL.findOne({
@@ -1899,7 +1889,7 @@ export const projectServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+      assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
       const sanitizedAccessRequestChannels = validateSlackChannelsField.parse(accessRequestChannels);
       const sanitizedSecretRequestChannels = validateSlackChannelsField.parse(secretRequestChannels);
@@ -1983,7 +1973,7 @@ export const projectServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+      assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
       if (isAccessRequestNotificationEnabled && !accessRequestChannels) {
         throw new BadRequestError({
@@ -2100,7 +2090,7 @@ export const projectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Settings);
 
     if (integration === WorkflowIntegration.SLACK) {
       const [deletedIntegration] = await projectSlackConfigDAL.delete({
@@ -2325,7 +2315,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     if (project.secretBlindIndexEnabled) {
       throw new BadRequestError({ message: "Secret blind indexing is already enabled for this project" });
@@ -2352,7 +2342,7 @@ export const projectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Settings);
 
     return projectQueue.getJobState(project.id);
   };

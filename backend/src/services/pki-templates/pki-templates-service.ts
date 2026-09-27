@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 import RE2 from "re2";
 
@@ -10,6 +10,7 @@ import {
   ProjectPermissionPkiTemplateActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { ms } from "@app/lib/ms";
@@ -125,9 +126,11 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.Create,
-      subject(ProjectPermissionSub.CertificateTemplates, { name })
+      ProjectPermissionSub.CertificateTemplates,
+      { name }
     );
 
     const existingTemplate = await pkiTemplatesDAL.findOne({ name, projectId: ca.projectId });
@@ -178,10 +181,9 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Edit,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: templateName })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Edit, ProjectPermissionSub.CertificateTemplates, {
+      name: templateName
+    });
 
     let caId;
     if (caName) {
@@ -195,9 +197,11 @@ export const pkiTemplatesServiceFactory = ({
     }
 
     if (name) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionPkiTemplateActions.Edit,
-        subject(ProjectPermissionSub.CertificateTemplates, { name })
+        ProjectPermissionSub.CertificateTemplates,
+        { name }
       );
 
       const existingTemplate = await pkiTemplatesDAL.findOne({ name, projectId });
@@ -242,9 +246,11 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.Delete,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: templateName })
+      ProjectPermissionSub.CertificateTemplates,
+      { name: templateName }
     );
 
     const deletedTemplate = await pkiTemplatesDAL.deleteById(certTemplate.id);
@@ -275,10 +281,9 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Read,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: templateName })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Read, ProjectPermissionSub.CertificateTemplates, {
+      name: templateName
+    });
 
     return certTemplate;
   };
@@ -344,9 +349,11 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.IssueCert,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: templateName })
+      ProjectPermissionSub.CertificateTemplates,
+      { name: templateName }
     );
 
     const ca = await certificateAuthorityDAL.findByIdWithAssociatedCa(certTemplate.caId);
@@ -391,9 +398,11 @@ export const pkiTemplatesServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.IssueCert,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: templateName })
+      ProjectPermissionSub.CertificateTemplates,
+      { name: templateName }
     );
 
     const appCfg = getConfig();

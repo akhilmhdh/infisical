@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import slugify from "@sindresorhus/slugify";
 import RE2 from "re2";
 
@@ -12,6 +11,7 @@ import {
   ResourcePermissionApplicationActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getProcessedPermissionRules } from "@app/lib/casl/permission-filter-utils";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { alphaNumericNanoId } from "@app/lib/nanoid";
@@ -681,11 +681,13 @@ export const certificatePolicyServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificatePolicyActions.Create,
-      subject(ProjectPermissionSub.CertificatePolicies, {
+      ProjectPermissionSub.CertificatePolicies,
+      {
         name: data.name
-      })
+      }
     );
 
     if (!data) {
@@ -760,11 +762,13 @@ export const certificatePolicyServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificatePolicyActions.Edit,
-      subject(ProjectPermissionSub.CertificatePolicies, {
+      ProjectPermissionSub.CertificatePolicies,
+      {
         name: existingTemplate.name
-      })
+      }
     );
 
     const consolidatedData = {
@@ -843,10 +847,7 @@ export const certificatePolicyServiceFactory = ({
           actorOrgId
         });
 
-        ForbiddenError.from(permission).throwUnlessCan(
-          ResourcePermissionApplicationActions.Read,
-          ResourcePermissionSub.Application
-        );
+        assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
       } else {
         const { permission } = await permissionService.getProjectPermission({
           actor,
@@ -857,11 +858,13 @@ export const certificatePolicyServiceFactory = ({
           actionProjectType: ActionProjectType.CertificateManager
         });
 
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionCertificatePolicyActions.Read,
-          subject(ProjectPermissionSub.CertificatePolicies, {
+          ProjectPermissionSub.CertificatePolicies,
+          {
             name: template.name
-          })
+          }
         );
       }
     }
@@ -898,11 +901,13 @@ export const certificatePolicyServiceFactory = ({
       throw new NotFoundError({ message: "Certificate policy not found" });
     }
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificatePolicyActions.Read,
-      subject(ProjectPermissionSub.CertificatePolicies, {
+      ProjectPermissionSub.CertificatePolicies,
+      {
         name: template.name
-      })
+      }
     );
     return template;
   };
@@ -938,7 +943,8 @@ export const certificatePolicyServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificatePolicyActions.Read,
       ProjectPermissionSub.CertificatePolicies
     );
@@ -985,11 +991,13 @@ export const certificatePolicyServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificatePolicyActions.Delete,
-      subject(ProjectPermissionSub.CertificatePolicies, {
+      ProjectPermissionSub.CertificatePolicies,
+      {
         name: template.name
-      })
+      }
     );
 
     const isInUse = await certificatePolicyDAL.isPolicyInUse(policyId);

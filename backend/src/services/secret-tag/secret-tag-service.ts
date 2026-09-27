@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 
 import { TSecretV2BridgeDALFactory } from "../secret-v2-bridge/secret-v2-bridge-dal";
@@ -38,7 +37,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.Tags);
 
     const existingTag = await secretTagDAL.findOne({ slug, projectId });
     if (existingTag) throw new BadRequestError({ message: "Tag already exists" });
@@ -70,7 +69,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Tags);
 
     const updatedTag = await secretTagDAL.updateById(tag.id, { color, slug });
     await secretV2BridgeDAL.invalidateSecretCacheByProjectId(tag.projectId);
@@ -89,7 +88,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Tags);
 
     const deletedTag = await secretTagDAL.deleteById(tag.id);
     await secretV2BridgeDAL.invalidateSecretCacheByProjectId(tag.projectId);
@@ -108,7 +107,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
 
     return { ...tag, name: tag.slug };
   };
@@ -125,7 +124,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
 
     return { ...tag, name: tag.slug };
   };
@@ -139,7 +138,7 @@ export const secretTagServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Tags);
 
     const tags = await secretTagDAL.find({ projectId }, { sort: [["createdAt", "asc"]] });
     return tags;

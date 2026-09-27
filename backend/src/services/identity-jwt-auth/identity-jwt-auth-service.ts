@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import { requestContext } from "@fastify/request-context";
 import https from "https";
 import jwt from "jsonwebtoken";
@@ -20,6 +19,7 @@ import {
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionIdentityActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
 import { TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto";
 import {
@@ -457,10 +457,9 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.EditAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.EditAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -471,10 +470,7 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionIdentityActions.EditAuth,
-        OrgPermissionSubjects.Identity
-      );
+      assertPermission(permission, OrgPermissionIdentityActions.EditAuth, OrgPermissionSubjects.Identity);
     }
 
     await validateIdentityUpdateForSuperAdminPrivileges(identityId, isActorSuperAdmin);
@@ -597,10 +593,9 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.EditAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.EditAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -611,10 +606,7 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionIdentityActions.EditAuth,
-        OrgPermissionSubjects.Identity
-      );
+      assertPermission(permission, OrgPermissionIdentityActions.EditAuth, OrgPermissionSubjects.Identity);
     }
 
     await validateIdentityUpdateForSuperAdminPrivileges(identityId, isActorSuperAdmin);
@@ -721,10 +713,9 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.Read,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -735,7 +726,7 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
     }
     const identityJwtAuth = await identityJwtAuthDAL.findOne({ identityId });
 
@@ -795,10 +786,9 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.RevokeAuth,
-        subject(ProjectPermissionSub.Identity, { identityId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.RevokeAuth, ProjectPermissionSub.Identity, {
+        identityId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,
@@ -809,7 +799,7 @@ export const identityJwtAuthServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+      assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
 
       const { permission: rolePermission } = await permissionService.getOrgPermission({
         scope: OrganizationActionScope.Any,

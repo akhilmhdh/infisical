@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
 import {
   decryptLogStream,
@@ -7,6 +5,7 @@ import {
   encryptLogStreamCredentials,
   listProviderOptions
 } from "@app/ee/services/audit-log-stream/audit-log-stream-fns";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { OrgServiceActor } from "@app/lib/types";
 import { TKmsServiceFactory } from "@app/services/kms/kms-service";
@@ -54,7 +53,7 @@ export const auditLogStreamServiceFactory = ({
       actorOrgId: actor.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Settings);
 
     const totalStreams = await auditLogStreamDAL.find({ orgId: actor.orgId });
     if (totalStreams.length >= plan.auditLogStreamLimit) {
@@ -109,7 +108,7 @@ export const auditLogStreamServiceFactory = ({
       actorOrgId: actor.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Settings);
 
     if (logStream.provider !== provider) {
       throw new BadRequestError({
@@ -221,7 +220,7 @@ export const auditLogStreamServiceFactory = ({
       actorOrgId: actor.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.Settings);
 
     if (logStream.provider !== provider) {
       throw new BadRequestError({
@@ -247,7 +246,7 @@ export const auditLogStreamServiceFactory = ({
       actorOrgId: actor.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     if (logStream.provider !== provider) {
       throw new BadRequestError({
@@ -268,7 +267,7 @@ export const auditLogStreamServiceFactory = ({
       actorOrgId: actor.orgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Settings);
 
     const logStreams = await auditLogStreamDAL.find({ orgId: actor.orgId });
 

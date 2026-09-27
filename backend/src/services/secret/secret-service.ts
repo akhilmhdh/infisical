@@ -1,6 +1,6 @@
 /* eslint-disable no-unreachable-loop */
 /* eslint-disable no-await-in-loop */
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import {
   ActionProjectType,
@@ -29,6 +29,7 @@ import { TSecretApprovalPolicyServiceFactory } from "@app/ee/services/secret-app
 import { TSecretApprovalRequestDALFactory } from "@app/ee/services/secret-approval-request/secret-approval-request-dal";
 import { TSecretApprovalRequestSecretDALFactory } from "@app/ee/services/secret-approval-request/secret-approval-request-secret-dal";
 import { TSecretApprovalRequestServiceFactory } from "@app/ee/services/secret-approval-request/secret-approval-request-service";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { buildSecretBlindIndexFromName, SymmetricKeySize } from "@app/lib/crypto";
 import { crypto } from "@app/lib/crypto/cryptography";
@@ -250,10 +251,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Create,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -368,10 +369,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -529,10 +530,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Delete,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -867,10 +868,10 @@ export const secretServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Create,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -955,10 +956,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -1077,10 +1078,10 @@ export const secretServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Delete,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath: path })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath: path
+    });
 
     await projectDAL.checkProjectUpgradeStatus(projectId);
 
@@ -2717,10 +2718,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath
+    });
 
     await projectDAL.checkProjectUpgradeStatus(project.id);
 
@@ -2824,10 +2825,10 @@ export const secretServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+      environment,
+      secretPath
+    });
 
     await projectDAL.checkProjectUpgradeStatus(project.id);
 

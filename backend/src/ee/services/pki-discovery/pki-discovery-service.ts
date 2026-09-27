@@ -9,6 +9,7 @@ import {
   ProjectPermissionPkiDiscoveryActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, DatabaseError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 
@@ -108,10 +109,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Create,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Create, ProjectPermissionSub.PkiDiscovery);
 
     const appCfg = getConfig();
     if (appCfg.isCloud) {
@@ -211,10 +209,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Edit,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Edit, ProjectPermissionSub.PkiDiscovery);
 
     if (targetConfig) {
       validateTargetConfigForType(
@@ -298,10 +293,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Delete,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Delete, ProjectPermissionSub.PkiDiscovery);
 
     await pkiDiscoveryConfigDAL.deleteById(discoveryId);
 
@@ -323,10 +315,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Read,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Read, ProjectPermissionSub.PkiDiscovery);
 
     let gatewayName: string | null = null;
     let gatewayPoolName: string | null = null;
@@ -364,10 +353,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Read,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Read, ProjectPermissionSub.PkiDiscovery);
 
     const discoveries = await pkiDiscoveryConfigDAL.findByProjectId(projectId, { offset, limit, search });
     const totalCount = await pkiDiscoveryConfigDAL.countByProjectId(projectId, { search });
@@ -396,10 +382,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.RunScan,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.RunScan, ProjectPermissionSub.PkiDiscovery);
 
     if (!discovery.isActive) {
       throw new BadRequestError({ message: "Cannot trigger scan on an inactive discovery configuration" });
@@ -445,10 +428,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Read,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Read, ProjectPermissionSub.PkiDiscovery);
 
     const latestScan = await pkiDiscoveryScanHistoryDAL.findLatestByDiscoveryId(discoveryId);
 
@@ -478,10 +458,7 @@ export const pkiDiscoveryServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiDiscoveryActions.Read,
-      ProjectPermissionSub.PkiDiscovery
-    );
+    assertPermission(permission, ProjectPermissionPkiDiscoveryActions.Read, ProjectPermissionSub.PkiDiscovery);
 
     const scans = await pkiDiscoveryScanHistoryDAL.findByDiscoveryId(discoveryId, { offset, limit });
     const totalCount = await pkiDiscoveryScanHistoryDAL.countByDiscoveryId(discoveryId);

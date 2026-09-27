@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable no-bitwise */
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 import slugify from "@sindresorhus/slugify";
 import { Knex } from "knex";
@@ -15,6 +15,7 @@ import {
   ProjectPermissionPkiTemplateActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { extractX509CertFromChain } from "@app/lib/certificates/extract-certificate";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
@@ -330,9 +331,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.Create,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: commonName })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: commonName }
       );
     }
 
@@ -625,9 +628,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     return expandInternalCa(ca);
@@ -658,9 +663,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.Edit,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: ca.name }
       );
     }
 
@@ -702,9 +709,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Delete,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     await certificateAuthorityDAL.deleteById(ca.id);
@@ -732,9 +741,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.Create,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: ca.name }
       );
     }
 
@@ -808,9 +819,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: ca.name }
       );
     }
 
@@ -1089,9 +1102,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const caCertChains = await getCaCertChains({
@@ -1148,9 +1163,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const { caCert, caCertChain, serialNumber } = await getCaCertChain({
@@ -1250,9 +1267,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.Read,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     const caCert = await certificateAuthorityCertDAL.findOne({
@@ -1382,9 +1401,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.SignIntermediate,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: ca.name }
       );
     }
 
@@ -1529,9 +1550,11 @@ export const internalCertificateAuthorityServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateAuthorityActions.Create,
-        subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+        ProjectPermissionSub.CertificateAuthorities,
+        { name: ca.name }
       );
     }
 
@@ -1711,14 +1734,18 @@ export const internalCertificateAuthorityServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: intermediateCa.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: intermediateCa.name }
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.SignIntermediate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: parentCa.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: parentCa.name }
     );
 
     await $validatePqcLicense(intermediateCa.internalCa.keyAlgorithm, intermediateCa.projectId);
@@ -1878,15 +1905,13 @@ export const internalCertificateAuthorityServiceFactory = ({
       });
 
       if (isFromProfile) {
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionCertificateProfileActions.IssueCert,
           ProjectPermissionSub.CertificateProfiles
         );
       } else {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionCertificateActions.Create,
-          ProjectPermissionSub.Certificates
-        );
+        assertPermission(permission, ProjectPermissionCertificateActions.Create, ProjectPermissionSub.Certificates);
       }
     }
 
@@ -2319,15 +2344,13 @@ export const internalCertificateAuthorityServiceFactory = ({
       });
 
       if (dto.isFromProfile && dto.profileId) {
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ProjectPermissionCertificateProfileActions.IssueCert,
           ProjectPermissionSub.CertificateProfiles
         );
       } else {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionCertificateActions.Create,
-          ProjectPermissionSub.Certificates
-        );
+        assertPermission(permission, ProjectPermissionCertificateActions.Create, ProjectPermissionSub.Certificates);
       }
     }
 
@@ -2788,9 +2811,11 @@ export const internalCertificateAuthorityServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateAuthorityActions.IssueCACertificate,
-      subject(ProjectPermissionSub.CertificateAuthorities, { name: ca.name })
+      ProjectPermissionSub.CertificateAuthorities,
+      { name: ca.name }
     );
 
     await $validatePqcLicense(ca.internalCa.keyAlgorithm, ca.projectId);

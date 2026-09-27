@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import * as x509 from "@peculiar/x509";
 
 import { ActionProjectType, TCertificateTemplateEstConfigsUpdate } from "@app/db/schemas";
@@ -8,6 +7,7 @@ import {
   ProjectPermissionPkiTemplateActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { extractX509CertFromChain } from "@app/lib/certificates/extract-certificate";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
@@ -80,9 +80,11 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.Create,
-      subject(ProjectPermissionSub.CertificateTemplates, { name })
+      ProjectPermissionSub.CertificateTemplates,
+      { name }
     );
 
     return certificateTemplateDAL.transaction(async (tx) => {
@@ -142,10 +144,9 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Edit,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Edit, ProjectPermissionSub.CertificateTemplates, {
+      name: certTemplate.name
+    });
 
     if (caId) {
       const ca = await certificateAuthorityDAL.findById(caId);
@@ -157,9 +158,11 @@ export const certificateTemplateServiceFactory = ({
     }
 
     if (name) {
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionPkiTemplateActions.Create,
-        subject(ProjectPermissionSub.CertificateTemplates, { name })
+        ProjectPermissionSub.CertificateTemplates,
+        { name }
       );
     }
 
@@ -207,9 +210,11 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionPkiTemplateActions.Delete,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
+      ProjectPermissionSub.CertificateTemplates,
+      { name: certTemplate.name }
     );
 
     await certificateTemplateDAL.deleteById(certTemplate.id);
@@ -234,10 +239,9 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Read,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Read, ProjectPermissionSub.CertificateTemplates, {
+      name: certTemplate.name
+    });
 
     return certTemplate;
   };
@@ -276,10 +280,9 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Edit,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Edit, ProjectPermissionSub.CertificateTemplates, {
+      name: certTemplate.name
+    });
 
     const appCfg = getConfig();
 
@@ -359,10 +362,9 @@ export const certificateTemplateServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionPkiTemplateActions.Edit,
-      subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
-    );
+    assertPermission(permission, ProjectPermissionPkiTemplateActions.Edit, ProjectPermissionSub.CertificateTemplates, {
+      name: certTemplate.name
+    });
 
     const originalCaEstConfig = await certificateTemplateEstConfigDAL.findOne({
       certificateTemplateId
@@ -439,9 +441,11 @@ export const certificateTemplateServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionPkiTemplateActions.Read,
-        subject(ProjectPermissionSub.CertificateTemplates, { name: certTemplate.name })
+        ProjectPermissionSub.CertificateTemplates,
+        { name: certTemplate.name }
       );
     }
 

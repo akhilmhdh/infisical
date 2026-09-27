@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType, ResourceType } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 import { TProjectPermission } from "@app/lib/types";
 
@@ -119,7 +118,7 @@ export const certificateInventoryViewServiceFactory = ({
         actorAuthMethod: dto.actorAuthMethod,
         actorOrgId: dto.actorOrgId
       });
-      ForbiddenError.from(permission).throwUnlessCan(action, ResourcePermissionSub.CertificateInventoryViews);
+      assertPermission(permission, action, ResourcePermissionSub.CertificateInventoryViews);
       return;
     }
     const { permission } = await permissionService.getProjectPermission({
@@ -130,7 +129,7 @@ export const certificateInventoryViewServiceFactory = ({
       actorOrgId: dto.actorOrgId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, ProjectPermissionSub.CertificateInventoryViews);
+    assertPermission(permission, action, ProjectPermissionSub.CertificateInventoryViews);
   };
 
   const listViews = async ({

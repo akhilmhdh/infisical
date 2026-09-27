@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ResourceType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import {
@@ -13,6 +11,7 @@ import {
   resolveCaType,
   resolveScepRaSigning
 } from "@app/ee/services/pki-scep/pki-scep-fns";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
@@ -180,11 +179,9 @@ export const pkiApplicationEnrollmentServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Edit,
-      ResourcePermissionSub.Application
-    );
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(permission, ResourcePermissionApplicationActions.Edit, ResourcePermissionSub.Application);
+    assertPermission(
+      permission,
       ResourcePermissionApplicationEnrollmentActions.Edit,
       ResourcePermissionSub.ApplicationEnrollment
     );
@@ -212,11 +209,9 @@ export const pkiApplicationEnrollmentServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
+    assertPermission(
+      permission,
       ResourcePermissionApplicationEnrollmentActions.Read,
       ResourcePermissionSub.ApplicationEnrollment
     );
@@ -580,11 +575,9 @@ export const pkiApplicationEnrollmentServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Read,
-      ResourcePermissionSub.Application
-    );
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(permission, ResourcePermissionApplicationActions.Read, ResourcePermissionSub.Application);
+    assertPermission(
+      permission,
       ResourcePermissionApplicationEnrollmentActions.RevealAcmeEabSecret,
       ResourcePermissionSub.ApplicationEnrollment
     );
@@ -628,11 +621,9 @@ export const pkiApplicationEnrollmentServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionApplicationActions.Edit,
-      ResourcePermissionSub.Application
-    );
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(permission, ResourcePermissionApplicationActions.Edit, ResourcePermissionSub.Application);
+    assertPermission(
+      permission,
       ResourcePermissionApplicationEnrollmentActions.RotateAcmeEabSecret,
       ResourcePermissionSub.ApplicationEnrollment
     );

@@ -13,6 +13,7 @@ import {
   ResourcePermissionCertificateActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getProcessedPermissionRules } from "@app/lib/casl/permission-filter-utils";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -170,7 +171,8 @@ export const certificateRequestServiceFactory = ({
         actionProjectType: ActionProjectType.CertificateManager
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionCertificateProfileActions.IssueCert,
         ProjectPermissionSub.CertificateProfiles
       );
@@ -257,7 +259,7 @@ export const certificateRequestServiceFactory = ({
         );
       }
       if (!allowedByResource) {
-        ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionCertificateActions.Read, certSubject);
+        assertPermission(permission, ProjectPermissionCertificateActions.Read, certSubject);
       }
     }
 
@@ -314,10 +316,7 @@ export const certificateRequestServiceFactory = ({
         );
       }
       if (!allowedByResource) {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionCertificateActions.Read,
-          certFromRequestSubject
-        );
+        assertPermission(permission, ProjectPermissionCertificateActions.Read, certFromRequestSubject);
       }
     }
 
@@ -597,16 +596,13 @@ export const certificateRequestServiceFactory = ({
       );
     }
     if (!allowedByResource) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionCertificateActions.Edit,
-        subject(ProjectPermissionSub.Certificates, {
-          commonName: certificateRequest.commonName ?? undefined,
-          altNames: Array.isArray(certificateRequest.altNames)
-            ? (certificateRequest.altNames as { type: string; value: string }[]).map((san) => san.value)
-            : undefined,
-          metadata: requestMetadata
-        })
-      );
+      assertPermission(permission, ProjectPermissionCertificateActions.Edit, ProjectPermissionSub.Certificates, {
+        commonName: certificateRequest.commonName ?? undefined,
+        altNames: Array.isArray(certificateRequest.altNames)
+          ? (certificateRequest.altNames as { type: string; value: string }[]).map((san) => san.value)
+          : undefined,
+        metadata: requestMetadata
+      });
     }
 
     const previousStatus = certificateRequest.status as CertificateRequestStatus;

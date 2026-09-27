@@ -24,6 +24,7 @@ import {
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
 import { TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
@@ -340,10 +341,7 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Read,
-        ProjectPermissionSub.AppConnections
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Read, ProjectPermissionSub.AppConnections);
 
       appConnections = (
         await appConnectionDAL.findWithProjectDetails({
@@ -366,10 +364,7 @@ export const appConnectionServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionAppConnectionActions.Read,
-        OrgPermissionSubjects.AppConnections
-      );
+      assertPermission(permission, OrgPermissionAppConnectionActions.Read, OrgPermissionSubjects.AppConnections);
 
       appConnections = (
         await appConnectionDAL.findWithProjectDetails({
@@ -406,10 +401,9 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Read,
-        subject(ProjectPermissionSub.AppConnections, { connectionId })
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Read, ProjectPermissionSub.AppConnections, {
+        connectionId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         actorId: actor.id,
@@ -420,10 +414,9 @@ export const appConnectionServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionAppConnectionActions.Read,
-        subject(OrgPermissionSubjects.AppConnections, { connectionId })
-      );
+      assertPermission(permission, OrgPermissionAppConnectionActions.Read, OrgPermissionSubjects.AppConnections, {
+        connectionId
+      });
     }
 
     if (appConnection.app !== app)
@@ -457,10 +450,9 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Read,
-        subject(ProjectPermissionSub.AppConnections, { connectionId: appConnection.id })
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Read, ProjectPermissionSub.AppConnections, {
+        connectionId: appConnection.id
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         actorId: actor.id,
@@ -471,10 +463,9 @@ export const appConnectionServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionAppConnectionActions.Read,
-        subject(OrgPermissionSubjects.AppConnections, { connectionId: appConnection.id })
-      );
+      assertPermission(permission, OrgPermissionAppConnectionActions.Read, OrgPermissionSubjects.AppConnections, {
+        connectionId: appConnection.id
+      });
     }
 
     if (appConnection.app !== app)
@@ -542,10 +533,7 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Create,
-        ProjectPermissionSub.AppConnections
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Create, ProjectPermissionSub.AppConnections);
     } else {
       ForbiddenError.from(orgPermission).throwUnlessCan(
         OrgPermissionAppConnectionActions.Create,
@@ -776,10 +764,9 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Edit,
-        subject(ProjectPermissionSub.AppConnections, { connectionId })
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Edit, ProjectPermissionSub.AppConnections, {
+        connectionId
+      });
     } else {
       ForbiddenError.from(orgPermission).throwUnlessCan(
         OrgPermissionAppConnectionActions.Edit,
@@ -1098,10 +1085,9 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Delete,
-        subject(ProjectPermissionSub.AppConnections, { connectionId })
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Delete, ProjectPermissionSub.AppConnections, {
+        connectionId
+      });
     } else {
       const { permission } = await permissionService.getOrgPermission({
         actorId: actor.id,
@@ -1112,10 +1098,9 @@ export const appConnectionServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionAppConnectionActions.Delete,
-        subject(OrgPermissionSubjects.AppConnections, { connectionId })
-      );
+      assertPermission(permission, OrgPermissionAppConnectionActions.Delete, OrgPermissionSubjects.AppConnections, {
+        connectionId
+      });
     }
 
     if (appConnection.app !== app)
@@ -1168,10 +1153,9 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionAppConnectionActions.Connect,
-        subject(ProjectPermissionSub.AppConnections, { connectionId })
-      );
+      assertPermission(permission, ProjectPermissionAppConnectionActions.Connect, ProjectPermissionSub.AppConnections, {
+        connectionId
+      });
     } else {
       const { permission: orgPermission } = await permissionService.getOrgPermission({
         actorId: actor.id,
@@ -1298,10 +1282,7 @@ export const appConnectionServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionAppConnectionActions.Read,
-      OrgPermissionSubjects.AppConnections
-    );
+    assertPermission(permission, OrgPermissionAppConnectionActions.Read, OrgPermissionSubjects.AppConnections);
 
     if (appConnection.app !== app)
       throw new BadRequestError({ message: `App Connection with ID ${connectionId} is not for App "${app}"` });
@@ -1332,9 +1313,11 @@ export const appConnectionServiceFactory = ({
         actionProjectType: ActionProjectType.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         ProjectPermissionAppConnectionActions.RotateCredentials,
-        subject(ProjectPermissionSub.AppConnections, { connectionId })
+        ProjectPermissionSub.AppConnections,
+        { connectionId }
       );
     } else {
       const { permission } = await permissionService.getOrgPermission({
@@ -1346,9 +1329,11 @@ export const appConnectionServiceFactory = ({
         scope: OrganizationActionScope.Any
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
+      assertPermission(
+        permission,
         OrgPermissionAppConnectionActions.RotateCredentials,
-        subject(OrgPermissionSubjects.AppConnections, { connectionId })
+        OrgPermissionSubjects.AppConnections,
+        { connectionId }
       );
     }
 

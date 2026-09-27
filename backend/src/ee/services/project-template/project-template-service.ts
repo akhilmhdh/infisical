@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { packRules } from "@casl/ability/extra";
 
 import { OrganizationActionScope, ProjectMembershipRole, ProjectType, TProjectTemplates } from "@app/db/schemas";
@@ -17,6 +16,7 @@ import {
   TProjectTemplateUser,
   TUnpackedPermission
 } from "@app/ee/services/project-template/project-template-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { validateHandlebarTemplate } from "@app/lib/template/validate-handlebars";
 import { unpackPermissions } from "@app/server/routes/sanitizedSchema/permission";
@@ -131,7 +131,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
 
     const projectTemplates = await projectTemplateDAL.find({
       orgId: actor.orgId,
@@ -186,7 +186,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
 
     const [userMemberships, groupMemberships, identityMemberships] = await Promise.all([
       projectTemplateUserMembershipDAL.findByTemplateId(projectTemplate.id),
@@ -224,7 +224,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.ProjectTemplates);
 
     const [userMemberships, groupMemberships, identityMemberships] = await Promise.all([
       projectTemplateUserMembershipDAL.findByTemplateId(projectTemplate.id),
@@ -261,7 +261,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.ProjectTemplates);
 
     // Template roles are materialized into project custom roles (rendered by the same permission
     // templating), so validate them the same way role creation does.
@@ -512,7 +512,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.ProjectTemplates);
 
     if (roles) {
       // Template roles are materialized into project custom roles, so validate them the same way
@@ -839,7 +839,7 @@ export const projectTemplateServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.ProjectTemplates);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.ProjectTemplates);
 
     const [userMemberships, groupMemberships, identityMemberships] = await Promise.all([
       projectTemplateUserMembershipDAL.findByTemplateId(id),

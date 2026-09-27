@@ -1,8 +1,9 @@
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import { AccessScope, ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionIdentityActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { NotFoundError } from "@app/lib/errors";
 
 import { TMembershipIdentityDALFactory } from "../membership-identity/membership-identity-dal";
@@ -46,10 +47,7 @@ export const identityProjectServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Read,
-      ProjectPermissionSub.Identity
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity);
 
     const identityMemberships = await identityProjectDAL.findByProjectId(projectId, {
       limit,
@@ -87,10 +85,7 @@ export const identityProjectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Read,
-      subject(ProjectPermissionSub.Identity, { identityId })
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, { identityId });
 
     const [identityMembership] = await identityProjectDAL.findByProjectId(projectId, { identityId });
     if (!identityMembership)
@@ -128,10 +123,9 @@ export const identityProjectServiceFactory = ({
       actionProjectType: ActionProjectType.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Read,
-      subject(ProjectPermissionSub.Identity, { identityId: membership.actorIdentityId })
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, {
+      identityId: membership.actorIdentityId
+    });
 
     const [identityMembership] = await identityProjectDAL.findByProjectId(membership.scopeProjectId, {
       identityId: membership.actorIdentityId

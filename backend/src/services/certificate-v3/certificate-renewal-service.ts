@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import { randomUUID } from "crypto";
 import { Knex } from "knex";
 
@@ -9,6 +8,7 @@ import {
   ProjectPermissionCertificateProfileActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { isPqcAlgorithm } from "@app/lib/crypto/pqc/pqc-utils";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -623,9 +623,11 @@ export const certificateRenewalServiceFactory = ({
       projectId: profile.projectId,
       actionProjectType: ActionProjectType.CertificateManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
+    assertPermission(
+      permission,
       ProjectPermissionCertificateProfileActions.IssueCert,
-      subject(ProjectPermissionSub.CertificateProfiles, { slug: profile.slug })
+      ProjectPermissionSub.CertificateProfiles,
+      { slug: profile.slug }
     );
 
     return { certMetadata, projectPermission };

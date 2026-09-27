@@ -1,10 +1,10 @@
-import { ForbiddenError } from "@casl/ability";
 import { WebhookEventMap } from "@octokit/webhooks-types";
 import { ProbotOctokit } from "probot";
 
 import { OrganizationActionScope } from "@app/db/schemas";
 import { OrgPermissionActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
@@ -58,7 +58,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.SecretScanning);
 
     const sessionId = crypto.randomBytes(16).toString("hex");
     await gitAppInstallSessionDAL.upsert({ orgId, sessionId, userId: actorId });
@@ -84,7 +84,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.SecretScanning);
     const installatedApp = await gitAppOrgDAL.transaction(async (tx) => {
       await gitAppInstallSessionDAL.deleteById(session.id, tx);
       return gitAppOrgDAL.upsert({ orgId: session.orgId, installationId, userId: actorId }, tx);
@@ -134,7 +134,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
 
     const appInstallation = await gitAppOrgDAL.findOne({ orgId });
     return Boolean(appInstallation);
@@ -149,7 +149,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
 
     const results = await secretScanningDAL.findByOrgId(orgId, filter);
 
@@ -165,7 +165,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.SecretScanning);
 
     const risks = await secretScanningDAL.find({ orgId }, { sort: [["createdAt", "desc"]] });
     return risks;
@@ -188,7 +188,7 @@ export const secretScanningServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.SecretScanning);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.SecretScanning);
 
     const existingRisk = await secretScanningDAL.findById(riskId);
     if (!existingRisk || existingRisk.orgId !== actorOrgId) {

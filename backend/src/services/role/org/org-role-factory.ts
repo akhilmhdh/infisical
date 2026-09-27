@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope } from "@app/db/schemas";
 import {
   orgAdminPermissions,
@@ -9,6 +7,7 @@ import {
   OrgPermissionSubjects
 } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError } from "@app/lib/errors";
 import { TExternalGroupOrgRoleMappingDALFactory } from "@app/services/external-group-org-role-mapping/external-group-org-role-mapping-dal";
 import { isCustomOrgRole } from "@app/services/org/org-role-fns";
@@ -42,7 +41,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Role);
   };
 
   const onUpdateRoleGuard: TRoleScopeFactory["onUpdateRoleGuard"] = async (dto) => {
@@ -54,7 +53,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Role);
   };
 
   const onDeleteRoleGuard: TRoleScopeFactory["onDeleteRoleGuard"] = async (dto) => {
@@ -66,7 +65,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.Role);
 
     const externalGroupMapping = await externalGroupOrgRoleMappingDAL.findOne({
       orgId: dto.permission.orgId,
@@ -89,7 +88,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Role);
   };
 
   const onGetRoleByIdGuard: TRoleScopeFactory["onGetRoleByIdGuard"] = async (dto) => {
@@ -101,7 +100,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Role);
   };
 
   const onGetRoleBySlugGuard: TRoleScopeFactory["onGetRoleBySlugGuard"] = async (dto) => {
@@ -113,7 +112,7 @@ export const newOrgRoleFactory = ({
       actorOrgId: dto.permission.orgId,
       scope: OrganizationActionScope.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Role);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Role);
   };
 
   const getPredefinedRoles: TRoleScopeFactory["getPredefinedRoles"] = async (scopeData) => {

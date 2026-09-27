@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
 import { BadRequestError, DatabaseError, NotFoundError } from "@app/lib/errors";
 import { ActorAuthMethod, ActorType } from "@app/services/auth/auth-type";
@@ -37,7 +36,7 @@ export const kmipServerServiceFactory = ({
       actorAuthMethod: actor.authMethod,
       actorOrgId: actor.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(action, OrgPermissionSubjects.KmipServer);
+    assertPermission(permission, action, OrgPermissionSubjects.KmipServer);
   };
 
   const createKmipServer = async ({

@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { ForbiddenError, subject } from "@casl/ability";
+import { subject } from "@casl/ability";
 
 import { ActionProjectType, TableName } from "@app/db/schemas";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
@@ -16,6 +16,7 @@ import {
 } from "@app/ee/services/permission/project-permission";
 import { ProjectEvents } from "@app/ee/services/project-events/project-events-types";
 import { getReplicationFolderName } from "@app/ee/services/secret-replication/secret-replication-service";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -145,10 +146,10 @@ export const secretImportServiceFactory = ({
     });
 
     // check if user has permission to import into destination path
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Create,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const sourceProjectId = data.sourceProjectId ?? projectId;
     const isCrossProjectImport = sourceProjectId !== projectId;
@@ -317,10 +318,10 @@ export const secretImportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Edit,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder) {
@@ -472,10 +473,10 @@ export const secretImportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Delete,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder)
@@ -557,10 +558,10 @@ export const secretImportServiceFactory = ({
     });
 
     // check if user has permission to import into destination  path
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Edit,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.secretApproval) {
@@ -633,10 +634,10 @@ export const secretImportServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Read,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder)
@@ -683,10 +684,10 @@ export const secretImportServiceFactory = ({
     }
 
     for (const environment of filteredEnvironments) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionActions.Read,
-        subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-      );
+      assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+        environment,
+        secretPath
+      });
     }
 
     const folders = await folderDAL.findBySecretPathMultiEnv(projectId, environments, secretPath);
@@ -731,10 +732,10 @@ export const secretImportServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Read,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder)
@@ -782,13 +783,10 @@ export const secretImportServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Read,
-      subject(ProjectPermissionSub.SecretImports, {
-        environment: folder.environment.envSlug,
-        secretPath: folderWithPath.path
-      })
-    );
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+      environment: folder.environment.envSlug,
+      secretPath: folderWithPath.path
+    });
 
     const importIntoEnv = await projectEnvDAL.findOne({
       projectId: folder.projectId,
@@ -830,10 +828,10 @@ export const secretImportServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Read,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder) return [];
     // this will already order by position
@@ -872,10 +870,10 @@ export const secretImportServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.SecretManager
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionActions.Read,
-      subject(ProjectPermissionSub.SecretImports, { environment, secretPath })
-    );
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.SecretImports, {
+      environment,
+      secretPath
+    });
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
     if (!folder) return [];
     // this will already order by position

@@ -1,5 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { AccessScope, OrganizationActionScope, OrgMembershipRole, TableName, TRoles } from "@app/db/schemas";
 import { getEnforcedIdentityLimit } from "@app/ee/services/license/license-fns";
 import { TLicenseServiceFactory } from "@app/ee/services/license/license-service";
@@ -11,6 +9,7 @@ import {
 } from "@app/ee/services/permission/permission-fns";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { PgSqlLock, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError, PermissionBoundaryError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -99,7 +98,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Create, OrgPermissionSubjects.Identity);
 
     const [rolePermissionDetails] = await permissionService.getOrgPermissionByRoles([role], orgId);
 
@@ -227,7 +226,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Edit, OrgPermissionSubjects.Identity);
 
     let customRole: TRoles | undefined;
     if (role) {
@@ -354,7 +353,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     const activeLockoutAuthMethods = await getIdentityActiveLockoutAuthMethods(id, keyStore);
 
@@ -390,7 +389,7 @@ export const identityServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Delete, OrgPermissionSubjects.Identity);
 
     const targetRoles = resolveMembershipRoleSlugs(identityOrgMembership.roles);
     const targetPermissions = await permissionService.getOrgPermissionByRoles(targetRoles, actorOrgId, {
@@ -511,7 +510,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     const identityMemberships = await identityOrgMembershipDAL.find({
       [`${TableName.Membership}.scopeOrgId` as "scopeOrgId"]: orgId,
@@ -551,7 +550,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     const { totalCount, docs } = await identityOrgMembershipDAL.searchIdentities({
       orgId,
@@ -597,7 +596,7 @@ export const identityServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
+    assertPermission(permission, OrgPermissionIdentityActions.Read, OrgPermissionSubjects.Identity);
 
     const identityMemberships = await identityProjectDAL.findByIdentityId(identityId, actorOrgId);
     return identityMemberships;

@@ -1,9 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { TDbClient } from "@app/db";
 import { OrganizationActionScope, ProjectType, TableName } from "@app/db/schemas";
 import { OrgPermissionCertManagerActions, OrgPermissionSubjects } from "@app/ee/services/permission/org-permission";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { ActorType } from "@app/services/auth/auth-type";
 import { TOrgDALFactory } from "@app/services/org/org-dal";
@@ -74,10 +73,7 @@ export const certManagerInstanceServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionCertManagerActions.ManageInstance,
-      OrgPermissionSubjects.CertManager
-    );
+    assertPermission(permission, OrgPermissionCertManagerActions.ManageInstance, OrgPermissionSubjects.CertManager);
 
     const projects = await projectDAL.find({ orgId: actorOrgId, type: ProjectType.CertificateManager });
     const target = projects.find((p) => p.id === projectId);
@@ -109,10 +105,7 @@ export const certManagerInstanceServiceFactory = ({
       scope: OrganizationActionScope.Any
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionCertManagerActions.Read,
-      OrgPermissionSubjects.CertManager
-    );
+    assertPermission(permission, OrgPermissionCertManagerActions.Read, OrgPermissionSubjects.CertManager);
 
     const org = await orgDAL.findById(actorOrgId);
     if (!org) throw new NotFoundError({ message: "Organization not found" });

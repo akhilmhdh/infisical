@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { ForbiddenError, subject } from "@casl/ability";
 import { Knex } from "knex";
 
 import {
@@ -13,6 +12,7 @@ import {
   TSecretApprovalRequestsSecretsV2Insert
 } from "@app/db/schemas";
 import { Actor, Event, EventType } from "@app/ee/services/audit-log/audit-log-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { AUDIT_LOG_SENSITIVE_VALUE } from "@app/lib/config/const";
 import { getConfig } from "@app/lib/config/env";
 import { crypto, SymmetricKeySize } from "@app/lib/crypto/cryptography";
@@ -2295,15 +2295,12 @@ export const secretApprovalRequestServiceFactory = ({
           message: `Secret does not exist: ${secretsToDeleteInDB.map((el) => el.key).join(",")}`
         });
       secretsToDeleteInDB.forEach((el) => {
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionSecretActions.Delete,
-          subject(ProjectPermissionSub.Secrets, {
-            environment,
-            secretPath,
-            secretName: el.key,
-            secretTags: el.tags?.map((i) => i.slug)
-          })
-        );
+        assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+          environment,
+          secretPath,
+          secretName: el.key,
+          secretTags: el.tags?.map((i) => i.slug)
+        });
       });
 
       const secretsGroupedByKey = groupBy(secretsToDeleteInDB, (i) => i.key);
@@ -2354,15 +2351,12 @@ export const secretApprovalRequestServiceFactory = ({
       if (commit.op === SecretOperations.Update) action = ProjectPermissionSecretActions.Edit;
       if (commit.op === SecretOperations.Delete) return; // we do the validation on top
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        action,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: commit.key,
-          secretTags: commitTagIds?.[commit.key]?.map((secretTagId) => tagsGroupById[secretTagId][0].slug)
-        })
-      );
+      assertPermission(permission, action, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: commit.key,
+        secretTags: commitTagIds?.[commit.key]?.map((secretTagId) => tagsGroupById[secretTagId][0].slug)
+      });
     });
 
     const executeApprovalRequestCreation = async (tx: Knex) => {

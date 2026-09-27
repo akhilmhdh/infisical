@@ -1,9 +1,9 @@
 import { KMSServiceException } from "@aws-sdk/client-kms";
 import { STSServiceException } from "@aws-sdk/client-sts";
-import { ForbiddenError } from "@casl/ability";
 import slugify from "@sindresorhus/slugify";
 
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, InternalServerError, NotFoundError } from "@app/lib/errors";
 import { alphaNumericNanoId } from "@app/lib/nanoid";
 import { TKmsKeyDALFactory } from "@app/services/kms/kms-key-dal";
@@ -68,7 +68,7 @@ export const externalKmsServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Create, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Create, OrgPermissionSubjects.Kms);
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.externalKms) {
       throw new BadRequestError({
@@ -193,7 +193,7 @@ export const externalKmsServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Edit, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Edit, OrgPermissionSubjects.Kms);
 
     const plan = await licenseService.getPlan(kmsDoc.orgId);
     if (!plan.externalKms) {
@@ -319,7 +319,7 @@ export const externalKmsServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Delete, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Delete, OrgPermissionSubjects.Kms);
 
     const externalKmsDoc = await externalKmsDAL.findOne({ kmsKeyId: kmsDoc.id });
     if (!externalKmsDoc) throw new NotFoundError({ message: `External KMS with ID '${kmsId}' not found` });
@@ -372,7 +372,7 @@ export const externalKmsServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
 
     const externalKmsDocs = await externalKmsDAL.find({ orgId: actorOrgId });
 
@@ -391,7 +391,7 @@ export const externalKmsServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
 
     const externalKmsDoc = await externalKmsDAL.findOne({ kmsKeyId: kmsDoc.id });
     if (!externalKmsDoc) throw new NotFoundError({ message: `External KMS with ID '${kmsId}' not found` });
@@ -439,7 +439,7 @@ export const externalKmsServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
 
     const externalKmsDoc = await externalKmsDAL.findOne({ kmsKeyId: kmsDoc.id });
     if (!externalKmsDoc) throw new NotFoundError({ message: `External KMS with ID '${kmsDoc.id}' not found` });
@@ -488,7 +488,7 @@ export const externalKmsServiceFactory = ({
       actorAuthMethod,
       actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
+    assertPermission(permission, OrgPermissionActions.Read, OrgPermissionSubjects.Kms);
 
     const plan = await licenseService.getPlan(actorOrgId);
     if (!plan.externalKms) {

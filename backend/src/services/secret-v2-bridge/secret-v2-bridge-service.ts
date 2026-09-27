@@ -1,4 +1,4 @@
-import { ForbiddenError, MongoAbility, subject } from "@casl/ability";
+import { MongoAbility, subject } from "@casl/ability";
 import { Knex } from "knex";
 import { z } from "zod";
 
@@ -29,6 +29,7 @@ import { TSecretApprovalRequestSecretDALFactory } from "@app/ee/services/secret-
 import { scanSecretPolicyViolations } from "@app/ee/services/secret-scanning-v2/secret-scanning-v2-fns";
 import { KeyStorePrefixes, KeyStoreTtls, TKeyStoreFactory } from "@app/keystore/keystore";
 import { withCache } from "@app/lib/cache/with-cache";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { generateCacheKeyFromBuffer, generateCacheKeyFromData } from "@app/lib/crypto/cache";
 import { utcDayStamp } from "@app/lib/dates";
 import { DatabaseErrorCode } from "@app/lib/error-codes";
@@ -387,15 +388,12 @@ export const secretV2BridgeServiceFactory = ({
         secretTags: doesSecretExist?.tags?.map((el) => el.slug)
       });
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Create,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName,
-          secretTags: tags?.map((el) => el.slug)
-        })
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName,
+        secretTags: tags?.map((el) => el.slug)
+      });
     }
 
     const project = await requestMemoize(requestMemoKeys.projectFindById(projectId), () =>
@@ -628,15 +626,12 @@ export const secretV2BridgeServiceFactory = ({
     }
 
     if (secret.type !== SecretType.Personal)
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Edit,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: inputSecret.secretName,
-          secretTags: secret.tags.map((el) => el.slug)
-        })
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: inputSecret.secretName,
+        secretTags: secret.tags.map((el) => el.slug)
+      });
 
     // validate tags
     // fetch all tags and if not same count throw error meaning one was invalid tags
@@ -648,17 +643,14 @@ export const secretV2BridgeServiceFactory = ({
 
     // now check with new ids
     if (secret.type !== SecretType.Personal)
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Edit,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: inputSecret.secretName,
-          ...(tagsToCheck.length && {
-            secretTags: tagsToCheck.map((el) => el.slug)
-          })
+      assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: inputSecret.secretName,
+        ...(tagsToCheck.length && {
+          secretTags: tagsToCheck.map((el) => el.slug)
         })
-      );
+      });
 
     if (inputSecret.newSecretName) {
       const doesNewNameSecretExist = await secretDAL.findOne({
@@ -667,17 +659,14 @@ export const secretV2BridgeServiceFactory = ({
         folderId
       });
       if (doesNewNameSecretExist) throw new BadRequestError({ message: "Secret with the new name already exists" });
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Edit,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: inputSecret.newSecretName,
-          ...(tagsToCheck.length && {
-            secretTags: tagsToCheck.map((el) => el.slug)
-          })
+      assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: inputSecret.newSecretName,
+        ...(tagsToCheck.length && {
+          secretTags: tagsToCheck.map((el) => el.slug)
         })
-      );
+      });
     }
 
     const { secretName, secretValue } = inputSecret;
@@ -932,15 +921,12 @@ export const secretV2BridgeServiceFactory = ({
     }
 
     if (inputSecret.type === SecretType.Shared)
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Delete,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: secretToDelete.key,
-          secretTags: secretToDelete.tags?.map((el) => el.slug)
-        })
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: secretToDelete.key,
+        secretTags: secretToDelete.tags?.map((el) => el.slug)
+      });
 
     try {
       const deletedSecret = await secretDAL.transaction(async (tx) => {
@@ -2179,15 +2165,12 @@ export const secretV2BridgeServiceFactory = ({
     const tagsGroupByID = groupBy(tags, (i) => i.id);
 
     deduplicatedSecrets.forEach((el) => {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Create,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: el.secretKey,
-          secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
-        })
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: el.secretKey,
+        secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
+      });
     });
 
     // now get all secret references made and validate the permission
@@ -2430,15 +2413,12 @@ export const secretV2BridgeServiceFactory = ({
         secretsToUpdate = secretsToUpdate.filter((el) => secretsToUpdateInDBGroupedByKey?.[el.secretKey]);
 
         secretsToUpdateInDB.forEach((el) => {
-          ForbiddenError.from(permission).throwUnlessCan(
-            ProjectPermissionSecretActions.Edit,
-            subject(ProjectPermissionSub.Secrets, {
-              environment,
-              secretPath,
-              secretName: el.key,
-              secretTags: el.tags.map((i) => i.slug)
-            })
-          );
+          assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+            environment,
+            secretPath,
+            secretName: el.key,
+            secretTags: el.tags.map((i) => i.slug)
+          });
 
           if (el.isHoneyTokenSecret) {
             const input = secretsToUpdateGroupByPath[secretPath].find((i) => i.secretKey === el.key);
@@ -2480,29 +2460,23 @@ export const secretV2BridgeServiceFactory = ({
         // check create permission allowed in upsert mode
         if (updateMode === SecretUpdateMode.Upsert) {
           secretsToCreate.forEach((el) => {
-            ForbiddenError.from(permission).throwUnlessCan(
-              ProjectPermissionSecretActions.Create,
-              subject(ProjectPermissionSub.Secrets, {
-                environment,
-                secretPath,
-                secretName: el.secretKey,
-                secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
-              })
-            );
+            assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+              environment,
+              secretPath,
+              secretName: el.secretKey,
+              secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
+            });
           });
         }
 
         // check again to avoid non authorized tags are removed
         secretsToUpdate.forEach((el) => {
-          ForbiddenError.from(permission).throwUnlessCan(
-            ProjectPermissionSecretActions.Edit,
-            subject(ProjectPermissionSub.Secrets, {
-              environment,
-              secretPath,
-              secretName: el.secretKey,
-              secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
-            })
-          );
+          assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+            environment,
+            secretPath,
+            secretName: el.secretKey,
+            secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
+          });
         });
 
         // now find any secret that needs to update its name
@@ -2527,15 +2501,12 @@ export const secretV2BridgeServiceFactory = ({
             });
 
           secretsWithNewName.forEach((el) => {
-            ForbiddenError.from(permission).throwUnlessCan(
-              ProjectPermissionSecretActions.Create,
-              subject(ProjectPermissionSub.Secrets, {
-                environment,
-                secretPath,
-                secretName: el.newSecretName as string,
-                secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
-              })
-            );
+            assertPermission(permission, ProjectPermissionSecretActions.Create, ProjectPermissionSub.Secrets, {
+              environment,
+              secretPath,
+              secretName: el.newSecretName as string,
+              secretTags: (el.tagIds || []).map((i) => tagsGroupByID[i][0].slug)
+            });
           });
         }
         // now get all secret references made and validate the permission
@@ -2860,15 +2831,12 @@ export const secretV2BridgeServiceFactory = ({
         message: `One or more secrets does not exist: ${secretsToDelete.map((el) => el.key).join(", ")}`
       });
     secretsToDelete.forEach((el) => {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionSecretActions.Delete,
-        subject(ProjectPermissionSub.Secrets, {
-          environment,
-          secretPath,
-          secretName: el.key,
-          secretTags: el.tags?.map((i) => i.slug)
-        })
-      );
+      assertPermission(permission, ProjectPermissionSecretActions.Delete, ProjectPermissionSub.Secrets, {
+        environment,
+        secretPath,
+        secretName: el.key,
+        secretTags: el.tags?.map((i) => i.slug)
+      });
     });
     const honeyTokenSecretsToDelete = secretsToDelete.filter((el) => el.isHoneyTokenSecret);
     if (honeyTokenSecretsToDelete.length) {
@@ -3825,15 +3793,12 @@ export const secretV2BridgeServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionSecretActions.Edit,
-      subject(ProjectPermissionSub.Secrets, {
-        environment: folderWithPath.environmentSlug,
-        secretPath: folderWithPath.path,
-        secretName: secret.key,
-        secretTags: secret.tags.map((i) => i.slug)
-      })
-    );
+    assertPermission(permission, ProjectPermissionSecretActions.Edit, ProjectPermissionSub.Secrets, {
+      environment: folderWithPath.environmentSlug,
+      secretPath: folderWithPath.path,
+      secretName: secret.key,
+      secretTags: secret.tags.map((i) => i.slug)
+    });
 
     if (secretVersion.isRedacted) {
       throw new BadRequestError({ message: `Secret version with ID '${versionId}' is already redacted` });

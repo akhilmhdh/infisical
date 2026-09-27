@@ -1,4 +1,4 @@
-import { createMongoAbility, ForbiddenError, MongoAbility, RawRuleOf, subject } from "@casl/ability";
+import { createMongoAbility, MongoAbility, RawRuleOf } from "@casl/ability";
 import { PackRule, packRules, unpackRules } from "@casl/ability/extra";
 import { requestContext } from "@fastify/request-context";
 
@@ -41,6 +41,7 @@ import { ResourcePermissionSet } from "@app/ee/services/permission/resource-perm
 import { KeyStorePrefixes, KeyStoreTtls, TKeyStoreFactory } from "@app/keystore/keystore";
 import { withCacheFingerprint } from "@app/lib/cache/with-cache";
 import { conditionsMatcher } from "@app/lib/casl";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { objectify } from "@app/lib/fn";
 import { logger } from "@app/lib/logger";
@@ -1214,7 +1215,7 @@ export const permissionServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
+    assertPermission(permission, ProjectPermissionMemberActions.Read, ProjectPermissionSub.Member);
 
     const targetMemberships = await permissionDAL.getPermission({
       scopeData: {
@@ -1323,10 +1324,9 @@ export const permissionServiceFactory = ({
       actorOrgId,
       actionProjectType: ActionProjectType.Any
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionIdentityActions.Read,
-      subject(ProjectPermissionSub.Identity, { identityId: targetIdentityId })
-    );
+    assertPermission(permission, ProjectPermissionIdentityActions.Read, ProjectPermissionSub.Identity, {
+      identityId: targetIdentityId
+    });
 
     const targetMemberships = await permissionDAL.getPermission({
       scopeData: {

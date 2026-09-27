@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { Knex } from "knex";
 
 import { AccessScope, ActionProjectType, RESOURCE_SCOPE, ResourceType, TemporaryPermissionMode } from "@app/db/schemas";
@@ -11,6 +10,7 @@ import {
   ResourcePermissionPamResourceActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError, ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { ms } from "@app/lib/ms";
 import { TApprovalPolicyDALFactory } from "@app/services/approval-policy/approval-policy-dal";
@@ -155,7 +155,8 @@ export const pamMembershipServiceFactory = ({
           actorAuthMethod: ctx.actorAuthMethod,
           actorOrgId: ctx.actorOrgId
         });
-        ForbiddenError.from(permission).throwUnlessCan(
+        assertPermission(
+          permission,
           ResourcePermissionPamResourceActions.ManageMembers,
           ResourcePermissionSub.PamResource
         );
@@ -175,10 +176,7 @@ export const pamMembershipServiceFactory = ({
       actorAuthMethod: ctx.actorAuthMethod,
       actorOrgId: ctx.actorOrgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionPamResourceActions.ManageMembers,
-      ResourcePermissionSub.PamResource
-    );
+    assertPermission(permission, ResourcePermissionPamResourceActions.ManageMembers, ResourcePermissionSub.PamResource);
   };
 
   const checkAccountManagePermission = async (projectId: string, accountId: string, ctx: TActorContext) => {

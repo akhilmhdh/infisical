@@ -1,8 +1,8 @@
-import { ForbiddenError } from "@casl/ability";
 import { requestContext } from "@fastify/request-context";
 
 import { ActionProjectType, OrganizationActionScope, TUsers } from "@app/db/schemas";
 import { KeyStorePrefixes, KeyStoreTtls, TKeyStoreFactory } from "@app/keystore/keystore";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -84,10 +84,7 @@ export const auditLogServiceFactory = ({
           actorOrgId,
           actionProjectType: ActionProjectType.Any
         });
-        ForbiddenError.from(permission).throwUnlessCan(
-          ProjectPermissionAuditLogsActions.Read,
-          ProjectPermissionSub.AuditLogs
-        );
+        assertPermission(permission, ProjectPermissionAuditLogsActions.Read, ProjectPermissionSub.AuditLogs);
       }
     } else {
       // Organization-wide logs
@@ -100,10 +97,7 @@ export const auditLogServiceFactory = ({
         actorOrgId
       });
 
-      ForbiddenError.from(permission).throwUnlessCan(
-        OrgPermissionAuditLogsActions.Read,
-        OrgPermissionSubjects.AuditLogs
-      );
+      assertPermission(permission, OrgPermissionAuditLogsActions.Read, OrgPermissionSubjects.AuditLogs);
     }
 
     if (filter.auditLogActorId && filter.actorType && !ACTOR_TYPE_TO_METADATA_ID_KEY[filter.actorType]) {
@@ -184,7 +178,7 @@ export const auditLogServiceFactory = ({
       actorOrgId
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(OrgPermissionAuditLogsActions.Read, OrgPermissionSubjects.AuditLogs);
+    assertPermission(permission, OrgPermissionAuditLogsActions.Read, OrgPermissionSubjects.AuditLogs);
 
     const appCfg = getConfig();
     const clickHouseConfigured = Boolean(appCfg.isClickHouseConfigured && appCfg.CLICKHOUSE_AUDIT_LOG_ENABLED);

@@ -1,6 +1,7 @@
 import { ForbiddenError, subject } from "@casl/ability";
 
 import { ActionProjectType } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { ForbiddenRequestError } from "@app/lib/errors";
@@ -38,15 +39,11 @@ export const assumePrivilegeServiceFactory = ({
     });
 
     if (targetActorType === ActorType.USER) {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionMemberActions.AssumePrivileges,
-        ProjectPermissionSub.Member
-      );
+      assertPermission(permission, ProjectPermissionMemberActions.AssumePrivileges, ProjectPermissionSub.Member);
     } else {
-      ForbiddenError.from(permission).throwUnlessCan(
-        ProjectPermissionIdentityActions.AssumePrivileges,
-        subject(ProjectPermissionSub.Identity, { identityId: targetActorId })
-      );
+      assertPermission(permission, ProjectPermissionIdentityActions.AssumePrivileges, ProjectPermissionSub.Identity, {
+        identityId: targetActorId
+      });
     }
 
     // check entity is  part of project

@@ -1,8 +1,7 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { ActionProjectType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
 import { ProjectPermissionActions, ProjectPermissionSub } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { ForbiddenRequestError, NotFoundError } from "@app/lib/errors";
 import { groupBy } from "@app/lib/fn";
 import { TPkiCollectionDALFactory } from "@app/services/pki-collection/pki-collection-dal";
@@ -83,7 +82,7 @@ export const pkiAlertServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.PkiAlerts);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.PkiAlerts);
 
     const pkiCollection = await pkiCollectionDAL.findById(pkiCollectionId);
     if (!pkiCollection) throw new NotFoundError({ message: `PKI collection with ID '${pkiCollectionId}' not found` });
@@ -113,7 +112,7 @@ export const pkiAlertServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.PkiAlerts);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.PkiAlerts);
     return alert;
   };
 
@@ -140,7 +139,7 @@ export const pkiAlertServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.PkiAlerts);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.PkiAlerts);
 
     if (pkiCollectionId) {
       const pkiCollection = await pkiCollectionDAL.findById(pkiCollectionId);
@@ -173,7 +172,7 @@ export const pkiAlertServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.PkiAlerts);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.PkiAlerts);
     alert = await pkiAlertDAL.deleteById(alertId);
     return alert;
   };

@@ -1,4 +1,3 @@
-import { ForbiddenError, subject } from "@casl/ability";
 import RE2 from "re2";
 
 import { ActionProjectType } from "@app/db/schemas";
@@ -8,6 +7,7 @@ import {
   ProjectPermissionDynamicSecretActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig } from "@app/lib/config/env";
 import { BadRequestError, NotFoundError } from "@app/lib/errors";
 import { logger } from "@app/lib/logger";
@@ -116,14 +116,7 @@ export const dynamicSecretLeaseServiceFactory = ({
         message: `Dynamic secret with name '${name}' in folder with path '${path}' not found`
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionDynamicSecretActions.Lease,
-      subject(ProjectPermissionSub.DynamicSecrets, {
-        environment: environmentSlug,
-        secretPath: path,
-        metadata: dynamicSecretCfg.metadata
-      })
-    );
+    assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets);
 
     const totalLeasesTaken = await dynamicSecretLeaseDAL.countLeasesForDynamicSecret(dynamicSecretCfg.id);
     if (totalLeasesTaken >= appCfg.MAX_LEASE_LIMIT)
@@ -275,14 +268,11 @@ export const dynamicSecretLeaseServiceFactory = ({
         message: `Dynamic secret with ID '${dynamicSecretLease.dynamicSecretId}' not found`
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionDynamicSecretActions.Lease,
-      subject(ProjectPermissionSub.DynamicSecrets, {
-        environment: environmentSlug,
-        secretPath: path,
-        metadata: dynamicSecretCfg.metadata
-      })
-    );
+    assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets, {
+      environment: environmentSlug,
+      secretPath: path,
+      metadata: dynamicSecretCfg.metadata
+    });
 
     const selectedProvider = dynamicSecretProviders[dynamicSecretCfg.type as DynamicSecretProviders];
     const decryptedStoredInput = JSON.parse(
@@ -371,14 +361,11 @@ export const dynamicSecretLeaseServiceFactory = ({
         message: `Dynamic secret with ID '${dynamicSecretLease.dynamicSecretId}' not found`
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionDynamicSecretActions.Lease,
-      subject(ProjectPermissionSub.DynamicSecrets, {
-        environment: environmentSlug,
-        secretPath: path,
-        metadata: dynamicSecretCfg.metadata
-      })
-    );
+    assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets, {
+      environment: environmentSlug,
+      secretPath: path,
+      metadata: dynamicSecretCfg.metadata
+    });
 
     const selectedProvider = dynamicSecretProviders[dynamicSecretCfg.type as DynamicSecretProviders];
     const decryptedStoredInput = JSON.parse(
@@ -461,14 +448,11 @@ export const dynamicSecretLeaseServiceFactory = ({
         message: `Dynamic secret with name '${name}' in folder with path '${path}' not found`
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionDynamicSecretActions.Lease,
-      subject(ProjectPermissionSub.DynamicSecrets, {
-        environment: environmentSlug,
-        secretPath: path,
-        metadata: dynamicSecretCfg.metadata
-      })
-    );
+    assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets, {
+      environment: environmentSlug,
+      secretPath: path,
+      metadata: dynamicSecretCfg.metadata
+    });
 
     const dynamicSecretLeases = await dynamicSecretLeaseDAL.find({ dynamicSecretId: dynamicSecretCfg.id });
     return {
@@ -520,14 +504,11 @@ export const dynamicSecretLeaseServiceFactory = ({
         message: `Dynamic secret with ID '${dynamicSecretLease.dynamicSecretId}' not found`
       });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionDynamicSecretActions.Lease,
-      subject(ProjectPermissionSub.DynamicSecrets, {
-        environment: environmentSlug,
-        secretPath: path,
-        metadata: dynamicSecretCfg.metadata
-      })
-    );
+    assertPermission(permission, ProjectPermissionDynamicSecretActions.Lease, ProjectPermissionSub.DynamicSecrets, {
+      environment: environmentSlug,
+      secretPath: path,
+      metadata: dynamicSecretCfg.metadata
+    });
 
     return {
       lease: dynamicSecretLease,

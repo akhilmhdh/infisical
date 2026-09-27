@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { packRules } from "@casl/ability/extra";
 import * as x509 from "@peculiar/x509";
 import { KeyObject } from "crypto";
@@ -21,6 +20,7 @@ import {
   ResourcePermissionSignerActions,
   ResourcePermissionSub
 } from "@app/ee/services/permission/resource-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { signingService } from "@app/lib/crypto/sign/signing";
 import { AsymmetricKeyAlgorithm, SigningAlgorithm } from "@app/lib/crypto/sign/types";
@@ -416,10 +416,7 @@ export const signerServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCodeSigningActions.Create,
-      ProjectPermissionSub.CodeSigners
-    );
+    assertPermission(permission, ProjectPermissionCodeSigningActions.Create, ProjectPermissionSub.CodeSigners);
 
     // pkiCodeSigning is ignored when null (no restriction); only an explicit boolean gates the feature,
     // blocking creation when it is explicitly false.
@@ -852,10 +849,7 @@ export const signerServiceFactory = ({
       actionProjectType: ActionProjectType.CertificateManager
     });
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionCodeSigningActions.Read,
-      ProjectPermissionSub.CodeSigners
-    );
+    assertPermission(permission, ProjectPermissionCodeSigningActions.Read, ProjectPermissionSub.CodeSigners);
 
     let signerIds: string[] | undefined;
     if (!hasRole(ProjectMembershipRole.Admin)) {
@@ -903,7 +897,7 @@ export const signerServiceFactory = ({
       dto.actorOrgId
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     let externalOrder: { provider: string; orderId: number; status: string | null } | null = null;
     if (!signer.certificateId) {
@@ -934,10 +928,7 @@ export const signerServiceFactory = ({
       dto.actorOrgId
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ReissueCertificate,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ReissueCertificate, ResourcePermissionSub.Signer);
 
     await signerIssuanceService.runPendingJobNow(signer.id);
     return getById(dto);
@@ -981,7 +972,7 @@ export const signerServiceFactory = ({
       dto.actorOrgId
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Edit, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Edit, ResourcePermissionSub.Signer);
 
     const patch: Record<string, unknown> = {};
     if (dto.name !== undefined) patch.name = dto.name;
@@ -1027,10 +1018,7 @@ export const signerServiceFactory = ({
       dto.actorOrgId
     );
 
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.Delete,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.Delete, ResourcePermissionSub.Signer);
 
     // Revoke the DigiCert order so a deleted signer can't leave a live publicly-trusted cert behind.
     // Best-effort and outside the deletion transaction so a DigiCert outage can't block the delete.
@@ -1095,10 +1083,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageStatus,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageStatus, ResourcePermissionSub.Signer);
 
     if (signer.status !== SignerStatus.Disabled) {
       throw new BadRequestError({
@@ -1125,10 +1110,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ManageStatus,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ManageStatus, ResourcePermissionSub.Signer);
 
     if (signer.status === SignerStatus.Disabled) return signer;
     return signerDAL.updateById(dto.signerId, { status: SignerStatus.Disabled });
@@ -1263,10 +1245,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ReissueCertificate,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ReissueCertificate, ResourcePermissionSub.Signer);
 
     const ca = await certificateAuthorityDAL.findByIdWithAssociatedCa(dto.caId);
     if (!ca || ca.projectId !== signer.projectId) {
@@ -1417,10 +1396,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(
-      ResourcePermissionSignerActions.ExportCertificate,
-      ResourcePermissionSub.Signer
-    );
+    assertPermission(permission, ResourcePermissionSignerActions.ExportCertificate, ResourcePermissionSub.Signer);
 
     if (!signer.certificateId) {
       throw new BadRequestError({ message: `Signer '${signer.name}' has no certificate attached yet.` });
@@ -1619,7 +1595,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Sign, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Sign, ResourcePermissionSub.Signer);
 
     if (signer.status !== SignerStatus.Active) {
       throw new BadRequestError({ message: `Signer '${signer.name}' is not active (status: ${signer.status})` });
@@ -1855,7 +1831,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     if (!signer.certificateId) {
       throw new BadRequestError({ message: `Signer '${signer.name}' has no certificate attached yet.` });
@@ -1930,7 +1906,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     const operations = await signingOperationDAL.findBySignerId(dto.signerId, {
       offset: dto.offset,
@@ -1957,7 +1933,7 @@ export const signerServiceFactory = ({
       dto.actorAuthMethod,
       dto.actorOrgId
     );
-    ForbiddenError.from(permission).throwUnlessCan(ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
+    assertPermission(permission, ResourcePermissionSignerActions.Read, ResourcePermissionSub.Signer);
 
     const operation = await signingOperationDAL.findByIdWithActor(dto.operationId);
     if (!operation || operation.signerId !== signer.id) {

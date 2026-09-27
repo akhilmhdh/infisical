@@ -1,6 +1,5 @@
-import { ForbiddenError } from "@casl/ability";
-
 import { OrganizationActionScope } from "@app/db/schemas";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError } from "@app/lib/errors";
 
 import { HoneyTokenType } from "../honey-token/honey-token-enums";
@@ -52,10 +51,7 @@ export const honeyTokenConfigServiceFactory = (deps: THoneyTokenConfigServiceFac
       actorAuthMethod: orgPermission.authMethod,
       actorOrgId: orgPermission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionHoneyTokenActions.Setup,
-      OrgPermissionSubjects.HoneyTokens
-    );
+    assertPermission(permission, OrgPermissionHoneyTokenActions.Setup, OrgPermissionSubjects.HoneyTokens);
 
     const providerType = assertSupportedHoneyTokenType(type);
     const providerDefinition = getHoneyTokenProviderDefinition(providerType);
@@ -93,10 +89,7 @@ export const honeyTokenConfigServiceFactory = (deps: THoneyTokenConfigServiceFac
       actorAuthMethod: orgPermission.authMethod,
       actorOrgId: orgPermission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionHoneyTokenActions.Setup,
-      OrgPermissionSubjects.HoneyTokens
-    );
+    assertPermission(permission, OrgPermissionHoneyTokenActions.Setup, OrgPermissionSubjects.HoneyTokens);
 
     const providerType = assertSupportedHoneyTokenType(type);
     const provider = honeyTokenConfigProviderByType[providerType];
@@ -115,10 +108,7 @@ export const honeyTokenConfigServiceFactory = (deps: THoneyTokenConfigServiceFac
       actorAuthMethod: orgPermission.authMethod,
       actorOrgId: orgPermission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      OrgPermissionHoneyTokenActions.Setup,
-      OrgPermissionSubjects.HoneyTokens
-    );
+    assertPermission(permission, OrgPermissionHoneyTokenActions.Setup, OrgPermissionSubjects.HoneyTokens);
 
     const providerType = assertSupportedHoneyTokenType(type);
     const provider = honeyTokenConfigProviderByType[providerType];

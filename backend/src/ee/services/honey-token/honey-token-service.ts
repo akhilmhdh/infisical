@@ -6,6 +6,7 @@ import {
   ProjectPermissionHoneyTokenActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { getConfig as getAppConfig } from "@app/lib/config/env";
 import { crypto } from "@app/lib/crypto/cryptography";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "@app/lib/errors";
@@ -199,10 +200,10 @@ export const honeyTokenServiceFactory = ({
       actionProjectType: ActionProjectType.SecretManager,
       projectId
     });
-    ForbiddenError.from(permission).throwUnlessCan(
-      ProjectPermissionHoneyTokenActions.Create,
-      subject(ProjectPermissionSub.HoneyTokens, { environment, secretPath: canonicalPath })
-    );
+    assertPermission(permission, ProjectPermissionHoneyTokenActions.Create, ProjectPermissionSub.HoneyTokens, {
+      environment,
+      secretPath: canonicalPath
+    });
 
     const folder = await folderDAL.findBySecretPath(projectId, environment, secretPath);
 

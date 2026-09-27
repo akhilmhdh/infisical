@@ -1,4 +1,3 @@
-import { ForbiddenError } from "@casl/ability";
 import { v4 as uuidv4 } from "uuid";
 
 import { AccessScope, ActionProjectType, ProjectMembershipRole, ProjectType } from "@app/db/schemas";
@@ -15,6 +14,7 @@ import {
   ProjectPermissionActions,
   ProjectPermissionSub
 } from "@app/ee/services/permission/project-permission";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { BadRequestError } from "@app/lib/errors";
 import { requestMemoKeys } from "@app/lib/request-context/memo-keys";
 import { requestMemoize } from "@app/lib/request-context/request-memoizer";
@@ -50,7 +50,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Create, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Create, ProjectPermissionSub.Role);
   };
 
   const onUpdateRoleGuard: TRoleScopeFactory["onUpdateRoleGuard"] = async (dto) => {
@@ -63,7 +63,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Edit, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Edit, ProjectPermissionSub.Role);
   };
 
   const onDeleteRoleGuard: TRoleScopeFactory["onDeleteRoleGuard"] = async (dto) => {
@@ -76,7 +76,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Delete, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Delete, ProjectPermissionSub.Role);
   };
 
   const onListRoleGuard: TRoleScopeFactory["onListRoleGuard"] = async (dto) => {
@@ -89,7 +89,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Role);
   };
 
   const onGetRoleByIdGuard: TRoleScopeFactory["onGetRoleByIdGuard"] = async (dto) => {
@@ -102,7 +102,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Role);
   };
 
   const onGetRoleBySlugGuard: TRoleScopeFactory["onGetRoleBySlugGuard"] = async (dto) => {
@@ -115,7 +115,7 @@ export const newProjectRoleFactory = ({
       projectId: scope.value,
       actorOrgId: dto.permission.orgId
     });
-    ForbiddenError.from(permission).throwUnlessCan(ProjectPermissionActions.Read, ProjectPermissionSub.Role);
+    assertPermission(permission, ProjectPermissionActions.Read, ProjectPermissionSub.Role);
   };
 
   const getPredefinedRoles: TRoleScopeFactory["getPredefinedRoles"] = async (scopeData) => {

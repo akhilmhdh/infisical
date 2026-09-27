@@ -4,6 +4,7 @@ import { Knex } from "knex";
 
 import { ActionProjectType, ResourceType } from "@app/db/schemas";
 import { TPermissionServiceFactory } from "@app/ee/services/permission/permission-service-types";
+import { assertPermission } from "@app/lib/casl/assert-permission";
 import { ForbiddenRequestError } from "@app/lib/errors";
 import { ActorAuthMethod, ActorType } from "@app/services/auth/auth-type";
 import { TMembershipDALFactory } from "@app/services/membership/membership-dal";
@@ -108,7 +109,7 @@ export const checkAccountAccess = async (
   if (folderId) {
     try {
       const { permission } = await checkFolderPermission(permissionService, folderId, projectId, ctx);
-      ForbiddenError.from(permission).throwUnlessCan(action, ResourcePermissionSub.PamResource);
+      assertPermission(permission, action, ResourcePermissionSub.PamResource);
       return;
     } catch (err) {
       // No folder access: fall back to direct account access
@@ -125,7 +126,7 @@ export const checkAccountAccess = async (
     actorAuthMethod: ctx.actorAuthMethod,
     actorOrgId: ctx.actorOrgId
   });
-  ForbiddenError.from(permission).throwUnlessCan(action, ResourcePermissionSub.PamResource);
+  assertPermission(permission, action, ResourcePermissionSub.PamResource);
 };
 
 // Non-throwing counterpart to checkAccountAccess, for deciding what a caller may do.
